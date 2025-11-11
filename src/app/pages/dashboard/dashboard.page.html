@@ -1,0 +1,64 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>KineSphere - {{ usuarioNombre }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="ion-padding">
+    <!-- HEADER PERSONALIZADO -->
+    <div class="custom-header">
+      <div class="main-title">
+        <h1>Dashboard</h1>
+      </div>
+      <div class="subtitle">
+        <p>Resumen de tu actividad</p>
+      </div>
+    </div>
+
+    <ion-grid>
+      <ion-row>
+        <ion-col size="4" class="animated-item">
+          <ion-card>
+            <ion-card-content>
+              <h2>{{ totalPacientes }}</h2>
+              <p>Pacientes</p>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+        <ion-col size="4" class="animated-item">
+          <ion-card>
+            <ion-card-content>
+              <h2>{{ sesionesHoy }}</h2>
+              <p>Sesiones Hoy</p>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+        <ion-col size="4" class="animated-item">
+          <ion-card>
+            <ion-card-content>
+              <h2>{{ evaluacionesPendientes }}</h2>
+              <p>Evaluaciones</p>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <!-- BOTONES DE NAVEGACIÓN -->
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6" class="animated-item">
+          <ion-button expand="block" (click)="irAPacientes()">
+            👥 Ver Pacientes
+          </ion-button>
+        </ion-col>
+        <ion-col size="6" class="animated-item">
+          <ion-button expand="block" routerLink="/sesion" color="secondary">
+            📝 Nueva Sesión
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

@@ -1,0 +1,75 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>KineSphere - {{ tituloPagina }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="ion-padding">
+    <!-- HEADER PERSONALIZADO -->
+    <div class="custom-header">
+      <div class="main-title">
+        <h1>Pacientes</h1>
+      </div>
+      <div class="subtitle">
+        <!-- INTERPOLACIÓN: Contadores dinámicos -->
+        <p>Total: {{ totalPacientes }} | Activos: {{ pacientesActivos }}</p>
+      </div>
+    </div>
+
+    <!-- COMPONENTE IONIC: Searchbar -->
+    <ion-searchbar 
+      placeholder="Buscar paciente..."
+      animated
+      class="animated-item">
+    </ion-searchbar>
+
+    <!-- COMPONENTE IONIC: Lista con *ngFor -->
+    <ion-list class="animated-item">
+      <!-- INTERPOLACIÓN + *ngFor + ANIMACIONES -->
+      <ion-item 
+        *ngFor="let paciente of pacientes; let i = index"
+        [routerLink]="['/paciente-detalle']"
+        button
+        detail
+        class="paciente-item animated-item"
+        [style.animation-delay]="(i * 0.1) + 's'">
+        
+        <ion-avatar slot="start">
+          <ion-icon name="person-circle" size="large"></ion-icon>
+        </ion-avatar>
+        
+        <ion-label>
+          <h2>{{ i + 1 }}. {{ paciente.nombre }}</h2>
+          <p>{{ paciente.diagnostico }}</p>
+          <p>
+            <ion-badge [color]="paciente.activo ? 'success' : 'medium'">
+              {{ paciente.activo ? 'Activo' : 'Finalizado' }}
+            </ion-badge>
+            • Sesión {{ paciente.sesiones }}/10 • EVA: {{ paciente.eva }}/10
+          </p>
+        </ion-label>
+        
+        <ion-note slot="end">
+          {{ paciente.proximaSesion }}
+        </ion-note>
+      </ion-item>
+    </ion-list>
+
+    <!-- COMPONENTE IONIC: FAB Button -->
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button color="primary">
+        <ion-icon name="add"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+
+    <!-- BOTÓN VOLVER -->
+    <ion-button 
+      expand="block" 
+      routerLink="/dashboard" 
+      color="light"
+      class="ion-margin-top">
+      ← Volver al Dashboard
+    </ion-button>
+  </div>
+</ion-content>

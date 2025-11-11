@@ -1,0 +1,11 @@
+/* FUERZA la fuente en TODOS los componentes de Ionic */
+ion-title, ion-label, ion-button, ion-input, ion-select, 
+ion-card, ion-item, ion-content, ion-header, ion-toolbar,
+ion-card-title, ion-card-content, ion-card-header {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+/* Para textos específicos */
+h1, h2, h3, h4, h5, h6, p, span, strong, div {
+  font-family: 'Courier New', Courier, monospace !important;
+}

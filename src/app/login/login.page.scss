@@ -1,0 +1,112 @@
+.custom-header {
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.custom-header .main-title {
+  background: #2dd36f;
+  padding: 16px;
+  text-align: center;
+}
+
+.custom-header .main-title h1 {
+  margin: 0;
+  color: black;
+  font-size: 3.0rem;
+  font-weight: bold;
+}
+
+.custom-header .subtitle {
+  background: rgba(45, 211, 111, 0.6);
+  padding: 8px;
+  text-align: center;
+}
+
+.custom-header .subtitle p {
+  margin: 0;
+  color: black;
+  font-size: 0.9rem;
+}
+
+.logo-section h2 {
+  animation: tituloEntrante 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  text-align: center;
+  font-size: 2.5rem;
+}
+
+.logo-section p {
+  animation: subtituloEntrante 1s ease-out 0.3s;
+  text-align: center;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+@keyframes tituloEntrante {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes subtituloEntrante {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+ion-card, ion-card-header, ion-card-title, ion-card-content,
+ion-item, ion-label, ion-input, ion-button, ion-list,
+ion-toolbar, ion-title, h2, p, strong, span, div {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+/* Específico para elementos del login */
+ion-card ion-card-title,
+ion-card ion-card-content, 
+ion-item ion-label,
+ion-button .button-native,
+ion-input .native-input,
+.login-container h2,
+.login-container p {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+/* SOLUCIÓN BOTÓN LOGIN - Forzar colores */
+.login-button {
+  --background: #2dd36f !important;
+  --background-activated: #28ba62 !important;
+  --background-hover: #28ba62 !important;
+  --color: #000000 !important; /* Texto NEGRO */
+  --border-radius: 8px;
+  --border-color: #000000;
+  --border-style: solid;
+  --border-width: 1px;
+  
+  /* Forzar color del texto */
+  .button-native {
+    color: #000000 !important;
+  }
+  
+  /* Forzar color del span interno */
+  span, .button-inner {
+    color: #000000 !important;
+    font-weight: bold;
+  }
+}
+
+/* Estado deshabilitado */
+.login-button[disabled] {
+  --background: #cccccc !important;
+  --color: #666666 !important;
+}

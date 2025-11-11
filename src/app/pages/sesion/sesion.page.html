@@ -1,0 +1,85 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>KineSphere - Sesión</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="ion-padding">
+    <!-- HEADER PERSONALIZADO -->
+    <div class="custom-header">
+      <div class="main-title">
+        <h1>Registro de Sesión</h1>
+      </div>
+      <div class="subtitle">
+        <p>Sesión {{ numeroSesion }} - {{ pacienteNombre }}</p>
+      </div>
+    </div>
+
+    <!-- FORMULARIO DE SESIÓN -->
+    <ion-card class="animated-item">
+      <ion-card-header>
+        <ion-card-title>📝 Evaluación</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <!-- ESCALA EVA -->
+        <ion-item>
+          <ion-label position="stacked">Escala EVA (0-10)</ion-label>
+          <ion-range 
+            min="0" 
+            max="10" 
+            step="1" 
+            snaps="true"
+            [(ngModel)]="eva"
+            color="primary">
+            <ion-label slot="start">0</ion-label>
+            <ion-label slot="end">10</ion-label>
+          </ion-range>
+        </ion-item>
+        <p><strong>EVA Actual:</strong> {{ eva }}/10</p>
+
+        <!-- CALIDAD DE SUEÑO -->
+        <ion-item>
+          <ion-label>¿Cómo durmió?</ion-label>
+          <ion-select [(ngModel)]="sueno" interface="action-sheet">
+            <ion-select-option value="bueno">Bueno</ion-select-option>
+            <ion-select-option value="regular">Regular</ion-select-option>
+            <ion-select-option value="malo">Malo</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- EJERCICIOS EN CASA -->
+        <ion-item>
+          <ion-label>¿Hizo ejercicios en casa?</ion-label>
+          <ion-checkbox slot="start" [(ngModel)]="ejerciciosRealizados"></ion-checkbox>
+        </ion-item>
+
+        <!-- OBSERVACIONES -->
+        <ion-item>
+          <ion-label position="stacked">Observaciones</ion-label>
+          <ion-textarea 
+            [(ngModel)]="observaciones"
+            placeholder="Registre observaciones de la sesión..."
+            rows="4">
+          </ion-textarea>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- BOTONES -->
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6">
+          <ion-button expand="block" (click)="guardarSesion()" color="primary">
+            💾 Guardar Sesión
+          </ion-button>
+        </ion-col>
+        <ion-col size="6">
+          <ion-button expand="block" routerLink="/paciente-detalle" color="light">
+            ← Volver
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</ion-content>

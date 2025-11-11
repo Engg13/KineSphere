@@ -1,0 +1,32 @@
+.paciente-item {
+  margin-bottom: 8px;
+  border-radius: 8px;
+  
+  ion-avatar {
+    width: 48px;
+    height: 48px;
+    
+    ion-icon {
+      font-size: 48px;
+      color: var(--ion-color-primary);
+    }
+  }
+  
+  h2 {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  
+  p {
+    margin: 2px 0;
+  }
+}
+
+ion-searchbar {
+  --border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+ion-fab {
+  margin-bottom: 20px;
+}

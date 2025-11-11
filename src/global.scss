@@ -1,37 +1,77 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
+/* ===== FUENTE COURIER NEW GLOBAL ===== */
+ion-card, ion-card-header, ion-card-title, ion-card-subtitle, ion-card-content,
+ion-item, ion-label, ion-input, ion-textarea, ion-select, ion-button, ion-list,
+ion-toolbar, ion-title, ion-header, ion-content, ion-grid, ion-row, ion-col,
+ion-segment, ion-segment-button, ion-alert, ion-toast, ion-loading,
+h1, h2, h3, h4, h5, h6, p, strong, span, div, 
+.native-input, .button-native, .sc-ion-label-md-h {
+  font-family: 'Courier New', Courier, monospace !important;
+}
 
-/* Core CSS required for Ionic components to work properly */
-@import "@ionic/angular/css/core.css";
+/* ===== ANIMACIONES GLOBALES ===== */
+@keyframes tituloEntrante {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
 
-/* Basic CSS for apps built with Ionic */
-@import "@ionic/angular/css/normalize.css";
-@import "@ionic/angular/css/structure.css";
-@import "@ionic/angular/css/typography.css";
-@import "@ionic/angular/css/display.css";
+@keyframes subtituloEntrante {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-/* Optional CSS utils that can be commented out */
-@import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
-@import "@ionic/angular/css/flex-utils.css";
+/* ===== HEADER PERSONALIZADO GLOBAL ===== */
+.custom-header {
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  animation: tituloEntrante 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+.custom-header .main-title {
+  background: #2dd36f;
+  padding: 16px;
+  text-align: center;
+}
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+.custom-header .main-title h1 {
+  margin: 0;
+  color: black;
+  font-size: 3.0rem;
+  font-weight: bold;
+}
+
+.custom-header .subtitle {
+  background: rgba(45, 211, 111, 0.6);
+  padding: 8px;
+  text-align: center;
+}
+
+.custom-header .subtitle p {
+  margin: 0;
+  color: black;
+  font-size: 0.9rem;
+}
+
+/* Animación para elementos que entran */
+.animated-item {
+  animation: subtituloEntrante 0.8s ease-out;
+  animation-fill-mode: both;
+}
+
+/* Retrasos escalonados para listas */
+.animated-item:nth-child(1) { animation-delay: 0.1s; }
+.animated-item:nth-child(2) { animation-delay: 0.2s; }
+.animated-item:nth-child(3) { animation-delay: 0.3s; }
+.animated-item:nth-child(4) { animation-delay: 0.4s; }
