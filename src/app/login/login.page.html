@@ -25,7 +25,7 @@
     <!-- Formulario de Login -->
     <ion-card>
       <ion-card-content>
-          <form (ngSubmit)="onLogin()">
+          <form (ngSubmit)="login()">
             <ion-item>
               <!-- Campo Usuario -->
               <ion-icon name="person-circle-outline" slot="start" color="medium"></ion-icon>
@@ -70,10 +70,15 @@
             </ion-item>
 
             <!-- Recordar contraseña -->
-            <ion-item lines="none">
-              <ion-checkbox slot="start" [(ngModel)]="rememberMe" name="rememberMe"></ion-checkbox>
-              <ion-label>Recordar mis datos</ion-label>
-            </ion-item>
+            <!-- Recordar contraseña -->
+              <ion-item lines="none">
+                <ion-checkbox 
+                  slot="start" 
+                  [(ngModel)]="rememberMe"
+                  name="rememberMe">
+                </ion-checkbox>
+                <ion-label>Recordar mis datos</ion-label>
+              </ion-item>
 
             <!-- Botón de Login -->
               <ion-button 

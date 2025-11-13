@@ -29,7 +29,7 @@
       <!-- INTERPOLACIÓN + *ngFor + ANIMACIONES -->
       <ion-item 
         *ngFor="let paciente of pacientes; let i = index"
-        [routerLink]="['/paciente-detalle']"
+        (click)="verDetallePaciente(paciente)"
         button
         detail
         class="paciente-item animated-item"

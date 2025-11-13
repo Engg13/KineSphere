@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-pacientes-lista',
@@ -59,11 +60,19 @@ export class PacientesListaPage {
     return this.pacientes.filter(p => p.activo).length;
   }
 
-  constructor() { }
+  constructor(private navCtrl: NavController) {}
 
-  // ANIMACIÓN: Función para navegar con efecto
-  verDetalle(paciente: any) {
-    console.log('Ver detalle de:', paciente.nombre);
-    // La navegación real se hará con routerLink en el HTML
+  
+  verDetallePaciente(paciente: any) {
+    // Usar navigateRoot con un pequeño delay
+    setTimeout(() => {
+      this.navCtrl.navigateRoot('/paciente-detalle');
+    }, 10);
+  }
+
+  volverAlDashboard() {
+    setTimeout(() => {
+      this.navCtrl.navigateRoot('/dashboard');
+    }, 10);
   }
 }

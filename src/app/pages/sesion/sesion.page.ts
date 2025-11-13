@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NavController } from '@ionic/angular'; // ← AGREGAR ESTE IMPORT
 
 @Component({
   selector: 'app-sesion',
@@ -17,10 +18,19 @@ export class SesionPage {
   ejerciciosRealizados: boolean = true;
   sueno: string = 'bueno';
 
-  constructor() { }
+  constructor(private navCtrl: NavController) {} // ← YA ESTÁ BIEN
 
   guardarSesion() {
     alert(`Sesión ${this.numeroSesion} guardada para ${this.pacienteNombre}`);
     // Aquí iría la lógica para guardar
+  }
+
+  // AGREGAR MÉTODOS DE NAVEGACIÓN
+  volverAPaciente() {
+    this.navCtrl.navigateRoot('/paciente-detalle');
+  }
+
+  volverAlDashboard() {
+    this.navCtrl.navigateRoot('/dashboard');
   }
 }

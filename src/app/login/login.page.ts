@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-login',
@@ -11,9 +11,9 @@ export class LoginPage {
   username: string = '';
   password: string = '';
   profesionalSeleccionado: string = 'Esteban';
-  rememberMe: boolean = false; //
+  rememberMe: boolean = false; 
 
-  constructor(private router: Router) {}
+  constructor(private navCtrl: NavController) {}
 
   getProfesionalNombre(): string {
     const nombres: any = {
@@ -22,14 +22,10 @@ export class LoginPage {
     return nombres[this.profesionalSeleccionado] || 'Profesional';
   }
 
+  // REEMPLAZA ESTA FUNCIÓN COMPLETA:
   login() {
     if (this.username && this.password) {
-      this.router.navigate(['/dashboard']);
+      this.navCtrl.navigateRoot('/dashboard'); // ← Método de Ionic
     }
-  }
-
-  // AGREGAR ESTE MÉTODO
-  onLogin() {
-    this.login();
   }
 }

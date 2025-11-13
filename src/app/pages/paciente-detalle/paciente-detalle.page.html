@@ -4,80 +4,72 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <div class="ion-padding">
-    <!-- HEADER PERSONALIZADO -->
-    <div class="custom-header">
-      <div class="main-title">
-        <h1>Ficha Paciente</h1>
-      </div>
-      <div class="subtitle">
-        <p>{{ paciente.nombre }} - {{ paciente.diagnostico }}</p>
-      </div>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <!-- HEADER COMPACTO -->
+  <div class="custom-header">
+    <div class="main-title">
+      <h1>{{ paciente.nombre }}</h1>
     </div>
+    <div class="subtitle">
+      <p>{{ paciente.diagnostico }}</p>
+    </div>
+  </div>
 
-    <!-- DATOS DEL PACIENTE -->
-    <ion-card class="animated-item">
-      <ion-card-header>
-        <ion-card-title>👤 Datos Personales</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <p><strong>Nombre:</strong> {{ paciente.nombre }}</p>
-        <p><strong>Edad:</strong> {{ paciente.edad }} años</p>
-        <p><strong>Teléfono:</strong> {{ paciente.telefono }}</p>
-        <p><strong>Email:</strong> {{ paciente.email }}</p>
-        <p><strong>Fecha Ingreso:</strong> {{ paciente.fechaIngreso }}</p>
-      </ion-card-content>
-    </ion-card>
+  <!-- DATOS COMPACTOS EN UNA SOLA TARJETA -->
+  <ion-card class="animated-item">
+    <ion-card-header>
+      <ion-card-title>👤 Información del Paciente</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6">
+            <p><strong>Edad:</strong><br>{{ paciente.edad }} años</p>
+            <p><strong>Teléfono:</strong><br>{{ paciente.telefono }}</p>
+          </ion-col>
+          <ion-col size="6">
+            <p><strong>EVA Actual:</strong><br>{{ paciente.evaActual }}/10</p>
+            <p><strong>Sesiones:</strong><br>{{ paciente.sesionesCompletadas }}/10</p>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12">
+            <p><strong>Ingreso:</strong> {{ paciente.fechaIngreso }}</p>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
 
-    <!-- ESTADO ACTUAL -->
-    <ion-card class="animated-item">
-      <ion-card-header>
-        <ion-card-title>📊 Estado Actual</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="6">
-              <h3>EVA Actual</h3>
-              <ion-badge color="primary">{{ paciente.evaActual }}/10</ion-badge>
-            </ion-col>
-            <ion-col size="6">
-              <h3>Sesiones</h3>
-              <ion-badge color="secondary">{{ paciente.sesionesCompletadas }}/10</ion-badge>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
+  <!-- HISTORIAL COMPACTO -->
+  <ion-card class="animated-item">
+    <ion-card-header>
+      <ion-card-title>📅 Últimas Sesiones</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list lines="none">
+        <ion-item *ngFor="let sesion of historialSesiones" class="animated-item">
+          <ion-label class="ion-text-wrap">
+            <h3>{{ sesion.fecha }}</h3>
+            <p>EVA: {{ sesion.eva }}/10</p>
+            <p><small>{{ sesion.observaciones }}</small></p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
 
-    <!-- HISTORIAL DE SESIONES -->
-    <ion-card class="animated-item">
-      <ion-card-header>
-        <ion-card-title>📅 Historial de Sesiones</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-list>
-          <ion-item *ngFor="let sesion of historialSesiones" class="animated-item">
-            <ion-label>
-              <h3>{{ sesion.fecha }}</h3>
-              <p>EVA: {{ sesion.eva }}/10 - {{ sesion.observaciones }}</p>
-            </ion-label>
-          </ion-item>
-        </ion-list>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- BOTONES DE ACCIÓN -->
+  <!-- BOTONES FIJOS AL FINAL -->
+  <div class="buttons-container">
     <ion-grid>
       <ion-row>
         <ion-col size="6">
-          <ion-button expand="block" routerLink="/sesion" color="primary">
+          <ion-button expand="block" (click)="nuevaSesion()">
             📝 Nueva Sesión
           </ion-button>
         </ion-col>
         <ion-col size="6">
-          <ion-button expand="block" routerLink="/pacientes-lista" color="light">
+          <ion-button expand="block" (click)="volverALista()">
             ← Volver
           </ion-button>
         </ion-col>
