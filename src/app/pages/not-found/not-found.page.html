@@ -1,0 +1,37 @@
+<!-- src/app/pages/not-found/not-found.page.html -->
+<ion-header [translucent]="true">
+  <ion-toolbar color="danger">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Página No Encontrada</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="error-container">
+    <ion-icon name="warning-outline" class="error-icon"></ion-icon>
+    <h1>404</h1>
+    <h2>¡Ups! Página no encontrada</h2>
+    <p>La página que estás buscando no existe o ha sido movida.</p>
+    
+    <div class="action-buttons">
+      <ion-button 
+        (click)="goToDashboard()" 
+        expand="block"
+        class="ion-margin-bottom">
+        <ion-icon slot="start" name="home-outline"></ion-icon>
+        Volver al Dashboard
+      </ion-button>
+      
+      <ion-button 
+        (click)="goToPatients()" 
+        expand="block" 
+        color="secondary" 
+        fill="outline">
+        <ion-icon slot="start" name="people-outline"></ion-icon>
+        Ver Pacientes
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

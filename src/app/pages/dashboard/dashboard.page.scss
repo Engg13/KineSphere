@@ -1,22 +1,82 @@
-#container {
+/* dashboard.page.scss */
+.custom-header {
   text-align: center;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 20px;
+  margin-bottom: 20px;
+  
+  .main-title h1 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--ion-color-primary);
+    margin: 0;
+  }
+  
+  .subtitle p {
+    color: var(--ion-color-medium);
+    margin: 5px 0 0 0;
+    font-size: 0.9rem;
+  }
 }
 
-#container h2 {
-  margin: 20px 0;
-  color: var(--ion-color-primary);
+.stat-card {
+  transition: transform 0.3s ease;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  ion-icon {
+    margin-bottom: 10px;
+  }
+  
+  h2 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 5px 0;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
 }
 
-#container p {
-  margin-bottom: 30px;
+.paciente-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  margin-bottom: 10px;
+  
+  ion-avatar {
+    margin-right: 15px;
+  }
 }
 
-ion-card {
-  margin: 20px 0;
+.empty-state {
+  padding: 30px 0;
+  
+  ion-icon {
+    margin-bottom: 15px;
+    opacity: 0.5;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+    margin-bottom: 15px;
+  }
+}
+
+.animated-item {
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+// login.page.ts - CON inject() MODERNO
+import { Component, inject } from '@angular/core';
 import { NavController } from '@ionic/angular';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -11,9 +13,12 @@ export class LoginPage {
   username: string = '';
   password: string = '';
   profesionalSeleccionado: string = 'Esteban';
-  rememberMe: boolean = false; 
+  rememberMe: boolean = false;
+  showPwd: boolean = false;
 
-  constructor(private navCtrl: NavController) {}
+  // ✅ USAR inject() EN LUGAR DEL CONSTRUCTOR
+  private navCtrl = inject(NavController);
+  private authService = inject(AuthService);
 
   getProfesionalNombre(): string {
     const nombres: any = {
@@ -22,10 +27,18 @@ export class LoginPage {
     return nombres[this.profesionalSeleccionado] || 'Profesional';
   }
 
-  // REEMPLAZA ESTA FUNCIÓN COMPLETA:
+  togglePwd() {
+    this.showPwd = !this.showPwd;
+  }
+
   login() {
-    if (this.username && this.password) {
-      this.navCtrl.navigateRoot('/dashboard'); // ← Método de Ionic
+    console.log('Login attempt:', this.username, this.password);
+    
+    if (this.authService.login(this.username, this.password)) {
+      console.log('Login successful!');
+      this.navCtrl.navigateRoot('/dashboard'); 
+    } else {
+      console.log('Login failed');
     }
   }
 }

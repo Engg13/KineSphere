@@ -52,7 +52,7 @@
               <ion-icon name="key-outline" slot="start" color="medium"></ion-icon>
               <ion-label position="stacked">Contraseña</ion-label>
               <ion-input 
-                type="password" 
+                [type]="showPwd ? 'text' : 'password'" 
                 placeholder="Ingresa tu contraseña de 4 digitos"
                 [(ngModel)]="password" 
                 name="password"
@@ -61,34 +61,38 @@
                 minlength="4"
                 maxlength="4"
                 pattern="[0-9]*"
-                >
-
+                autocomplete="current-password">
               </ion-input>
-              <ion-note color="danger" *ngIf="passwordRef.invalid && passwordRef.touched">
-                Debe ser un número de 4 dígitos
-              </ion-note>
+              
+              <!-- Botón para mostrar/ocultar contraseña -->
+              <ion-button fill="clear" slot="end" (click)="togglePwd()" class="eye-button">
+                <ion-icon [name]="showPwd ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+              </ion-button>
             </ion-item>
 
+            <ion-note color="danger" *ngIf="passwordRef.invalid && passwordRef.touched">
+              Debe ser un número de 4 dígitos
+            </ion-note>
+
             <!-- Recordar contraseña -->
-            <!-- Recordar contraseña -->
-              <ion-item lines="none">
-                <ion-checkbox 
-                  slot="start" 
-                  [(ngModel)]="rememberMe"
-                  name="rememberMe">
-                </ion-checkbox>
-                <ion-label>Recordar mis datos</ion-label>
-              </ion-item>
+            <ion-item lines="none">
+              <ion-checkbox 
+                slot="start" 
+                [(ngModel)]="rememberMe"
+                name="rememberMe">
+              </ion-checkbox>
+              <ion-label>Recordar mis datos</ion-label>
+            </ion-item>
 
             <!-- Botón de Login -->
-              <ion-button 
-                type="button" 
-                expand="block" 
-                class="ion-margin-top login-button"
-                (click)="login()"
-                [disabled]="!username || !password">
-                Ingresar
-              </ion-button>
+            <ion-button 
+              type="button" 
+              expand="block" 
+              class="ion-margin-top login-button"
+              (click)="login()"
+              [disabled]="!username || !password">
+              Ingresar
+            </ion-button>
           </form> 
         
       </ion-card-content>

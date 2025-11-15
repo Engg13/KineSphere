@@ -1,9 +1,13 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+// capacitor.config.ts
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'SkeletonAPP',
-  webDir: 'www'
+  appId: 'com.esteban.kinesphere',
+  appName: 'KineSphere',  // ← DEBE ser exactamente esto
+  webDir: 'www',
+  server: {
+    androidScheme: 'https'
+  }
 };
 
 export default config;

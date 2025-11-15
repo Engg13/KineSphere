@@ -1,0 +1,40 @@
+/* src/app/pages/not-found/not-found.page.scss */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 80px;
+  color: var(--ion-color-danger);
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 4rem;
+  font-weight: bold;
+  color: var(--ion-color-dark);
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.5rem;
+  color: var(--ion-color-dark);
+  margin: 10px 0;
+}
+
+p {
+  color: var(--ion-color-medium);
+  font-size: 1rem;
+  margin-bottom: 30px;
+  max-width: 300px;
+}
+
+.action-buttons {
+  width: 100%;
+  max-width: 250px;
+}
