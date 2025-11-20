@@ -1,0 +1,63 @@
+{
+  "profesionales": [
+    {
+      "id": "1",
+      "nombre": "Esteban Gomez",
+      "email": "Esteban@kinesphere.cl",
+      "especialidad": "Kinesiologia Deportiva",
+      "password": "123456"
+    }
+  ],
+  "pacientes": [
+    {
+      "id": "1",
+      "nombre": "Juan Perez",
+      "edad": 35,
+      "email": "juan@email.com",
+      "telefono": "+56912345678",
+      "diagnostico": "Lumbalgia cronica",
+      "profesional_id": 1
+    },
+    {
+      "id": "2",
+      "nombre": "Maria Lopez",
+      "edad": 42,
+      "email": "maria@email.com",
+      "telefono": "+56987654321",
+      "diagnostico": "Artrosis de rodilla",
+      "profesional_id": 1
+    }
+  ],
+  "sesiones": [
+    {
+      "id": "1",
+      "paciente_id": 1,
+      "numero_sesion": 1,
+      "fecha": "2024-01-10T10:00:00.000Z",
+      "nivel_dolor": 7,
+      "calidad_sueno": 2,
+      "ejercicios_realizados": true,
+      "observaciones": "Paciente con dolor agudo"
+    },
+    {
+      "id": "b07e",
+      "paciente_id": 1,
+      "numero_sesion": 4,
+      "nivel_dolor": 0,
+      "calidad_sueno": 2,
+      "ejercicios_realizados": true,
+      "observaciones": "",
+      "fecha": "2025-11-20T14:55:08.954Z"
+    },
+    {
+      "id": "60d8",
+      "paciente_id": 1,
+      "numero_sesion": 4,
+      "nivel_dolor": 3,
+      "calidad_sueno": 3,
+      "ejercicios_realizados": true,
+      "observaciones": "",
+      "fecha": "2025-11-20T14:56:43.618Z"
+    }
+  ]
+}

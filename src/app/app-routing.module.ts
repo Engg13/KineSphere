@@ -44,13 +44,18 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: '**',
-    loadChildren: () => import('./pages/not-found/not-found.module').then(m => m.NotFoundPageModule)  // ✅ 404
-  },  {
+    path: 'posts',
+    loadChildren: () => import('./pages/posts/posts.module').then( m => m.PostsPageModule)
+  },
+  {
     path: 'test-pacientes',
     loadChildren: () => import('./pages/test-pacientes/test-pacientes.module').then( m => m.TestPacientesPageModule)
-  }
-
+  },
+  {
+    path: '**',
+    loadChildren: () => import('./pages/not-found/not-found.module').then(m => m.NotFoundPageModule)  // ✅ 404
+  },
+  
 ];
 
 @NgModule({

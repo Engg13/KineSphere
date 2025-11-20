@@ -1,0 +1,121 @@
+.eva-scale-container.compact {
+  max-width: 100%;
+  margin: 0 auto;
+  
+  .header {
+    margin-bottom: 12px;
+    
+    .titulo {
+      margin: 0 0 4px 0;
+      font-size: 1rem;
+      color: var(--ion-color-dark);
+    }
+    
+    .descripcion {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+    }
+  }
+
+  .escala-numerica {
+    display: flex;
+    justify-content: space-between;
+    gap: 2px;
+    padding: 8px 0;
+    
+    .numero-eva {
+      flex: 1;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 0;
+      
+      &.readonly {
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+      
+      &.selected {
+        .circulo-numero {
+          transform: scale(1.1);
+          border: 2px solid var(--ion-color-dark);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+      }
+    }
+    
+    .circulo-numero {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: white;
+      margin: 0 auto 4px;
+      transition: all 0.2s ease;
+      
+      &.color-success {
+        background: var(--ion-color-success);
+      }
+      
+      &.color-warning {
+        background: var(--ion-color-warning);
+      }
+      
+      &.color-danger {
+        background: var(--ion-color-danger);
+      }
+    }
+    
+    .etiqueta-nivel {
+      font-size: 0.6rem;
+      color: var(--ion-color-medium);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      height: 12px;
+      line-height: 1;
+    }
+  }
+
+  .indicador-seleccion {
+    margin-top: 12px;
+    text-align: center;
+    
+    ion-badge {
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+  }
+
+  .readonly-notice {
+    margin-top: 8px;
+    text-align: center;
+    
+    ion-note {
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+    }
+  }
+}
+
+// Para pantallas muy pequeñas
+@media (max-width: 320px) {
+  .eva-scale-container.compact {
+    .escala-numerica {
+      .circulo-numero {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+      }
+      
+      .etiqueta-nivel {
+        font-size: 0.55rem;
+      }
+    }
+  }
+}

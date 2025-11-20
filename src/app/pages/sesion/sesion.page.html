@@ -22,60 +22,68 @@
         <ion-card-title>📝 Evaluación</ion-card-title>
       </ion-card-header>
       <ion-card-content>
-        <!-- ESCALA EVA -->
-        <ion-item>
-          <ion-label position="stacked">Escala EVA (0-10)</ion-label>
-          <ion-range 
-            min="0" 
-            max="10" 
-            step="1" 
-            snaps="true"
-            [(ngModel)]="eva"
-            color="primary">
-            <ion-label slot="start">0</ion-label>
-            <ion-label slot="end">10</ion-label>
-          </ion-range>
-        </ion-item>
-        <p><strong>EVA Actual:</strong> {{ eva }}/10</p>
 
-        <!-- CALIDAD DE SUEÑO -->
-        <ion-item>
-          <ion-label>¿Cómo durmió?</ion-label>
-          <ion-select [(ngModel)]="sueno" interface="action-sheet">
-            <ion-select-option value="bueno">Bueno</ion-select-option>
-            <ion-select-option value="regular">Regular</ion-select-option>
-            <ion-select-option value="malo">Malo</ion-select-option>
-          </ion-select>
-        </ion-item>
+        <!-- ESCALA EVA COMPACTA -->
+        <div class="componente-sesion">
+          <app-eva-scale
+            [(valor)]="sesionData.nivelDolor"
+            titulo="Nivel de Dolor (EVA)"
+            descripcion="Selecciona tu nivel de dolor actual (0-10)"
+            [readonly]="false">
+          </app-eva-scale>
+        </div>
+
+        <!-- CALIDAD DE SUEÑO COMPACTA -->
+        <div class="componente-sesion">
+          <app-sleep-quality 
+            [(valor)]="sesionData.calidadSueno"
+            [titulo]="'Calidad del Sueño'"
+            [descripcion]="'¿Cómo califica la calidad de su sueño durante la última noche?'">
+          </app-sleep-quality>
+        </div>
 
         <!-- EJERCICIOS EN CASA -->
-        <ion-item>
-          <ion-label>¿Hizo ejercicios en casa?</ion-label>
-          <ion-checkbox slot="start" [(ngModel)]="ejerciciosRealizados"></ion-checkbox>
-        </ion-item>
+        <div class="seccion-formulario">
+          <ion-item>
+            <ion-label>¿Realizó los ejercicios en casa?</ion-label>
+            <ion-checkbox slot="start" [(ngModel)]="sesionData.ejerciciosRealizados"></ion-checkbox>
+          </ion-item>
+        </div>
 
         <!-- OBSERVACIONES -->
-        <ion-item>
-          <ion-label position="stacked">Observaciones</ion-label>
-          <ion-textarea 
-            [(ngModel)]="observaciones"
-            placeholder="Registre observaciones de la sesión..."
-            rows="4">
-          </ion-textarea>
-        </ion-item>
+        <div class="seccion-formulario">
+          <ion-item>
+            <ion-label position="stacked">Observaciones de la sesión</ion-label>
+            <ion-textarea 
+              [(ngModel)]="sesionData.observaciones"
+              placeholder="Registre observaciones relevantes, progresos, dificultades..."
+              rows="3"
+              autoGrow="true">
+            </ion-textarea>
+          </ion-item>
+        </div>
+
       </ion-card-content>
     </ion-card>
 
-    <!-- BOTONES -->
+    <!-- BOTONES DE ACCIÓN -->
     <ion-grid>
       <ion-row>
         <ion-col size="6">
-          <ion-button expand="block" (click)="guardarSesion()">
+          <ion-button 
+            expand="block" 
+            color="primary" 
+            (click)="guardarSesion()"
+            [disabled]="!esFormularioValido()">
             💾 Guardar Sesión
           </ion-button>
         </ion-col>
         <ion-col size="6">
-          <ion-button expand="block" (click)="volverAPaciente()">
+          <ion-button 
+            expand="block" 
+            color="medium" 
+            fill="outline" 
+            (click)="volverAPaciente()">
             ← Volver
           </ion-button>
         </ion-col>

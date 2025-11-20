@@ -1,0 +1,38 @@
+<div class="eva-scale-container compact">
+  <!-- Header -->
+  <div class="header">
+    <h4 class="titulo">{{ titulo }}</h4>
+    <p class="descripcion">{{ descripcion }}</p>
+  </div>
+
+  <!-- Escala numérica compacta -->
+  <div class="escala-numerica">
+    <div 
+      *ngFor="let escala of escalas"
+      class="numero-eva"
+      [class.selected]="valor === escala.valor"
+      [class.readonly]="readonly"
+      (click)="seleccionarValor(escala.valor)">
+      
+      <div class="circulo-numero" [class]="'color-' + getColorEscala(escala.valor)">
+        {{ escala.valor }}
+      </div>
+      
+      <div class="etiqueta-nivel" *ngIf="escala.texto.includes('-')">
+        {{ escala.texto.split('-')[1].trim() }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicador de selección -->
+  <div class="indicador-seleccion" *ngIf="valor !== null && valor !== undefined">
+    <ion-badge [color]="getColorEscala(valor)">
+      {{ getTextoEscala() }}
+    </ion-badge>
+  </div>
+
+  <!-- Estado readonly -->
+  <div *ngIf="readonly" class="readonly-notice">
+    <ion-note>Nivel de dolor registrado</ion-note>
+  </div>
+</div>

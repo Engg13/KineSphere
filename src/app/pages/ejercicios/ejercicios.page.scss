@@ -1,0 +1,89 @@
+/* src/app/pages/ejercicios/ejercicios.page.scss */
+.cargando-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+  }
+}
+
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+  
+  ion-icon {
+    margin-bottom: 16px;
+    font-size: 64px;
+    opacity: 0.5;
+  }
+  
+  h3 {
+    color: var(--ion-color-medium);
+    margin-bottom: 8px;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+    margin-bottom: 16px;
+  }
+}
+
+.ejercicio-item {
+  margin-bottom: 12px;
+  border-radius: 12px;
+  --background: var(--ion-color-light);
+  
+  .ejercicio-nombre {
+    font-weight: 600;
+    color: var(--ion-color-primary);
+    margin-bottom: 8px;
+  }
+  
+  .ejercicio-descripcion {
+    color: var(--ion-color-medium);
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+  
+  .ejercicio-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    
+    ion-chip {
+      margin: 0;
+      height: 24px;
+      
+      ion-label {
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+.search-bar {
+  margin-bottom: 16px;
+}
+
+.ejercicio-detalle {
+  max-height: 300px;
+  overflow-y: auto;
+  
+  p {
+    margin-bottom: 8px;
+  }
+}

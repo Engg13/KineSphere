@@ -1,0 +1,119 @@
+.sleep-quality-container.compact {
+  margin: 12px 0;
+  
+  .header {
+    margin-bottom: 12px;
+    
+    .titulo {
+      font-weight: 600;
+      color: var(--ion-color-dark);
+      margin: 0 0 4px 0;
+      font-size: 1rem;
+    }
+    
+    .descripcion {
+      color: var(--ion-color-medium);
+      margin: 0;
+      font-size: 0.8rem;
+    }
+  }
+
+  .opciones-compactas {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+
+    .opcion-compacta {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 4px;
+      border-radius: 8px;
+      border: 1px solid var(--ion-color-light);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: white;
+      min-height: 60px;
+
+      &:not(.readonly):active {
+        transform: scale(0.95);
+      }
+
+      &.selected {
+        border-color: var(--ion-color-primary);
+        background: var(--ion-color-light);
+        transform: scale(1.02);
+      }
+
+      &.readonly {
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .icono-compacto {
+        margin-bottom: 4px;
+        
+        .icono-color-danger { color: var(--ion-color-danger); }
+        .icono-color-warning { color: var(--ion-color-warning); }
+        .icono-color-medium { color: var(--ion-color-medium); }
+        .icono-color-success { color: var(--ion-color-success); }
+        .icono-color-primary { color: var(--ion-color-primary); }
+      }
+
+      .texto-compacto {
+        text-align: center;
+        
+        .valor {
+          font-weight: bold;
+          font-size: 0.9rem;
+          color: var(--ion-color-dark);
+          margin-bottom: 2px;
+        }
+        
+        .texto {
+          font-size: 0.7rem;
+          color: var(--ion-color-medium);
+          line-height: 1.1;
+        }
+      }
+    }
+  }
+
+  .descripcion-seleccion {
+    text-align: center;
+    margin: 8px 0;
+    padding: 8px;
+    background: var(--ion-color-light);
+    border-radius: 6px;
+    
+    ion-note {
+      font-size: 0.8rem;
+    }
+  }
+
+  .readonly-notice {
+    text-align: center;
+    margin-top: 6px;
+    
+    ion-note {
+      font-size: 0.75rem;
+    }
+  }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 360px) {
+  .sleep-quality-container.compact {
+    .opciones-compactas {
+      .opcion-compacta {
+        padding: 6px 2px;
+        min-height: 55px;
+        
+        .texto-compacto .texto {
+          font-size: 0.65rem;
+        }
+      }
+    }
+  }
+}

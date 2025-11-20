@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 
@@ -11,9 +12,14 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+// Servicios
 import { AuthService } from './services/auth.service';
 import { SQLite } from '@awesome-cordova-plugins/sqlite/ngx';
 import { DatabaseService } from './services/database.service';
+import { JsonServerService } from './services/json-server.service';
+
+// Componentes
+
 
 @NgModule({
   declarations: [
@@ -24,16 +30,19 @@ import { DatabaseService } from './services/database.service';
     IonicModule.forRoot(),
     AppRoutingModule,
     FormsModule ,
+    HttpClientModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatInputModule,
-    MatFormFieldModule
+    MatFormFieldModule,
   ],
   providers: [
     AuthService,
     SQLite,
     DatabaseService,
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
+    JsonServerService,
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    provideHttpClient(withInterceptorsFromDi())
   ],
   bootstrap: [AppComponent]
 })

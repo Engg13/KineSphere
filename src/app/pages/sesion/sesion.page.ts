@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { NavController } from '@ionic/angular'; // ← AGREGAR ESTE IMPORT
+import { Component, Inject } from '@angular/core';
+import { NavController } from '@ionic/angular';
+import { JsonServerService } from 'src/app/services/json-server.service';
 
 @Component({
   selector: 'app-sesion',
@@ -8,26 +9,79 @@ import { NavController } from '@ionic/angular'; // ← AGREGAR ESTE IMPORT
   standalone: false
 })
 export class SesionPage {
-  // INTERPOLACIÓN: Datos de la sesión
-  pacienteNombre: string = 'Juan Pérez';
+  // Datos de la sesión
+  pacienteNombre: string = 'Juan Perez';
   numeroSesion: number = 4;
   
-  // Formulario
-  eva: number = 0;
-  observaciones: string = '';
-  ejerciciosRealizados: boolean = true;
-  sueno: string = 'bueno';
+  // Objeto principal de datos de la sesión
+  sesionData = {
+    nivelDolor: null as number | null,
+    calidadSueno: 0,
+    ejerciciosRealizados: true,
+    observaciones: ''
+  };
 
-  constructor(private navCtrl: NavController) {} // ← YA ESTÁ BIEN
+  constructor(
+    private navCtrl: NavController,
+    private jsonServerService: JsonServerService
+  ) {}
 
-  guardarSesion() {
-    alert(`Sesión ${this.numeroSesion} guardada para ${this.pacienteNombre}`);
-    // Aquí iría la lógica para guardar
+  // Validación del formulario
+  esFormularioValido(): boolean {
+    return this.sesionData.nivelDolor !== null && 
+           this.sesionData.calidadSueno > 0;
   }
 
-  // AGREGAR MÉTODOS DE NAVEGACIÓN
+  async guardarSesion() {
+    if (!this.esFormularioValido()) {
+      alert('Por favor, complete la evaluación de dolor y calidad de sueño');
+      return;
+    }
+
+    try {
+      // Preparar datos para JSON-Server
+      const datosSesion = {
+        paciente_id: 1, // ID del paciente Juan Pérez en tu db.json
+        numero_sesion: this.numeroSesion,
+        nivel_dolor: this.sesionData.nivelDolor,
+        calidad_sueno: this.sesionData.calidadSueno,
+        ejercicios_realizados: this.sesionData.ejerciciosRealizados,
+        observaciones: this.sesionData.observaciones,
+        fecha: new Date().toISOString()
+      };
+
+      // 📡 GUARDAR EN JSON-SERVER
+      const respuesta = await this.jsonServerService.createSesion(datosSesion).toPromise();
+
+      console.log('✅ Sesión guardada en JSON-Server:', respuesta);
+      
+      // Mostrar resumen
+      const mensaje = `
+        ✅ Sesión guardada exitosamente en JSON-Server
+        
+        Paciente: ${this.pacienteNombre}
+        Sesión: ${this.numeroSesion}
+        
+        📊 Evaluación:
+        • Dolor EVA: ${this.sesionData.nivelDolor}/10
+        • Calidad sueño: ${this.sesionData.calidadSueno}/5
+        • Ejercicios: ${this.sesionData.ejerciciosRealizados ? '✅ Realizados' : '❌ No realizados'}
+        ${this.sesionData.observaciones ? `• Observaciones: ${this.sesionData.observaciones}` : ''}
+      `;
+
+      alert(mensaje.trim());
+      
+      // Navegar de vuelta
+      this.volverAPaciente();
+
+    } catch (error) {
+      console.error('❌ Error al guardar sesión:', error);
+      alert('❌ Error al guardar la sesión. Verifica que json-server esté corriendo en http://localhost:3000');
+    }
+  }
+
   volverAPaciente() {
-    this.navCtrl.navigateRoot('/paciente-detalle');
+    this.navCtrl.navigateBack('/paciente-detalle');
   }
 
   volverAlDashboard() {

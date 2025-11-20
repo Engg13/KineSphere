@@ -1,0 +1,41 @@
+<div class="sleep-quality-container compact">
+  <!-- Título -->
+  <div class="header">
+    <h4 class="titulo">{{ titulo }}</h4>
+    <p class="descripcion">{{ descripcion }}</p>
+  </div>
+
+  <!-- Opciones compactas en línea -->
+  <div class="opciones-compactas">
+    <div 
+      *ngFor="let opcion of opciones"
+      class="opcion-compacta"
+      [class.selected]="valor === opcion.valor"
+      [class.readonly]="readonly"
+      (click)="seleccionarValor(opcion.valor)">
+      
+      <div class="icono-compacto">
+        <ion-icon 
+          [name]="opcion.icono" 
+          [class]="'icono-color-' + opcion.color"
+          size="small">
+        </ion-icon>
+      </div>
+      
+      <div class="texto-compacto">
+        <div class="valor">{{ opcion.valor }}</div>
+        <div class="texto">{{ opcion.texto.split(' ')[0] }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Descripción de la selección (solo cuando hay selección) -->
+  <div class="descripcion-seleccion" *ngIf="valor > 0">
+    <ion-note>{{ getOpcionSeleccionada()?.descripcion }}</ion-note>
+  </div>
+
+  <!-- Estado readonly -->
+  <div *ngIf="readonly" class="readonly-notice">
+    <ion-note>Calidad de sueño registrada</ion-note>
+  </div>
+</div>

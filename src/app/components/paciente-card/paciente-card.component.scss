@@ -1,0 +1,71 @@
+.paciente-card {
+  margin: 8px 0;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  .avatar {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ion-color-light);
+    border-radius: 50%;
+
+    ion-icon {
+      font-size: 24px;
+    }
+  }
+
+  .nombre {
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: var(--ion-color-dark);
+    font-size: 1rem;
+  }
+
+  .diagnostico {
+    margin: 0 0 6px 0;
+    color: var(--ion-color-medium);
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .meta-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+
+    .badge {
+      font-size: 0.7rem;
+    }
+
+    .edad {
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+    }
+  }
+
+  .fecha-ingreso {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--ion-color-medium);
+  }
+
+  .acciones {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    height: 100%;
+
+    ion-button {
+      --padding-start: 4px;
+      --padding-end: 4px;
+    }
+  }
+}

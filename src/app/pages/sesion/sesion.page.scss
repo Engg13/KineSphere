@@ -1,0 +1,56 @@
+// Espaciado y organización de componentes
+.componente-sesion {
+  margin-bottom: 24px;
+  display: block;
+}
+
+.seccion-formulario {
+  margin: 20px 0;
+}
+
+// Header personalizado
+.custom-header {
+  text-align: center;
+  margin-bottom: 24px;
+  
+  .main-title h1 {
+    margin: 0 0 8px 0;
+    font-size: 1.5rem;
+    color: var(--ion-color-dark);
+    font-weight: 600;
+  }
+  
+  .subtitle p {
+    margin: 0;
+    color: var(--ion-color-medium);
+    font-size: 0.9rem;
+  }
+}
+
+// Card de evaluación
+.animated-item {
+  margin-bottom: 20px;
+}
+
+// Mejoras para los items del formulario
+ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  margin-bottom: 16px;
+}
+
+// Botones responsivos
+ion-grid {
+  margin-top: 24px;
+}
+
+// Estado del botón guardar
+ion-button[disabled] {
+  --opacity: 0.6;
+}
+
+// Ajustes para textarea
+ion-textarea {
+  --padding-start: 0;
+  --padding-end: 0;
+}
