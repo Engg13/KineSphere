@@ -1,0 +1,60 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/paciente-detalle"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Documentos Médicos</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="ion-padding">
+    <!-- BOTONES DE ACCIÓN -->
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6">
+          <ion-button expand="block" (click)="tomarFoto()">
+            <ion-icon slot="start" name="camera"></ion-icon>
+            Tomar Foto
+          </ion-button>
+        </ion-col>
+        <ion-col size="6">
+          <ion-button expand="block"  (click)="abrirGaleria()">
+            <ion-icon slot="start" name="images"></ion-icon>
+            Galería
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <!-- LISTA DE DOCUMENTOS -->
+    <div *ngIf="documentos.length > 0" class="documentos-list">
+      <h3>Documentos Guardados ({{documentos.length}})</h3>
+      
+      <ion-list>
+        <ion-item *ngFor="let doc of documentos" class="documento-item">
+          <ion-thumbnail slot="start">
+            <img [src]="doc.imagen" (click)="verDocumento(doc)" />
+          </ion-thumbnail>
+          
+          <ion-label>
+            <h3>Documento Médico</h3>
+            <p>{{ doc.fecha }}</p>
+            <p>Paciente ID: {{ doc.pacienteId }}</p>
+          </ion-label>
+          
+          <ion-button slot="end" fill="clear" color="danger" (click)="eliminarDocumento(doc.id)">
+            <ion-icon name="trash"></ion-icon>
+          </ion-button>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <!-- ESTADO VACÍO -->
+    <div *ngIf="documentos.length === 0" class="empty-state ion-text-center">
+      <ion-icon name="document-attach-outline" size="large" color="medium"></ion-icon>
+      <h3>No hay documentos</h3>
+      <p>Usa los botones arriba para agregar documentos médicos</p>
+    </div>
+  </div>
+</ion-content>

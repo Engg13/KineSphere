@@ -44,7 +44,7 @@ async cargarEjercicios() {
   try {
     this.estaCargando = true;
     
-    // ✅ Usar el método corregido que filtra solo español
+    // Usar método que filtra solo español
     const ejerciciosSub = this.wgerService.getEjerciciosSoloEspanol(50)
       .subscribe({
         next: (ejerciciosData) => {
@@ -116,7 +116,7 @@ async cargarEjercicios() {
     try {
       this.estaCargando = true;
       
-      // ✅ Usar Observable con subscribe
+      // Usar Observable con subscribe
       const busquedaSub = this.wgerService.buscarEjercicios(this.terminoBusqueda)
         .subscribe({
           next: (resultados) => {

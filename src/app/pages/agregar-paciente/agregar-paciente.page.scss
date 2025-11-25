@@ -1,0 +1,108 @@
+// Mismos estilos de tu app para consistencia
+.custom-header {
+  text-align: center;
+  margin-bottom: 20px;
+  
+  .main-title {
+    h1 {
+      color: var(--ion-color-primary);
+      margin: 0;
+      font-weight: 600;
+    }
+  }
+  
+  .subtitle {
+    p {
+      color: var(--ion-color-medium);
+      margin: 5px 0 0 0;
+      font-size: 14px;
+    }
+  }
+}
+
+// Items del formulario con animaciones
+.form-item {
+  margin-bottom: 15px;
+  border-radius: 12px;
+  --background: var(--ion-color-light);
+  
+  ion-label[position="stacked"] {
+    font-weight: 500;
+    color: var(--ion-color-dark);
+    margin-bottom: 8px;
+  }
+}
+
+// Range personalizado
+.custom-range {
+  padding: 10px 0;
+  
+  ion-label {
+    font-size: 12px;
+    color: var(--ion-color-medium);
+  }
+}
+
+// Contenedor de botones
+.buttons-container {
+  margin-top: 30px;
+}
+
+// Animaciones consistentes con tu app
+.animated-item {
+  animation: fadeInUp 0.5s ease-out;
+  
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.1}s;
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Badges y estados
+ion-badge {
+  font-weight: 500;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .custom-header {
+    margin-bottom: 15px;
+    
+    .main-title h1 {
+      font-size: 1.5rem;
+    }
+  }
+  
+  .form-item {
+    margin-bottom: 10px;
+  }
+}
+
+// Estilos para validación visual
+.validacion-exitosa {
+  --background: var(--ion-color-success-tint);
+}
+
+.validacion-error {
+  --background: var(--ion-color-danger-tint);
+}
+
+// Mensajes de ayuda
+.mensaje-ayuda {
+  font-size: 12px;
+  color: var(--ion-color-medium);
+  margin-top: 5px;
+  display: block;
+}

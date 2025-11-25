@@ -1,9 +1,3 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>KineSphere - {{ tituloPagina }}</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
   <div class="ion-padding">
     <!-- HEADER PERSONALIZADO -->
@@ -12,21 +6,52 @@
         <h1>Pacientes</h1>
       </div>
       <div class="subtitle">
-        <!-- INTERPOLACIÓN: Contadores dinámicos -->
         <p>Total: {{ totalPacientes }} | Activos: {{ pacientesActivos }}</p>
       </div>
     </div>
 
-    <!-- COMPONENTE IONIC: Searchbar -->
+    <!-- ✅ PULL-TO-REFRESH -->
+    <ion-refresher slot="fixed" (ionRefresh)="recargarPacientes($event)">
+      <ion-refresher-content
+        pullingIcon="chevron-down-circle-outline"
+        pullingText="Tira para recargar"
+        refreshingSpinner="circles"
+        refreshingText="Cargando...">
+      </ion-refresher-content>
+    </ion-refresher>
+
+    <!-- BOTÓN VOLVER ARRIBA DE TODO -->
+    <ion-button 
+      expand="block" 
+      fill="outline" 
+      (click)="volverAlDashboard()" 
+      class="ion-margin-bottom"
+      color="medium">
+      <ion-icon slot="start" name="arrow-back"></ion-icon>
+      Volver al Dashboard
+    </ion-button>
+
     <ion-searchbar 
       placeholder="Buscar paciente..."
       animated
       class="animated-item">
     </ion-searchbar>
 
-    <!-- COMPONENTE IONIC: Lista con *ngFor -->
-    <ion-list class="animated-item">
-      <!-- INTERPOLACIÓN + *ngFor + ANIMACIONES -->
+    <!-- ✅ LOADING STATE -->
+    <div *ngIf="estaCargando" class="loading-container ion-text-center ion-padding">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando pacientes...</p>
+    </div>
+
+    <!-- ✅ EMPTY STATE -->
+    <div *ngIf="!estaCargando && pacientes.length === 0" class="empty-state ion-text-center ion-padding">
+      <ion-icon name="people-outline" size="large" color="medium"></ion-icon>
+      <h3>No hay pacientes registrados</h3>
+      <p>Usa el botón + para agregar tu primer paciente</p>
+    </div>
+
+    <!-- ✅ LISTA DE PACIENTES -->
+    <ion-list *ngIf="!estaCargando && pacientes.length > 0" class="animated-item">
       <ion-item 
         *ngFor="let paciente of pacientes; let i = index"
         (click)="verDetallePaciente(paciente)"
@@ -40,35 +65,53 @@
         </ion-avatar>
         
         <ion-label>
-          <h2>{{ i + 1 }}. {{ paciente.nombre }}</h2>
+          <h2>{{ paciente.nombre }}</h2>
           <p>{{ paciente.diagnostico }}</p>
           <p>
             <ion-badge [color]="paciente.activo ? 'success' : 'medium'">
               {{ paciente.activo ? 'Activo' : 'Finalizado' }}
             </ion-badge>
-            • Sesión {{ paciente.sesiones }}/10 • EVA: {{ paciente.eva }}/10
+            • Sesiones: {{ paciente.sesionesCompletadas || 0 }}/{{ paciente.sesionesPlanificadas || 0 }}
+            • RUT: {{ paciente.rut }}
           </p>
         </ion-label>
         
-        <ion-note slot="end">
-          {{ paciente.proximaSesion }}
+        <ion-note slot="end" *ngIf="paciente.fechaCreacion">
+          {{ paciente.fechaCreacion | date:'dd/MM' }}
         </ion-note>
       </ion-item>
     </ion-list>
 
-    <!-- COMPONENTE IONIC: FAB Button -->
-    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button color="primary">
-        <ion-icon name="add"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
+    <!-- BOTONES DE ACCIÓN AL FINAL -->
+    <div class="action-buttons">
+      <ion-button 
+        expand="block" 
+        fill="outline" 
+        color="tertiary" 
+        (click)="cargarPacientesEjemplo()"
+        class="ion-margin-top"
+        [disabled]="estaCargando">
+        <ion-icon slot="start" name="cloud-download"></ion-icon>
+        Cargar Pacientes de Ejemplo (5)
+      </ion-button>
 
-    <!-- BOTÓN VOLVER -->
-    <ion-button 
-      expand="block" 
-      (click)="volverAlDashboard()" 
-      class="ion-margin-top">
-      ← Volver al Dashboard
-    </ion-button>
+      <ion-button 
+        expand="block" 
+        fill="outline" 
+        color="danger" 
+        (click)="borrarTodosLosPacientes()"
+        class="ion-margin-top"
+        [disabled]="estaCargando || pacientes.length === 0">
+        <ion-icon slot="start" name="trash-outline"></ion-icon>
+        Borrar Todos los Pacientes
+      </ion-button>
+    </div>
   </div>
+
+  <!-- FAB BUTTON -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button color="primary" (click)="agregarPaciente()"> 
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>

@@ -23,14 +23,35 @@
       </ion-card-header>
       <ion-card-content>
 
-        <!-- ESCALA EVA COMPACTA -->
-        <div class="componente-sesion">
-          <app-eva-scale
-            [(valor)]="sesionData.nivelDolor"
-            titulo="Nivel de Dolor (EVA)"
-            descripcion="Selecciona tu nivel de dolor actual (0-10)"
-            [readonly]="false">
-          </app-eva-scale>
+        <!-- ESCALA EVA CON BARRA DE RANGO (NUEVO) -->
+        <div class="seccion-formulario">
+          <ion-item>
+            <ion-label position="stacked">
+              <strong>Nivel de Dolor (EVA)</strong>
+              <p class="descripcion">Selecciona tu nivel de dolor actual (0-10)</p>
+            </ion-label>
+            <ion-range 
+              [(ngModel)]="sesionData.nivelDolor"
+              min="0" 
+              max="10" 
+              step="1" 
+              snaps="true"
+              ticks="true"
+              class="eva-range">
+              <ion-label slot="start">0</ion-label>
+              <ion-label slot="end">10</ion-label>
+            </ion-range>
+            <ion-badge slot="end" color="primary" *ngIf="sesionData.nivelDolor !== null">
+              {{sesionData.nivelDolor}}/10
+            </ion-badge>
+          </ion-item>
+          
+          <!-- INDICADORES DE DOLOR -->
+          <div class="indicadores-dolor">
+            <span class="indicador">0: Sin dolor</span>
+            <span class="indicador">5: Dolor moderado</span>
+            <span class="indicador">10: Máximo dolor</span>
+          </div>
         </div>
 
         <!-- CALIDAD DE SUEÑO COMPACTA -->
@@ -66,28 +87,32 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- BOTONES DE ACCIÓN -->
-    <ion-grid>
-      <ion-row>
-        <ion-col size="6">
-          <ion-button 
-            expand="block" 
-            color="primary" 
-            (click)="guardarSesion()"
-            [disabled]="!esFormularioValido()">
-            💾 Guardar Sesión
-          </ion-button>
-        </ion-col>
-        <ion-col size="6">
-          <ion-button 
-            expand="block" 
-            color="medium" 
-            fill="outline" 
-            (click)="volverAPaciente()">
-            ← Volver
-          </ion-button>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+    <!-- ESPACIO PARA LOS BOTONES FIJOS -->
+    <div class="botones-spacer"></div>
   </div>
+
+
+<!--  BOTONES FIJOS  -->
+    <div class="botones-fijos">
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6">
+            <ion-button 
+              expand="block"
+              (click)="guardarSesion()"
+              [disabled]="!esFormularioValido()">
+              💾 Guardar Sesión
+            </ion-button>
+          </ion-col>
+          <ion-col size="6">
+            <ion-button 
+              expand="block" 
+              fill="outline" 
+              (click)="volverAPaciente()">
+              ← Volver
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </div>
 </ion-content>

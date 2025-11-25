@@ -1,32 +1,60 @@
-.paciente-item {
-  margin-bottom: 8px;
-  border-radius: 8px;
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
   
-  ion-avatar {
-    width: 48px;
-    height: 48px;
-    
-    ion-icon {
-      font-size: 48px;
-      color: var(--ion-color-primary);
-    }
-  }
-  
-  h2 {
-    font-weight: bold;
-    margin-bottom: 4px;
+  ion-spinner {
+    margin-bottom: 16px;
   }
   
   p {
-    margin: 2px 0;
+    color: var(--ion-color-medium);
   }
 }
 
-ion-searchbar {
-  --border-radius: 8px;
-  margin-bottom: 16px;
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  
+  ion-icon {
+    margin-bottom: 16px;
+    font-size: 64px;
+    opacity: 0.5;
+  }
+  
+  h3 {
+    color: var(--ion-color-medium);
+    margin-bottom: 8px;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+  }
 }
 
-ion-fab {
+.custom-header {
+  text-align: center;
   margin-bottom: 20px;
+  
+  .main-title h1 {
+    color: var(--ion-color-primary);
+    margin: 0;
+    font-weight: 600;
+  }
+  
+  .subtitle p {
+    color: var(--ion-color-medium);
+    margin: 5px 0 0 0;
+    font-size: 14px;
+  }
+}
+
+.paciente-item {
+  margin-bottom: 8px;
+  border-radius: 8px;
 }

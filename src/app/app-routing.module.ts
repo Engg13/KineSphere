@@ -51,10 +51,23 @@ const routes: Routes = [
     path: 'test-pacientes',
     loadChildren: () => import('./pages/test-pacientes/test-pacientes.module').then( m => m.TestPacientesPageModule)
   },
+
+  {
+    path: 'agregar-paciente',
+    loadChildren: () => import('./pages/agregar-paciente/agregar-paciente.module').then( m => m.AgregarPacientePageModule)
+  },
+
+  {
+    path: 'documentos-medicos',
+    loadChildren: () => import('./pages/documentos-medicos/documentos-medicos.module').then( m => m.DocumentosMedicosPageModule)
+  },
+  
   {
     path: '**',
     loadChildren: () => import('./pages/not-found/not-found.module').then(m => m.NotFoundPageModule)  // ✅ 404
   },
+  
+
   
 ];
 

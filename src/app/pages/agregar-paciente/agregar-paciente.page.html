@@ -1,0 +1,147 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>KineSphere - Nuevo Paciente</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="ion-padding">
+    <!-- HEADER PERSONALIZADO -->
+    <div class="custom-header">
+      <div class="main-title">
+        <h1>Nuevo Paciente</h1>
+      </div>
+      <div class="subtitle">
+        <p>Completa la información del paciente</p>
+      </div>
+    </div>
+
+    <!-- FORMULARIO CON ESTILO CONSISTENTE -->
+    <ion-list class="animated-item">
+      <!-- Nombre -->
+      <ion-item class="form-item animated-item">
+        <ion-label position="stacked">Nombre Completo *</ion-label>
+        <ion-input 
+          [(ngModel)]="paciente.nombre" 
+          placeholder="Ej: Juan Pérez González"
+          required>
+        </ion-input>
+      </ion-item>
+
+      <!-- RUT con formateo automático -->
+      <ion-item class="form-item animated-item">
+        <ion-label position="stacked">RUT *</ion-label>
+        <ion-input 
+          [(ngModel)]="paciente.rut" 
+          (ionInput)="formatearRut()"
+          (ionBlur)="validarRut()"
+          placeholder="Ej: 12345678-9"
+          maxlength="12"
+          required>
+        </ion-input>
+        <ion-icon 
+          *ngIf="paciente.rut && !validarRut()" 
+          slot="end" 
+          name="warning" 
+          color="danger">
+        </ion-icon>
+      </ion-item>
+
+      <!-- Fecha de Nacimiento y Edad -->
+      <ion-item class="form-item animated-item">
+        <ion-label position="stacked">Fecha de Nacimiento</ion-label>
+        <ion-input 
+          [(ngModel)]="paciente.fechaNacimiento" 
+          type="date"
+          placeholder="Selecciona fecha"
+          (ionChange)="actualizarEdad()">
+        </ion-input>
+        <ion-text slot="end" *ngIf="paciente.edad" color="medium">
+          {{paciente.edad}} años
+        </ion-text>
+      </ion-item>
+
+      <!-- Email -->
+      <ion-item class="form-item animated-item">
+        <ion-label position="stacked">Email</ion-label>
+        <ion-input 
+          [(ngModel)]="paciente.email" 
+          type="email"
+          placeholder="ejemplo@correo.com">
+        </ion-input>
+      </ion-item>
+
+      <!-- Teléfono con formateo automático -->
+      <ion-item class="form-item animated-item">
+        <ion-label position="stacked">Teléfono *</ion-label>
+        <ion-input 
+          [(ngModel)]="paciente.telefono" 
+          (ionInput)="formatearTelefono()"
+          (ionBlur)="validarTelefonoChileno()"
+          type="tel"
+          placeholder="9 1234 5678"
+          maxlength="15"
+          required>
+        </ion-input>
+        <ion-text slot="end" *ngIf="paciente.telefono" color="medium">
+          {{ validarTelefonoChileno() ? '✅' : '❌' }}
+        </ion-text>
+      </ion-item>
+
+      <!-- Diagnóstico -->
+      <ion-item class="form-item animated-item">
+        <ion-label position="stacked">Diagnóstico *</ion-label>
+        <ion-textarea 
+          [(ngModel)]="paciente.diagnostico" 
+          placeholder="Descripción del diagnóstico..."
+          rows="3"
+          required>
+        </ion-textarea>
+      </ion-item>
+
+      <!-- Sesiones planificadas -->
+      <ion-item class="form-item animated-item">
+        <ion-label position="stacked">Sesiones Planificadas (0-20)</ion-label>
+        <ion-range 
+          [(ngModel)]="paciente.sesionesPlanificadas"
+          min="0" max="20" step="1" snaps="true"
+          class="custom-range">
+          <ion-label slot="start">0</ion-label>
+          <ion-label slot="end">20</ion-label>
+        </ion-range>
+        <ion-badge slot="end" color="primary">
+          {{paciente.sesionesPlanificadas}} sesiones
+        </ion-badge>
+      </ion-item>
+
+      <!-- ID único generado -->
+      <ion-item class="form-item animated-item" *ngIf="paciente.rut">
+        <ion-label>ID Paciente:</ion-label>
+        <ion-badge color="success" slot="end">
+          {{generarIdPaciente()}}
+        </ion-badge>
+      </ion-item>
+    </ion-list>
+
+    <!-- BOTONES CON ESTILO CONSISTENTE -->
+    <div class="buttons-container">
+      <ion-button 
+        expand="block" 
+        (click)="guardarPaciente()" 
+        [disabled]="!formularioValido()"
+        class="animated-item">
+        <ion-icon slot="start" name="save"></ion-icon>
+        Guardar Paciente
+      </ion-button>
+
+      <ion-button 
+        expand="block" 
+        fill="outline" 
+        (click)="volverAPacientes()" 
+        class="ion-margin-top animated-item">
+        <ion-icon slot="start" name="arrow-back"></ion-icon>
+        Volver a Pacientes
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

@@ -53,7 +53,7 @@ export class JsonServerService {
       );
   }
 
-  getPaciente(id: number): Observable<any> {
+  getPaciente(id: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/pacientes/${id}`)
       .pipe(
         retry(2),
@@ -69,7 +69,7 @@ export class JsonServerService {
       );
   }
 
-  updatePaciente(id: number, paciente: any): Observable<any> {
+  updatePaciente(id: string, paciente: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/pacientes/${id}`, paciente, this.httpOptions)
       .pipe(
         retry(2),
@@ -77,7 +77,7 @@ export class JsonServerService {
       );
   }
 
-  deletePaciente(id: number): Observable<any> {
+  deletePaciente(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/pacientes/${id}`)
       .pipe(
         retry(2),
@@ -94,7 +94,7 @@ export class JsonServerService {
       );
   }
 
-  getSesionesPorPaciente(pacienteId: number): Observable<any> {
+  getSesionesPorPaciente(pacienteId: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/sesiones?paciente_id=${pacienteId}`)
       .pipe(
         retry(2),
@@ -102,7 +102,7 @@ export class JsonServerService {
       );
   }
 
-  getSesion(id: number): Observable<any> {
+  getSesion(id: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/sesiones/${id}`)
       .pipe(
         retry(2),
@@ -118,7 +118,7 @@ export class JsonServerService {
       );
   }
 
-  updateSesion(id: number, sesion: any): Observable<any> {
+  updateSesion(id: string, sesion: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/sesiones/${id}`, sesion, this.httpOptions)
       .pipe(
         retry(2),
@@ -126,7 +126,7 @@ export class JsonServerService {
       );
   }
 
-  deleteSesion(id: number): Observable<any> {
+  deleteSesion(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/sesiones/${id}`)
       .pipe(
         retry(2),

@@ -15,7 +15,7 @@ export class SesionPage {
   
   // Objeto principal de datos de la sesión
   sesionData = {
-    nivelDolor: null as number | null,
+    nivelDolor: 0,
     calidadSueno: 0,
     ejerciciosRealizados: true,
     observaciones: ''
@@ -29,6 +29,7 @@ export class SesionPage {
   // Validación del formulario
   esFormularioValido(): boolean {
     return this.sesionData.nivelDolor !== null && 
+            this.sesionData.nivelDolor >= 0 &&
            this.sesionData.calidadSueno > 0;
   }
 
@@ -41,7 +42,7 @@ export class SesionPage {
     try {
       // Preparar datos para JSON-Server
       const datosSesion = {
-        paciente_id: 1, // ID del paciente Juan Pérez en tu db.json
+        paciente_id: 1, 
         numero_sesion: this.numeroSesion,
         nivel_dolor: this.sesionData.nivelDolor,
         calidad_sueno: this.sesionData.calidadSueno,
@@ -50,7 +51,7 @@ export class SesionPage {
         fecha: new Date().toISOString()
       };
 
-      // 📡 GUARDAR EN JSON-SERVER
+      //  GUARDAR EN JSON-SERVER
       const respuesta = await this.jsonServerService.createSesion(datosSesion).toPromise();
 
       console.log('✅ Sesión guardada en JSON-Server:', respuesta);
@@ -63,16 +64,13 @@ export class SesionPage {
         Sesión: ${this.numeroSesion}
         
         📊 Evaluación:
-        • Dolor EVA: ${this.sesionData.nivelDolor}/10
+        • Dolor EVA: ${this.sesionData.nivelDolor}/10 ${this.sesionData.nivelDolor === 0 ? ' (Sin dolor)' : ''}
         • Calidad sueño: ${this.sesionData.calidadSueno}/5
         • Ejercicios: ${this.sesionData.ejerciciosRealizados ? '✅ Realizados' : '❌ No realizados'}
         ${this.sesionData.observaciones ? `• Observaciones: ${this.sesionData.observaciones}` : ''}
       `;
 
-      alert(mensaje.trim());
-      
-      // Navegar de vuelta
-      this.volverAPaciente();
+        alert(mensaje.trim());
 
     } catch (error) {
       console.error('❌ Error al guardar sesión:', error);
