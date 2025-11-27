@@ -17,6 +17,7 @@ import { AuthService } from './services/auth.service';
 import { SQLite } from '@awesome-cordova-plugins/sqlite/ngx';
 import { DatabaseService } from './services/database.service';
 import { JsonServerService } from './services/json-server.service';
+import { PlatformService } from './services/platform.service';
 
 // Componentes
 
@@ -27,7 +28,12 @@ import { JsonServerService } from './services/json-server.service';
   ],
   imports: [
     BrowserModule,
-    IonicModule.forRoot(),
+    IonicModule.forRoot({
+  mode: 'md',
+  animated: true,
+  hardwareBackButton: true,
+  swipeBackEnabled: true
+}),
     AppRoutingModule,
     FormsModule ,
     HttpClientModule,
@@ -41,6 +47,7 @@ import { JsonServerService } from './services/json-server.service';
     SQLite,
     DatabaseService,
     JsonServerService,
+    PlatformService,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideHttpClient(withInterceptorsFromDi())
   ],

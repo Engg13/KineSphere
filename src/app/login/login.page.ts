@@ -1,4 +1,4 @@
-// login.page.ts - CON inject() MODERNO
+// login.page.ts 
 import { Component, inject } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { AuthService } from 'src/app/services/auth.service';

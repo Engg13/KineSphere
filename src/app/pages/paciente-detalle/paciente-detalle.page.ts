@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { JsonServerService } from '../../services/json-server.service';
+import { DatabaseService } from '../../services/database.service'; // ✅ AÑADIR
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -15,11 +16,13 @@ export class PacienteDetallePage implements OnInit {
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
   pacienteId: string = '';
+  usandoSQLite: boolean = false; // ✅ PARA SABER QUÉ SERVICIO USA
 
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
-    private jsonServerService: JsonServerService
+    private jsonServerService: JsonServerService,
+    private databaseService: DatabaseService // ✅ INYECTAR
   ) { }
 
   ngOnInit() {
@@ -33,12 +36,10 @@ export class PacienteDetallePage implements OnInit {
       const pacienteId = params['id'];
       
       if (pacienteId && pacienteId !== 'undefined' && pacienteId !== 'null') {
-        //  GUARDAR EL ID EN LOCALSTORAGE
         localStorage.setItem('ultimoPacienteId', pacienteId);
         this.pacienteId = pacienteId;
         await this.cargarPaciente(pacienteId);
       } else {
-        //  INTENTAR CARGAR DESDE LOCALSTORAGE SI NO HAY PARÁMETROS
         const ultimoPacienteId = localStorage.getItem('ultimoPacienteId');
         if (ultimoPacienteId) {
           console.log('🔄 Cargando paciente desde localStorage:', ultimoPacienteId);
@@ -56,27 +57,46 @@ export class PacienteDetallePage implements OnInit {
     try {
       console.log('📥 Intentando cargar paciente ID:', id, 'Tipo:', typeof id);
       
-      // ✅ Cargar paciente específico por ID
-      const paciente = await firstValueFrom(this.jsonServerService.getPaciente(id));
+      let paciente = null;
+      
+      // ✅ ESTRATEGIA HÍBRIDA: PRIMERO INTENTAR SQLite
+      try {
+        console.log('📱 Intentando cargar desde SQLite...');
+        paciente = await this.databaseService.getPaciente(parseInt(id));
+        
+        if (paciente) {
+          console.log('✅ Paciente cargado desde SQLite:', paciente);
+          this.usandoSQLite = true;
+          this.paciente = paciente;
+          await this.cargarHistorialSesiones(id);
+          return;
+        }
+      } catch (sqliteError) {
+        console.log('📱 SQLite no disponible, intentando JSON Server...');
+      }
+      
+      // ✅ FALLBACK A JSON SERVER
+      console.log('🌐 Intentando cargar desde JSON Server...');
+      paciente = await firstValueFrom(this.jsonServerService.getPaciente(id));
       
       if (paciente) {
-        console.log('✅ Paciente encontrado:', paciente);
+        console.log('✅ Paciente encontrado en JSON Server:', paciente);
+        this.usandoSQLite = false;
         this.paciente = paciente;
-        
-        // Cargar historial de sesiones
         await this.cargarHistorialSesiones(id);
       } else {
         console.log('❌ Paciente no encontrado. ID:', id);
         
-        // ✅ FALLBACK: Buscar en todos los pacientes
+        // ✅ ÚLTIMO FALLBACK: Buscar en todos los pacientes
         const todosPacientes = await firstValueFrom(this.jsonServerService.getPacientes());
         const pacienteEncontrado = todosPacientes.find((p: any) => p.id === id);
         
         if (pacienteEncontrado) {
           console.log('✅ Paciente encontrado en lista completa:', pacienteEncontrado);
           this.paciente = pacienteEncontrado;
+          this.usandoSQLite = false;
         } else {
-          console.log('❌ Paciente no existe en la base de datos');
+          console.log('❌ Paciente no existe en ninguna base de datos');
         }
       }
       
@@ -89,19 +109,43 @@ export class PacienteDetallePage implements OnInit {
 
   private async cargarHistorialSesiones(pacienteId: string) { 
     try {
-      const sesiones = await firstValueFrom(this.jsonServerService.getSesionesPorPaciente(pacienteId));
+      let sesiones = [];
+      
+      // ✅ ESTRATEGIA HÍBRIDA PARA SESIONES
+      if (this.usandoSQLite) {
+        console.log('📱 Cargando sesiones desde SQLite...');
+        sesiones = await this.databaseService.getSesionesByPaciente(parseInt(pacienteId));
+      } else {
+        console.log('🌐 Cargando sesiones desde JSON Server...');
+        sesiones = await firstValueFrom(this.jsonServerService.getSesionesPorPaciente(pacienteId));
+      }
+      
       this.historialSesiones = sesiones || [];
       console.log('📊 Historial cargado:', this.historialSesiones.length, 'sesiones');
+      
     } catch (error) {
       console.error('❌ Error cargando historial:', error);
       this.historialSesiones = [];
     }
   }
 
+  // ✅ AGREGAR MÉTODO PARA REFRESCAR
+  async refrescarDatos(event?: any) {
+    console.log('🔄 Refrescando datos del paciente...');
+    
+    if (this.pacienteId) {
+      await this.cargarPaciente(this.pacienteId);
+    }
+    
+    if (event) {
+      event.target.complete();
+    }
+  }
+
   nuevaSesion() {
     if (!this.paciente) return;
     console.log('➕ Nueva sesión para:', this.paciente.nombre);
-    this.navCtrl.navigateForward('/sesion', {
+    this.navCtrl.navigateRoot('/sesion', {
       queryParams: { 
         pacienteId: this.paciente.id,
         pacienteNombre: this.paciente.nombre 
@@ -143,5 +187,17 @@ export class PacienteDetallePage implements OnInit {
   enviarEmail() {
     if (!this.paciente || !this.paciente.email) return;
     window.open(`mailto:${this.paciente.email}`, '_system');
+  }
+
+  irAVisitaDomiciliaria() {
+    if (!this.paciente) return;
+    
+    console.log('🏠 Navegando a visita domiciliaria:', this.paciente.nombre);
+    this.navCtrl.navigateRoot('/visita-domiciliaria', {
+      queryParams: { 
+        pacienteId: this.paciente.id,
+        pacienteNombre: this.paciente.nombre 
+      }
+    });
   }
 }

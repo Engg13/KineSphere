@@ -44,8 +44,8 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: 'posts',
-    loadChildren: () => import('./pages/posts/posts.module').then( m => m.PostsPageModule)
+    path: 'visita-domiciliaria',
+    loadChildren: () => import('./pages/visita-domiciliaria/visita-domiciliaria.module').then( m => m.VisitaDomiciliariaPageModule)
   },
   {
     path: 'test-pacientes',
@@ -66,6 +66,8 @@ const routes: Routes = [
     path: '**',
     loadChildren: () => import('./pages/not-found/not-found.module').then(m => m.NotFoundPageModule)  // ✅ 404
   },
+  
+
   
 
   

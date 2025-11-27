@@ -3,6 +3,7 @@ import { NavController } from '@ionic/angular';
 import { DatabaseService } from '../../services/database.service';
 import { JsonServerService } from '../../services/json-server.service';
 import { firstValueFrom } from 'rxjs';
+import { PlatformService } from '../../services/platform.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,7 +24,8 @@ export class DashboardPage implements OnInit {
   constructor(
     private navCtrl: NavController,
     private databaseService: DatabaseService,
-    private jsonServerService: JsonServerService
+    private jsonServerService: JsonServerService,
+    private platformService: PlatformService
   ) {}
 
   ngOnInit() {
@@ -37,54 +39,28 @@ export class DashboardPage implements OnInit {
   }
 
   async cargarDatosDashboard() {
-    console.log('📊 KineSphere: Cargando datos del dashboard...');
-    this.estaCargando = true;
+    // ✅ USAR INFORMACIÓN DE PLATAFORMA
+    const platformInfo = this.platformService.getDebugInfo();
+    this.plataformaUsada = platformInfo.descripcion;
     
-    try {
-      await this.cargarDatosEstrategiaHibrida();
-    } catch (error) {
-      console.log('❌ KineSphere ERROR: cargando dashboard:', error);
-    } finally {
-      this.estaCargando = false;
-    }
-  }
+    console.log('🎯 Dashboard usando plataforma:', platformInfo);
 
-  private async cargarDatosEstrategiaHibrida() {
-    let datosCargados = false;
-    
-    try {
-      console.log('🌐 Intentando cargar desde JSON Server...');
+    if (this.platformService.shouldUseSQLite()) {
+      console.log('📱 Cargando dashboard desde SQLite');
+      await this.cargarDesdeSQLite();
+    } else {
+      console.log('🌐 Cargando dashboard desde JSON Server');
       await this.cargarDesdeJsonServer();
-      datosCargados = true;
-      this.plataformaUsada = 'web';
-      console.log('✅ Datos cargados desde JSON Server');
-    } catch (errorWeb) {
-      console.log('❌ JSON Server no disponible, intentando SQLite...');
-      
-      try {
-        console.log('📱 Intentando cargar desde SQLite...');
-        await this.cargarDesdeSQLite();
-        datosCargados = true;
-        this.plataformaUsada = 'móvil';
-        console.log('✅ Datos cargados desde SQLite');
-      } catch (errorMovil) {
-        console.log('❌ Ambas plataformas fallaron');
-        throw new Error('No se pudieron cargar datos de ninguna plataforma');
-      }
-    }
-
-    if (datosCargados) {
-      console.log(`📊 Dashboard actualizado desde modo ${this.plataformaUsada}`);
     }
   }
 
+  // ✅ MÉTODOS DE CARGA ESPECÍFICOS (FALTABAN)
   private async cargarDesdeJsonServer() {
     try {
       const pacientes = await firstValueFrom(this.jsonServerService.getPacientes());
       
       if (pacientes && pacientes.length > 0) {
         this.actualizarContadores(pacientes);
-        
         
         this.pacientesRecientes = pacientes
           .sort((a: any, b: any) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
@@ -93,20 +69,23 @@ export class DashboardPage implements OnInit {
         this.reiniciarContadores();
       }
     } catch (error) {
+      console.error('❌ Error cargando desde JSON Server:', error);
       throw new Error('JSON Server no disponible');
     }
   }
 
   private async cargarDesdeSQLite() {
     try {
-      const estadisticas = await this.databaseService.getEstadisticas();
-      this.totalPacientes = estadisticas.totalPacientes;
-      this.sesionesHoy = estadisticas.sesionesHoy;
-      this.evaluacionesPendientes = estadisticas.totalEvaluaciones;
-
       const pacientes = await this.databaseService.getPacientes();
-      this.pacientesRecientes = pacientes.slice(0, 5);
+      
+      if (pacientes && pacientes.length > 0) {
+        this.actualizarContadores(pacientes);
+        this.pacientesRecientes = pacientes.slice(0, 5);
+      } else {
+        this.reiniciarContadores();
+      }
     } catch (error) {
+      console.error('❌ Error cargando desde SQLite:', error);
       throw new Error('SQLite no disponible');
     }
   }
@@ -176,14 +155,14 @@ export class DashboardPage implements OnInit {
   }
 
   verDetallePaciente(paciente: any) {
-  console.log('👤 KineSphere: Viendo detalle del paciente:', paciente);
-  console.log('🆔 ID del paciente:', paciente.id);
-  console.log('📝 Datos completos del paciente:', JSON.stringify(paciente, null, 2));
-  
-  this.navCtrl.navigateForward('/paciente-detalle', {
-    queryParams: { id: paciente.id }
-  });
-}
+    console.log('👤 KineSphere: Viendo detalle del paciente:', paciente);
+    console.log('🆔 ID del paciente:', paciente.id);
+    console.log('📝 Datos completos del paciente:', JSON.stringify(paciente, null, 2));
+    
+    this.navCtrl.navigateRoot('/paciente-detalle', {
+      queryParams: { id: paciente.id }
+    });
+  }
 
   crearSesionParaPaciente(paciente: any) {
     console.log('🧭 KineSphere: Creando sesión para paciente:', paciente.nombre);
@@ -195,9 +174,4 @@ export class DashboardPage implements OnInit {
   agregarPaciente() {
     this.navCtrl.navigateRoot('/agregar-paciente');
   }
-  
-  goToPosts() {
-    console.log('🎯 DEBUG: goToPosts() ejecutado');
-    this.navCtrl.navigateRoot('/posts');
-  }
-}
+} // ✅ CIERRE DE CLASE AÑADIDO

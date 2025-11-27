@@ -10,10 +10,9 @@
   ],
   "pacientes": [
     {
-      "id": "P1763853753168fjsmp",
+      "id": "ebb7",
       "nombre": "Ana González López",
       "rut": "12.345.678-9",
-      "fechaNacimiento": "1985-03-15",
       "edad": 39,
       "email": "ana.gonzalez@email.com",
       "telefono": "+56 9 8765 4321",
@@ -21,13 +20,13 @@
       "sesionesPlanificadas": 8,
       "sesionesCompletadas": 3,
       "activo": true,
-      "fechaCreacion": "2025-11-22T23:22:33.168Z"
+      "fechaCreacion": "2025-11-27T14:04:15.896Z",
+      "observaciones": null
     },
     {
-      "id": "P1763853753168l9eke",
+      "id": "e56a",
       "nombre": "Carlos Méndez Rojas",
       "rut": "23.456.789-0",
-      "fechaNacimiento": "1978-11-22",
       "edad": 46,
       "email": "carlos.mendez@email.com",
       "telefono": "+56 9 7654 3210",
@@ -35,13 +34,13 @@
       "sesionesPlanificadas": 10,
       "sesionesCompletadas": 6,
       "activo": true,
-      "fechaCreacion": "2025-11-22T23:22:33.168Z"
+      "fechaCreacion": "2025-11-27T14:04:15.896Z",
+      "observaciones": null
     },
     {
-      "id": "P176385375316808yq3",
+      "id": "c1ed",
       "nombre": "María Silva Pérez",
       "rut": "34.567.890-1",
-      "fechaNacimiento": "1992-07-08",
       "edad": 32,
       "email": "maria.silva@email.com",
       "telefono": "+56 9 6543 2109",
@@ -49,35 +48,8 @@
       "sesionesPlanificadas": 6,
       "sesionesCompletadas": 2,
       "activo": true,
-      "fechaCreacion": "2025-11-22T23:22:33.168Z"
-    },
-    {
-      "id": "P1763853753168g2ldi",
-      "nombre": "Roberto Navarro Díaz",
-      "rut": "45.678.901-2",
-      "fechaNacimiento": "1965-12-30",
-      "edad": 59,
-      "email": "roberto.navarro@email.com",
-      "telefono": "+56 9 5432 1098",
-      "diagnostico": "Cervicalgia crónica",
-      "sesionesPlanificadas": 12,
-      "sesionesCompletadas": 8,
-      "activo": false,
-      "fechaCreacion": "2025-11-22T23:22:33.168Z"
-    },
-    {
-      "id": "P1763853753168wy49a",
-      "nombre": "Fernanda Torres Castro",
-      "rut": "56.789.012-3",
-      "fechaNacimiento": "1988-05-18",
-      "edad": 36,
-      "email": "fernanda.torres@email.com",
-      "telefono": "+56 9 4321 0987",
-      "diagnostico": "Tendinitis de hombro",
-      "sesionesPlanificadas": 7,
-      "sesionesCompletadas": 4,
-      "activo": true,
-      "fechaCreacion": "2025-11-22T23:22:33.168Z"
+      "fechaCreacion": "2025-11-27T14:04:15.896Z",
+      "observaciones": null
     }
   ],
   "sesiones": [

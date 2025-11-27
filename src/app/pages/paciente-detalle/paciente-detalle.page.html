@@ -50,19 +50,19 @@
         <ion-grid class="botones-rapidos">
           <ion-row>
             <ion-col size="4">
-              <ion-button expand="block" fill="clear" color="primary" (click)="llamarPaciente()">
+              <ion-button expand="block" fill="clear"  (click)="llamarPaciente()">
                 <ion-icon name="call"></ion-icon>
                 Llamar
               </ion-button>
             </ion-col>
             <ion-col size="4">
-              <ion-button expand="block" fill="clear" color="secondary" (click)="enviarEmail()">
+              <ion-button expand="block" fill="clear"  (click)="enviarEmail()">
                 <ion-icon name="mail"></ion-icon>
                 Email
               </ion-button>
             </ion-col>
             <ion-col size="4">
-              <ion-button expand="block" fill="clear" color="tertiary" (click)="editarPaciente()">
+              <ion-button expand="block" fill="clear"  (click)="editarPaciente()">
                 <ion-icon name="create"></ion-icon>
                 Editar
               </ion-button>
@@ -76,7 +76,7 @@
     <ion-grid class="botones-principales">
       <ion-row>
         <ion-col size="6">
-          <ion-button expand="block"  (click)="nuevaSesion()">
+          <ion-button expand="block" (click)="nuevaSesion()">
             <ion-icon slot="start" name="add-circle"></ion-icon>
             Nueva Sesión
           </ion-button>
@@ -89,17 +89,18 @@
         </ion-col>
       </ion-row>
       
-      <!--  BOTÓN VOLVER A LISTA -->
+      <!--  BOTÓN VISITA DOMICILIARIA -->
       <ion-row>
-        <ion-col size="12">
-          <ion-button 
-            expand="block" 
-            fill="outline" 
-            color="medium" 
-            (click)="volverALista()"
-            class="boton-volver-lista">
+        <ion-col size="6">
+          <ion-button expand="block"  (click)="irAVisitaDomiciliaria()">
+            <ion-icon slot="start" name="navigate"></ion-icon>
+            🏠 Visita Domicilio
+          </ion-button>
+        </ion-col>
+        <ion-col size="6">
+          <ion-button expand="block" fill="outline" (click)="volverALista()">
             <ion-icon slot="start" name="arrow-back"></ion-icon>
-            Volver a Lista de Pacientes
+            Volver a Lista
           </ion-button>
         </ion-col>
       </ion-row>
@@ -129,7 +130,7 @@
         
         <div *ngIf="historialSesiones.length === 0" class="empty-state">
           <p>No hay sesiones registradas</p>
-          <ion-button (click)="nuevaSesion()" color="primary" fill="outline">
+          <ion-button (click)="nuevaSesion()" fill="outline">
             Agregar Primera Sesión
           </ion-button>
         </div>

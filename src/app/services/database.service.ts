@@ -1,369 +1,369 @@
 import { Injectable } from '@angular/core';
 import { Platform } from '@ionic/angular';
 import { SQLite, SQLiteObject } from '@awesome-cordova-plugins/sqlite/ngx';
-import { BehaviorSubject } from 'rxjs';
+import { PlatformService } from './platform.service'; // ✅ AÑADIR
 
 @Injectable({
   providedIn: 'root'
 })
 export class DatabaseService {
-  private database: SQLiteObject | undefined;
-  private dbReady: BehaviorSubject<boolean> = new BehaviorSubject(false);
+  private db: SQLiteObject | null = null;
+  private isInitialized = false;
 
   constructor(
     private platform: Platform,
-    private sqlite: SQLite
+    private sqlite: SQLite,
+    private platformService: PlatformService // ✅ INYECTAR
   ) {
-    this.initializeDatabase();
+    // ✅ SOLO INICIAR SQLite EN PLATAFORMAS NATIVAS
+    if (this.platformService.shouldUseSQLite()) {
+      console.log('📱 Entorno nativo detectado - Iniciando SQLite');
+      this.initDB();
+    } else {
+      console.log('🌐 Entorno web detectado - SQLite desactivado');
+    }
   }
 
-  private initializeDatabase() {
-    this.platform.ready().then(() => {
-      this.sqlite.create({
-        name: 'kinesphere.db',
-        location: 'default'
-      })
-      .then((db: SQLiteObject) => {
-        this.database = db;
-        this.createTables();
-      })
-      .catch(e => console.log('Error creating database:', e));
-    });
-  }
-
-  private createTables() {
-    if (!this.database) {
-      console.error('Database no está inicializado');
+  // ✅ INICIALIZACIÓN SOLO PARA NATIVOS
+  private async initDB() {
+    // Doble verificación por seguridad
+    if (!this.platformService.shouldUseSQLite()) {
+      console.log('🚫 SQLite desactivado - Entorno web');
       return;
     }
 
-    // TABLA PACIENTES
-    this.database.executeSql(`
-      CREATE TABLE IF NOT EXISTS pacientes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL,
-        rut TEXT UNIQUE,
-        edad INTEGER,
-        email TEXT,
-        telefono TEXT,
-        diagnostico TEXT,
-        sesiones_planificadas INTEGER DEFAULT 0,
-        sesiones_completadas INTEGER DEFAULT 0,
-        activo BOOLEAN DEFAULT 1,
-        fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-        observaciones TEXT,
-        creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`, [])
-    .then(() => {
-      console.log('✅ Tabla pacientes creada/actualizada');
-      // Insertar paciente de prueba SOLO si la tabla está vacía
-      this.getPacientes().then(pacientes => {
-        if (pacientes.length === 0) {
-          this.addPaciente({
-            nombre: 'Paciente Demo',
-            rut: '12.345.678-9',
-            edad: 35,
-            email: 'demo@email.com',
-            telefono: '+56912345678',
-            diagnostico: 'Lumbalgia crónica',
-            sesionesPlanificadas: 5,
-            sesionesCompletadas: 0,
-            activo: true
-          });
-        }
+    try {
+      console.log('🚀 Iniciando SQLite...');
+      
+      await this.platform.ready();
+      
+      this.db = await this.sqlite.create({
+        name: 'kinesphere_simple.db',
+        location: 'default'
       });
-    })
-    .catch(e => console.log('Error creando tabla pacientes:', e));
-
-    // Tabla de Sesiones
-    this.database.executeSql(`
-      CREATE TABLE IF NOT EXISTS sesiones (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        paciente_id INTEGER,
-        numero_sesion INTEGER,
-        fecha DATE DEFAULT CURRENT_DATE,
-        eva INTEGER CHECK(eva >= 0 AND eva <= 10),
-        sueño INTEGER CHECK(sueño >= 1 AND sueño <= 5),
-        ejercicios TEXT,
-        observaciones TEXT,
-        enviado_whatsapp BOOLEAN DEFAULT 0,
-        creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (paciente_id) REFERENCES pacientes (id)
-      )`, [])
-    .then(() => console.log('✅ Tabla sesiones creada'))
-    .catch(e => console.log('Error creando tabla sesiones:', e));
-
-    // Tabla de Evaluaciones
-    this.database.executeSql(`
-      CREATE TABLE IF NOT EXISTS evaluaciones (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        paciente_id INTEGER,
-        tipo TEXT CHECK(tipo IN ('inicial', 'final')),
-        fecha DATE DEFAULT CURRENT_DATE,
-        movilidad TEXT,
-        fuerza TEXT,
-        dolor TEXT,
-        eva_inicial INTEGER,
-        observaciones TEXT,
-        creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (paciente_id) REFERENCES pacientes (id)
-      )`, [])
-    .then(() => console.log('✅ Tabla evaluaciones creada'))
-    .catch(e => console.log('Error creando tabla evaluaciones:', e));
-
-    this.dbReady.next(true);
+      
+      console.log('✅ SQLite creado');
+      await this.createTables();
+      this.isInitialized = true;
+      console.log('🎉 Base de datos lista');
+      
+    } catch (error) {
+      console.error('❌ Error SQLite:', error);
+    }
   }
 
-  // ==================== MÉTODOS PARA PACIENTES ====================
+  // ✅ TABLAS MÍNIMAS
+  private async createTables() {
+    if (!this.db) return;
 
-  getPacientes() {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
-    }
+    try {
+      // TABLA PACIENTES
+      await this.db.executeSql(`
+        CREATE TABLE IF NOT EXISTS pacientes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL,
+          rut TEXT,
+          email TEXT,
+          telefono TEXT,
+          diagnostico TEXT,
+          activo BOOLEAN DEFAULT 1,
+          fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `, []);
+      console.log('✅ Tabla pacientes lista');
 
-    return this.database.executeSql(`
-      SELECT 
-        id,
-        nombre,
-        rut,
-        edad,
-        email,
-        telefono,
-        diagnostico,
-        sesiones_planificadas as sesionesPlanificadas,
-        sesiones_completadas as sesionesCompletadas,
-        activo,
-        fecha_creacion as fechaCreacion,
-        observaciones,
-        creado_en as creadoEn
-      FROM pacientes 
-      ORDER BY creado_en DESC`, [])
-      .then(data => {
-        let pacientes = [];
-        for (let i = 0; i < data.rows.length; i++) {
-          pacientes.push(data.rows.item(i));
-        }
-        return pacientes;
-      });
-  }
-
-  getPaciente(id: number) {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
-    }
-
-    return this.database.executeSql(`
-      SELECT 
-        id,
-        nombre,
-        rut,
-        edad,
-        email,
-        telefono,
-        diagnostico,
-        sesiones_planificadas as sesionesPlanificadas,
-        sesiones_completadas as sesionesCompletadas,
-        activo,
-        fecha_creacion as fechaCreacion,
-        observaciones,
-        creado_en as creadoEn
-      FROM pacientes 
-      WHERE id = ?`, [id])
-      .then(data => {
-        if (data.rows.length > 0) {
-          return data.rows.item(0);
-        }
-        return null;
-      });
-  }
-
-  // MÉTODOS TODOS LOS CAMPOS
-  addPaciente(paciente: any) {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
-    }
-
-    let data = [
-      paciente.nombre,
-      paciente.rut || null,
-      paciente.edad || null,
-      paciente.email || null,
-      paciente.telefono || null,
-      paciente.diagnostico || null,
-      paciente.sesionesPlanificadas || 0,
-      paciente.sesionesCompletadas || 0,
-      paciente.activo ? 1 : 0,
-      paciente.fechaCreacion || new Date().toISOString(),
-      paciente.observaciones || null
-    ];
-    
-    return this.database.executeSql(`
-      INSERT INTO pacientes 
-      (nombre, rut, edad, email, telefono, diagnostico, sesiones_planificadas, sesiones_completadas, activo, fecha_creacion, observaciones) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, data);
-  }
-
-  updatePaciente(id: number, paciente: any) {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
-    }
-
-    let data = [
-      paciente.nombre,
-      paciente.rut,
-      paciente.edad,
-      paciente.email,
-      paciente.telefono,
-      paciente.diagnostico,
-      paciente.sesionesPlanificadas,
-      paciente.sesionesCompletadas,
-      paciente.activo ? 1 : 0,
-      paciente.observaciones,
-      id
-    ];
-    
-    return this.database.executeSql(`
-      UPDATE pacientes 
-      SET nombre = ?, rut = ?, edad = ?, email = ?, telefono = ?, diagnostico = ?, 
-          sesiones_planificadas = ?, sesiones_completadas = ?, activo = ?, observaciones = ?
-      WHERE id = ?`, data);
-  }
-
-  deletePaciente(id: number) {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
-    }
-
-    return this.database.executeSql('DELETE FROM pacientes WHERE id = ?', [id]);
-  }
-
-  // ==================== MÉTODOS PARA SESIONES ====================
-
-  addSesion(sesion: any) {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
-    }
-
-    let data = [
-      sesion.paciente_id,
-      sesion.numero_sesion,
-      sesion.fecha || new Date().toISOString().split('T')[0],
-      sesion.eva || null,
-      sesion.sueño || null,
-      sesion.ejercicios || null,
-      sesion.observaciones || null,
-      sesion.enviado_whatsapp ? 1 : 0
-    ];
-    
-    return this.database.executeSql(`
-      INSERT INTO sesiones 
-      (paciente_id, numero_sesion, fecha, eva, sueño, ejercicios, observaciones, enviado_whatsapp) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, data);
-  }
-
-  getSesionesByPaciente(pacienteId: number) {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
-    }
-
-    return this.database.executeSql(
-      'SELECT * FROM sesiones WHERE paciente_id = ? ORDER BY fecha DESC', 
-      [pacienteId]
-    ).then(data => {
-      let sesiones = [];
-      for (let i = 0; i < data.rows.length; i++) {
-        sesiones.push(data.rows.item(i));
+      // ✅ TABLA SESIONES (AÑADIR SI NO EXISTE)
+      await this.db.executeSql(`
+        CREATE TABLE IF NOT EXISTS sesiones (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          paciente_id INTEGER,
+          fecha TEXT,
+          ejercicios TEXT,
+          observaciones TEXT,
+          eva INTEGER,
+          sueño INTEGER,
+          enviado_whatsapp BOOLEAN DEFAULT 0,
+          creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `, []);
+      console.log('✅ Tabla sesiones lista');
+      
+      // Verificar si hay datos
+      const result = await this.getPacientes();
+      if (result.length === 0) {
+        await this.addDemoData();
       }
-      return sesiones;
-    });
+      
+    } catch (error) {
+      console.error('Error creando tablas:', error);
+    }
   }
 
-  // ==================== MÉTODOS PARA EVALUACIONES ====================
+  // ✅ DATOS DEMO SIMPLES
+  private async addDemoData() {
+    // Solo agregar datos demo en entorno nativo
+    if (!this.platformService.shouldUseSQLite()) return;
 
-  addEvaluacion(evaluacion: any) {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
-    }
-
-    let data = [
-      evaluacion.paciente_id,
-      evaluacion.tipo,
-      evaluacion.fecha || new Date().toISOString().split('T')[0],
-      evaluacion.movilidad || null,
-      evaluacion.fuerza || null,
-      evaluacion.dolor || null,
-      evaluacion.eva_inicial || null,
-      evaluacion.observaciones || null
+    const demoPacientes = [
+      { nombre: 'Ana González', email: 'ana@email.com', telefono: '+56912345678', diagnostico: 'Lumbalgia' },
+      { nombre: 'Carlos Méndez', email: 'carlos@email.com', telefono: '+56923456789', diagnostico: 'Artrosis' },
+      { nombre: 'María Silva', email: 'maria@email.com', telefono: '+56934567890', diagnostico: 'Tendinitis' }
     ];
-    
-    return this.database.executeSql(`
-      INSERT INTO evaluaciones 
-      (paciente_id, tipo, fecha, movilidad, fuerza, dolor, eva_inicial, observaciones) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, data);
+
+    for (const paciente of demoPacientes) {
+      await this.addPaciente(paciente);
+    }
+    console.log('✅ Datos demo agregados');
   }
 
-  // ==================== MÉTODOS UTILITARIOS ====================
-
-  getDatabaseState() {
-    return this.dbReady.asObservable();
-  }
-
-  getEstadisticas() {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
+  // ✅ ESPERAR INICIALIZACIÓN MEJORADA
+  private async waitForInit(): Promise<boolean> {
+    // En web, nunca inicializar SQLite
+    if (!this.platformService.shouldUseSQLite()) {
+      return false;
     }
 
-    const hoy = new Date().toISOString().split('T')[0];
-
-    return Promise.all([
-      // Total pacientes
-      this.database.executeSql('SELECT COUNT(*) as total FROM pacientes', []),
-      // Sesiones de hoy
-      this.database.executeSql('SELECT COUNT(*) as total FROM sesiones WHERE fecha = ?', [hoy]),
-      // Total de evaluaciones
-      this.database.executeSql('SELECT COUNT(*) as total FROM evaluaciones', [])
-    ]).then(([pacientesData, sesionesHoyData, evaluacionesData]) => {
-      return {
-        totalPacientes: pacientesData.rows.item(0).total,
-        sesionesHoy: sesionesHoyData.rows.item(0).total,
-        totalEvaluaciones: evaluacionesData.rows.item(0).total
-      };
-    }).catch(error => {
-      console.log('Error en getEstadisticas:', error);
-      return {
-        totalPacientes: 0,
-        sesionesHoy: 0,
-        totalEvaluaciones: 0
-      };
+    if (this.isInitialized) return true;
+    
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (this.isInitialized) {
+          clearInterval(checkInterval);
+          resolve(true);
+        }
+      }, 100);
+      
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        console.warn('⚠️ Timeout esperando DB');
+        resolve(false);
+      }, 3000);
     });
   }
 
-  //Buscar pacientes por nombre o RUT
-  buscarPacientes(termino: string) {
-    if (!this.database) {
-      return Promise.reject('Database no inicializado');
+  // ==================== MÉTODOS CRUD MEJORADOS ====================
+
+  async getPacientes(): Promise<any[]> {
+    // ✅ EN WEB: Retornar datos demo directamente
+    if (!this.platformService.shouldUseSQLite()) {
+      console.log('🌐 Modo web - usando datos demo');
+      return this.getDemoPacientes();
     }
 
-    return this.database.executeSql(`
-      SELECT 
-        id,
-        nombre,
-        rut,
-        edad,
-        telefono,
-        diagnostico,
-        sesiones_planificadas as sesionesPlanificadas,
-        sesiones_completadas as sesionesCompletadas,
-        activo
-      FROM pacientes 
-      WHERE nombre LIKE ? OR rut LIKE ?
-      ORDER BY nombre`, [`%${termino}%`, `%${termino}%`])
-      .then(data => {
-        let pacientes = [];
-        for (let i = 0; i < data.rows.length; i++) {
-          pacientes.push(data.rows.item(i));
-        }
-        return pacientes;
-      });
+    const ready = await this.waitForInit();
+    if (!ready || !this.db) {
+      console.log('📱 SQLite no disponible');
+      return this.getDemoPacientes();
+    }
+
+    try {
+      const result = await this.db.executeSql('SELECT * FROM pacientes WHERE activo = 1', []);
+      const pacientes = [];
+      
+      for (let i = 0; i < result.rows.length; i++) {
+        pacientes.push(result.rows.item(i));
+      }
+      
+      return pacientes;
+    } catch (error) {
+      console.error('Error obteniendo pacientes:', error);
+      return this.getDemoPacientes();
+    }
+  }
+
+  async getPaciente(id: number): Promise<any> {
+    // ✅ EN WEB: Retornar datos demo
+    if (!this.platformService.shouldUseSQLite()) {
+      console.log('🌐 Modo web - paciente demo');
+      return this.getDemoPacientes().find(p => p.id === id) || null;
+    }
+
+    const ready = await this.waitForInit();
+    if (!ready || !this.db) {
+      console.log('📱 DB no disponible, paciente demo');
+      return this.getDemoPacientes().find(p => p.id === id) || null;
+    }
+
+    try {
+      const result = await this.db.executeSql(
+        'SELECT * FROM pacientes WHERE id = ?',
+        [id]
+      );
+      
+      return result.rows.length > 0 ? result.rows.item(0) : null;
+    } catch (error) {
+      console.error('Error obteniendo paciente:', error);
+      return null;
+    }
+  }
+
+  async addPaciente(paciente: any): Promise<any> {
+    // ✅ EN WEB: Simular éxito
+    if (!this.platformService.shouldUseSQLite()) {
+      console.log('🌐 Modo web - paciente no guardado (simulado)');
+      return { insertId: Date.now() };
+    }
+
+    const ready = await this.waitForInit();
+    if (!ready || !this.db) {
+      console.log('📱 DB no disponible, paciente no guardado');
+      return { insertId: Date.now() };
+    }
+
+    try {
+      const result = await this.db.executeSql(
+        'INSERT INTO pacientes (nombre, rut, email, telefono, diagnostico) VALUES (?, ?, ?, ?, ?)',
+        [paciente.nombre, paciente.rut, paciente.email, paciente.telefono, paciente.diagnostico]
+      );
+      
+      console.log('✅ Paciente guardado:', paciente.nombre);
+      return result;
+    } catch (error) {
+      console.error('Error guardando paciente:', error);
+      throw error;
+    }
+  }
+
+  async deletePaciente(id: number): Promise<any> {
+    // ✅ EN WEB: Simular éxito
+    if (!this.platformService.shouldUseSQLite()) {
+      console.log('🌐 Modo web - eliminación simulada');
+      return { rowsAffected: 1 };
+    }
+
+    const ready = await this.waitForInit();
+    if (!ready || !this.db) {
+      console.log('📱 DB no disponible, eliminación simulada');
+      return { rowsAffected: 1 };
+    }
+
+    try {
+      const result = await this.db.executeSql(
+        'DELETE FROM pacientes WHERE id = ?',
+        [id]
+      );
+      
+      console.log('✅ Paciente eliminado ID:', id);
+      return result;
+    } catch (error) {
+      console.error('Error eliminando paciente:', error);
+      throw error;
+    }
+  }
+
+  async updatePaciente(id: number, paciente: any): Promise<any> {
+    // ✅ EN WEB: Simular éxito
+    if (!this.platformService.shouldUseSQLite()) {
+      console.log('🌐 Modo web - actualización simulada');
+      return { rowsAffected: 1 };
+    }
+
+    const ready = await this.waitForInit();
+    if (!ready || !this.db) {
+      console.log('📱 DB no disponible, actualización simulada');
+      return { rowsAffected: 1 };
+    }
+
+    try {
+      const result = await this.db.executeSql(
+        'UPDATE pacientes SET nombre = ?, rut = ?, email = ?, telefono = ?, diagnostico = ? WHERE id = ?',
+        [paciente.nombre, paciente.rut, paciente.email, paciente.telefono, paciente.diagnostico, id]
+      );
+      
+      console.log('✅ Paciente actualizado ID:', id);
+      return result;
+    } catch (error) {
+      console.error('Error actualizando paciente:', error);
+      throw error;
+    }
+  }
+
+  async getSesionesByPaciente(pacienteId: number): Promise<any[]> {
+    // ✅ EN WEB: Retornar array vacío
+    if (!this.platformService.shouldUseSQLite()) {
+      console.log('🌐 Modo web - sesiones vacías');
+      return [];
+    }
+
+    const ready = await this.waitForInit();
+    if (!ready || !this.db) {
+      console.log('📱 DB no disponible, sesiones demo');
+      return [];
+    }
+
+    try {
+      const result = await this.db.executeSql(
+        'SELECT * FROM sesiones WHERE paciente_id = ? ORDER BY fecha DESC',
+        [pacienteId]
+      );
+      
+      const sesiones = [];
+      for (let i = 0; i < result.rows.length; i++) {
+        sesiones.push(result.rows.item(i));
+      }
+      
+      console.log(`✅ ${sesiones.length} sesiones cargadas para paciente ${pacienteId}`);
+      return sesiones;
+    } catch (error) {
+      console.error('Error obteniendo sesiones:', error);
+      return [];
+    }
+  }
+
+  async addSesion(sesion: any): Promise<any> {
+    // ✅ EN WEB: Simular éxito
+    if (!this.platformService.shouldUseSQLite()) {
+      console.log('🌐 Modo web - sesión no guardada (simulado)');
+      return { insertId: Date.now() };
+    }
+
+    const ready = await this.waitForInit();
+    if (!ready || !this.db) {
+      console.log('📱 DB no disponible, sesión no guardada');
+      return { insertId: Date.now() };
+    }
+
+    try {
+      const result = await this.db.executeSql(
+        `INSERT INTO sesiones 
+        (paciente_id, fecha, ejercicios, observaciones, eva, sueño, enviado_whatsapp) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          sesion.paciente_id, 
+          sesion.fecha || new Date().toISOString().split('T')[0],
+          sesion.ejercicios || '',
+          sesion.observaciones || '',
+          sesion.eva || null,
+          sesion.sueño || null,
+          sesion.enviado_whatsapp ? 1 : 0
+        ]
+      );
+      
+      console.log('✅ Sesión guardada para paciente:', sesion.paciente_id);
+      return result;
+    } catch (error) {
+      console.error('Error guardando sesión:', error);
+      throw error;
+    }
+  }
+
+  // ✅ DATOS DEMO DE FALLBACK
+  private getDemoPacientes(): any[] {
+    return [
+      { id: 1, nombre: 'Ana González', email: 'ana@email.com', telefono: '+56912345678', diagnostico: 'Lumbalgia', activo: 1 },
+      { id: 2, nombre: 'Carlos Méndez', email: 'carlos@email.com', telefono: '+56923456789', diagnostico: 'Artrosis', activo: 1 },
+      { id: 3, nombre: 'María Silva', email: 'maria@email.com', telefono: '+56934567890', diagnostico: 'Tendinitis', activo: 1 }
+    ];
+  }
+
+  // ✅ ESTADÍSTICAS SIMPLES
+  async getEstadisticas(): Promise<any> {
+    const pacientes = await this.getPacientes();
+    
+    return {
+      totalPacientes: pacientes.length,
+      pacientesActivos: pacientes.filter(p => p.activo).length,
+      ultimaActualizacion: new Date().toISOString()
+    };
   }
 }
