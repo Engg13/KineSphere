@@ -8,12 +8,12 @@ export class AuthService {
   private isLoggedIn = false;
 
   constructor() {
-    // Verificar si hay sesión guardada
+    
     this.checkStoredAuth();
   }
 
   login(username: string, password: string): boolean {
-    // Aquí tu lógica de autenticación
+    
     if (username && password) {
       this.isLoggedIn = true;
       localStorage.setItem('isLoggedIn', 'true');

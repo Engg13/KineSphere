@@ -10,7 +10,21 @@
   ],
   "pacientes": [
     {
-      "id": "ebb7",
+      "id": "PAC-6789",
+      "nombre": "Esteban Gomez",
+      "rut": "12.345.678-9",
+      "fechaNacimiento": "2013-03-20",
+      "edad": 12,
+      "email": "esteban.ggu@gmail.com",
+      "telefono": "+56 907876786",
+      "diagnostico": "lumbalgia",
+      "sesionesPlanificadas": 10,
+      "sesionesCompletadas": 0,
+      "activo": true,
+      "fechaCreacion": "2025-11-27T15:07:22.972Z"
+    },
+    {
+      "id": "b575",
       "nombre": "Ana González López",
       "rut": "12.345.678-9",
       "edad": 39,
@@ -20,11 +34,11 @@
       "sesionesPlanificadas": 8,
       "sesionesCompletadas": 3,
       "activo": true,
-      "fechaCreacion": "2025-11-27T14:04:15.896Z",
+      "fechaCreacion": "2025-11-27T15:08:18.486Z",
       "observaciones": null
     },
     {
-      "id": "e56a",
+      "id": "8a8a",
       "nombre": "Carlos Méndez Rojas",
       "rut": "23.456.789-0",
       "edad": 46,
@@ -34,11 +48,11 @@
       "sesionesPlanificadas": 10,
       "sesionesCompletadas": 6,
       "activo": true,
-      "fechaCreacion": "2025-11-27T14:04:15.896Z",
+      "fechaCreacion": "2025-11-27T15:08:18.486Z",
       "observaciones": null
     },
     {
-      "id": "c1ed",
+      "id": "afb2",
       "nombre": "María Silva Pérez",
       "rut": "34.567.890-1",
       "edad": 32,
@@ -48,7 +62,7 @@
       "sesionesPlanificadas": 6,
       "sesionesCompletadas": 2,
       "activo": true,
-      "fechaCreacion": "2025-11-27T14:04:15.896Z",
+      "fechaCreacion": "2025-11-27T15:08:18.486Z",
       "observaciones": null
     }
   ],
@@ -92,6 +106,26 @@
       "ejercicios_realizados": true,
       "observaciones": "LLego muy desanimada",
       "fecha": "2025-11-22T13:54:11.847Z"
+    },
+    {
+      "id": "2782",
+      "paciente_id": 1,
+      "numero_sesion": 4,
+      "nivel_dolor": 6,
+      "calidad_sueno": 4,
+      "ejercicios_realizados": true,
+      "observaciones": "asdasdasdas",
+      "fecha": "2025-11-27T14:45:00.812Z"
+    },
+    {
+      "id": "19c8",
+      "paciente_id": 1,
+      "numero_sesion": 4,
+      "nivel_dolor": 5,
+      "calidad_sueno": 3,
+      "ejercicios_realizados": true,
+      "observaciones": "s",
+      "fecha": "2025-11-27T15:09:03.737Z"
     }
   ]
 }

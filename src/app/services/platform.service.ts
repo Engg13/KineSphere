@@ -9,19 +9,22 @@ export class PlatformService {
 
   constructor() { }
 
-  // ✅ DETECCIÓN COMPLETA DE PLATAFORMA (SIN RECURSIVIDAD)
+  //  Verificar Capacitor REAL
   detectPlatform() {
-    // Cachear el resultado para evitar cálculos repetidos
     if (this.platformInfo) {
       return this.platformInfo;
     }
 
     const userAgent = navigator.userAgent.toLowerCase();
-    const isCapacitor = !!(window as any).Capacitor;
+    
+    // ✅ DETECCIÓN MEJORADA: Verificar si es Capacitor REAL
+    const isCapacitor = this.isRealCapacitor();
     const isCordova = !!(window as any).cordova;
     
+    // ✅ EN NAVEGADOR: Siempre false, sin importar el User Agent
+    const isNative = isCapacitor || isCordova;
+    
     this.platformInfo = {
-      // Información del User Agent
       userAgent: navigator.userAgent,
       isAndroidUserAgent: /android/.test(userAgent),
       isIOSUserAgent: /iphone|ipad|ipod/.test(userAgent),
@@ -30,21 +33,39 @@ export class PlatformService {
       // Entorno REAL
       isCapacitor,
       isCordova,
-      isNative: isCapacitor || isCordova,
-      isWeb: !isCapacitor && !isCordova,
+      isNative: isNative,
+      isWeb: !isNative,
       
-      // Plataforma final (CALCULADO DIRECTAMENTE)
       platform: this.getPlatformName(),
-      description: this.getPlatformDescriptionDirect(isCapacitor, isCordova, userAgent)
+      description: this.getPlatformDescriptionDirect(isNative, userAgent)
     };
 
+    console.log('🔍 Platform Detection Result:', this.platformInfo);
     return this.platformInfo;
   }
 
-  // ✅ OBTENER NOMBRE DE PLATAFORMA (INDEPENDIENTE)
+  // ✅ VERIFICAR SI ES CAPACITOR REAL (no falso positivo)
+  private isRealCapacitor(): boolean {
+    const capacitor = (window as any).Capacitor;
+    
+    if (!capacitor) {
+      return false;
+    }
+    
+    // ✅ Verificaciones adicionales para evitar falsos positivos
+    const hasPlatform = typeof capacitor.getPlatform === 'function';
+    const hasPlugins = capacitor.Plugins && typeof capacitor.Plugins === 'object';
+    const isInWeb = capacitor.isNative === false; // Si existe isNative y es false, estamos en web
+    
+    // Solo es Capacitor real si tiene la plataforma y plugins
+    return hasPlatform && hasPlugins;
+  }
+
   private getPlatformName(): string {
-    if ((window as any).Capacitor) {
-      return (window as any).Capacitor.getPlatform();
+    const capacitor = (window as any).Capacitor;
+    
+    if (capacitor && typeof capacitor.getPlatform === 'function') {
+      return capacitor.getPlatform();
     }
     if ((window as any).cordova) {
       return (window as any).cordova.platformId;
@@ -52,31 +73,36 @@ export class PlatformService {
     return 'web';
   }
 
-  // ✅ DESCRIPCIÓN LEGIBLE (SIN LLAMAR A detectPlatform)
-  private getPlatformDescriptionDirect(isCapacitor: boolean, isCordova: boolean, userAgent: string): string {
-    const isNative = isCapacitor || isCordova;
-    const isAndroidUA = /android/.test(userAgent);
-    
+  private getPlatformDescriptionDirect(isNative: boolean, userAgent: string): string {
     if (isNative) {
+      const isAndroidUA = /android/.test(userAgent);
       return isAndroidUA ? 'Android Nativo' : 'iOS Nativo';
     } else {
       const isMobileUA = /android|iphone|ipad|ipod/.test(userAgent);
-      return isMobileUA ? 'Navegador Móvil' : 'Navegador Escritorio';
+      return isMobileUA ? 'Navegador Móvil (Simulado)' : 'Navegador Escritorio';
     }
   }
 
-  // ✅ DECIDIR QUÉ BASE DE DATOS USAR
+  // ✅ FORZAR MODO WEB PARA DESARROLLO
   shouldUseSQLite(): boolean {
+    // ✅ TEMPORAL: Forzar modo web para desarrollo/video
+    const forceWebMode = true; // Cambiar a false cuando sea para producción
+    
+    if (forceWebMode) {
+      console.log('🌐 MODO WEB Usando localStorage');
+      return false;
+    }
+    
     const platform = this.detectPlatform();
-    return platform.isNative; // Solo SQLite en apps nativas
+    const shouldUse = platform.isNative;
+    console.log('💾 shouldUseSQLite:', shouldUse, '- Platform:', platform.platform);
+    return shouldUse;
   }
 
-  // ✅ DECIDIR QUÉ ESTRATEGIA DE DATOS USAR
-  getDataStrategy(): 'sqlite' | 'json-server' {
-    return this.shouldUseSQLite() ? 'sqlite' : 'json-server';
+  getDataStrategy(): 'sqlite' | 'localStorage' {
+    return this.shouldUseSQLite() ? 'sqlite' : 'localStorage';
   }
 
-  // ✅ INFORMACIÓN PARA DEBUG
   getDebugInfo(): any {
     const platform = this.detectPlatform();
     return {
@@ -84,11 +110,11 @@ export class PlatformService {
       descripcion: platform.description,
       estrategia: this.getDataStrategy(),
       userAgent: platform.userAgent,
+      isNative: platform.isNative,
       timestamp: new Date().toISOString()
     };
   }
 
-  // ✅ LIMPIAR CACHE (para testing)
   clearCache() {
     this.platformInfo = null;
   }
