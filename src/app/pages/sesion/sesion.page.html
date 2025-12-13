@@ -30,22 +30,24 @@
               <strong>Nivel de Dolor (EVA)</strong>
               <p class="descripcion">Selecciona tu nivel de dolor actual (0-10)</p>
             </ion-label>
-            <ion-range 
+            <ion-range
               [(ngModel)]="sesionData.nivelDolor"
-              min="0" 
-              max="10" 
-              step="1" 
+              min="0"
+              max="10"
+              step="1"
               snaps="true"
               ticks="true"
               class="eva-range">
               <ion-label slot="start">0</ion-label>
               <ion-label slot="end">10</ion-label>
             </ion-range>
-            <ion-badge slot="end" color="primary" *ngIf="sesionData.nivelDolor !== null">
-              {{sesionData.nivelDolor}}/10
-            </ion-badge>
+            @if (sesionData.nivelDolor !== null) {
+              <ion-badge slot="end" color="primary">
+                {{sesionData.nivelDolor}}/10
+              </ion-badge>
+            }
           </ion-item>
-          
+
           <!-- INDICADORES DE DOLOR -->
           <div class="indicadores-dolor">
             <span class="indicador">0: Sin dolor</span>
@@ -56,7 +58,7 @@
 
         <!-- CALIDAD DE SUEÑO COMPACTA -->
         <div class="componente-sesion">
-          <app-sleep-quality 
+          <app-sleep-quality
             [(valor)]="sesionData.calidadSueno"
             [titulo]="'Calidad del Sueño'"
             [descripcion]="'¿Cómo califica la calidad de su sueño durante la última noche?'">
@@ -75,7 +77,7 @@
         <div class="seccion-formulario">
           <ion-item>
             <ion-label position="stacked">Observaciones de la sesión</ion-label>
-            <ion-textarea 
+            <ion-textarea
               [(ngModel)]="sesionData.observaciones"
               placeholder="Registre observaciones relevantes, progresos, dificultades..."
               rows="3"
@@ -92,27 +94,27 @@
   </div>
 
 
-<!--  BOTONES FIJOS  -->
-    <div class="botones-fijos">
-      <ion-grid>
-        <ion-row>
-          <ion-col size="6">
-            <ion-button 
-              expand="block"
-              (click)="guardarSesion()"
-              [disabled]="!esFormularioValido()">
-              💾 Guardar Sesión
-            </ion-button>
-          </ion-col>
-          <ion-col size="6">
-            <ion-button 
-              expand="block" 
-              fill="outline" 
-              (click)="volverAPaciente()">
-              ← Volver
-            </ion-button>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    </div>
+  <!--  BOTONES FIJOS  -->
+  <div class="botones-fijos">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6">
+          <ion-button
+            expand="block"
+            (click)="guardarSesion()"
+            [disabled]="!esFormularioValido()">
+            💾 Guardar Sesión
+          </ion-button>
+        </ion-col>
+        <ion-col size="6">
+          <ion-button
+            expand="block"
+            fill="outline"
+            (click)="volverAPaciente()">
+            ← Volver
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
 </ion-content>

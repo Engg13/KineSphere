@@ -5,8 +5,8 @@
         <!-- Avatar -->
         <ion-col size="3">
           <ion-avatar class="avatar">
-            <ion-icon 
-              [name]="paciente.genero === 'Femenino' ? 'female' : 'male'" 
+            <ion-icon
+              [name]="paciente.genero === 'Femenino' ? 'female' : 'male'"
               size="large"
               [color]="getBadgeColor(paciente.genero)">
             </ion-icon>
@@ -16,33 +16,41 @@
         <!-- Información -->
         <ion-col size="6">
           <h3 class="nombre">{{ paciente.nombre }}</h3>
-          <p class="diagnostico" *ngIf="paciente.diagnostico">
-            {{ paciente.diagnostico }}
-          </p>
+          @if (paciente.diagnostico) {
+            <p class="diagnostico">
+              {{ paciente.diagnostico }}
+            </p>
+          }
           <div class="meta-info">
             <ion-badge [color]="getBadgeColor(paciente.genero)" class="badge">
               {{ paciente.genero || 'N/A' }}
             </ion-badge>
-            <span class="edad" *ngIf="paciente.edad">
-              • {{ paciente.edad }} años
-            </span>
+            @if (paciente.edad) {
+              <span class="edad">
+                • {{ paciente.edad }} años
+              </span>
+            }
           </div>
-          <p class="fecha-ingreso" *ngIf="paciente.fecha_ingreso">
-            Ingreso: {{ paciente.fecha_ingreso | date:'dd/MM/yyyy' }}
-          </p>
+          @if (paciente.fecha_ingreso) {
+            <p class="fecha-ingreso">
+              Ingreso: {{ paciente.fecha_ingreso | date:'dd/MM/yyyy' }}
+            </p>
+          }
         </ion-col>
 
         <!-- Acciones -->
-        <ion-col size="3" *ngIf="mostrarAcciones">
-          <div class="acciones">
-            <ion-button 
-              fill="clear" 
-              size="small" 
-              (click)="onNuevaSesion(); $event.stopPropagation()">
-              <ion-icon name="add-circle" color="primary"></ion-icon>
-            </ion-button>
-          </div>
-        </ion-col>
+        @if (mostrarAcciones) {
+          <ion-col size="3">
+            <div class="acciones">
+              <ion-button
+                fill="clear"
+                size="small"
+                (click)="onNuevaSesion(); $event.stopPropagation()">
+                <ion-icon name="add-circle" color="primary"></ion-icon>
+              </ion-button>
+            </div>
+          </ion-col>
+        }
       </ion-row>
     </ion-grid>
   </ion-card-content>

@@ -11,113 +11,119 @@
 
 <ion-content [fullscreen]="true">
   <div class="ion-padding">
-    
+
     <!-- INFORMACIÓN DEL PACIENTE -->
-    <ion-card *ngIf="paciente" class="paciente-info">
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="home" slot="start"></ion-icon>
-          Visita a Domicilio
-        </ion-card-title>
-        <ion-card-subtitle>
-          Paciente: {{ paciente.nombre }}
-        </ion-card-subtitle>
-      </ion-card-header>
-    </ion-card>
-
-    <!-- ESTADO DE CARGA -->
-    <div *ngIf="estaCargando" class="loading-container ion-text-center ion-padding">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p>Obteniendo ubicación...</p>
-    </div>
-
-    <!-- MAPA -->
-    <div *ngIf="ubicacionActual && !estaCargando" class="map-container">
-      <ion-card>
+    @if (paciente) {
+      <ion-card class="paciente-info">
         <ion-card-header>
           <ion-card-title>
-            <ion-icon name="map" slot="start"></ion-icon>
-            Ubicación Actual
+            <ion-icon name="home" slot="start"></ion-icon>
+            Visita a Domicilio
           </ion-card-title>
           <ion-card-subtitle>
-            📍 Lat: {{ ubicacionActual.latitud?.toFixed(6) }}, 
-            Lng: {{ ubicacionActual.longitud?.toFixed(6) }}
+            Paciente: {{ paciente.nombre }}
           </ion-card-subtitle>
         </ion-card-header>
-        
-        <ion-card-content>
-          <!-- CONTENEDOR DEL MAPA -->
-          <div #map class="map"></div>
-          
-          <!-- INFORMACIÓN DE UBICACIÓN -->
-          <ion-grid class="ubicacion-info">
-            <ion-row>
-              <ion-col size="6">
-                <p><strong>Precisión:</strong> {{ ubicacionActual.precision?.toFixed(1) }}m</p>
-              </ion-col>
-              <ion-col size="6">
-                <p><strong>Hora:</strong> {{ ubicacionActual.timestamp | date:'HH:mm' }}</p>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
       </ion-card>
-    </div>
+    }
+
+    <!-- ESTADO DE CARGA -->
+    @if (estaCargando) {
+      <div class="loading-container ion-text-center ion-padding">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Obteniendo ubicación...</p>
+      </div>
+    }
+
+    <!-- MAPA -->
+    @if (ubicacionActual && !estaCargando) {
+      <div class="map-container">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>
+              <ion-icon name="map" slot="start"></ion-icon>
+              Ubicación Actual
+            </ion-card-title>
+            <ion-card-subtitle>
+              📍 Lat: {{ ubicacionActual.latitud?.toFixed(6) }},
+              Lng: {{ ubicacionActual.longitud?.toFixed(6) }}
+            </ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <!-- CONTENEDOR DEL MAPA -->
+            <div #map class="map"></div>
+            <!-- INFORMACIÓN DE UBICACIÓN -->
+            <ion-grid class="ubicacion-info">
+              <ion-row>
+                <ion-col size="6">
+                  <p><strong>Precisión:</strong> {{ ubicacionActual.precision?.toFixed(1) }}m</p>
+                </ion-col>
+                <ion-col size="6">
+                  <p><strong>Hora:</strong> {{ ubicacionActual.timestamp | date:'HH:mm' }}</p>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    }
 
     <!-- BOTONES DE ACCIÓN -->
-    <ion-grid class="botones-accion" *ngIf="!estaCargando">
-      <ion-row>
-        <ion-col size="6">
-          <ion-button 
-            expand="block"  
-            (click)="obtenerUbicacionActual()"
-            [disabled]="estaCargando">
-            <ion-icon slot="start" name="refresh"></ion-icon>
-            Actualizar Ubicación
-          </ion-button>
-        </ion-col>
-        <ion-col size="6">
-          <ion-button 
-            expand="block"  
-            (click)="iniciarSeguimientoUbicacion()"
-            [disabled]="!ubicacionActual">
-            <ion-icon slot="start" name="navigate"></ion-icon>
-            Seguir Ubicación
-          </ion-button>
-        </ion-col>
-      </ion-row>
-      
-      <ion-row>
-        <ion-col size="12">
-          <ion-button 
-            expand="block"  
-            (click)="guardarVisitaDomiciliaria()"
-            [disabled]="!ubicacionActual">
-            <ion-icon slot="start" name="save"></ion-icon>
-            Guardar Visita
-          </ion-button>
-        </ion-col>
-      </ion-row>
-
-      <ion-row>
-        <ion-col size="12">
-          <ion-button 
-            expand="block" 
-            fill="outline" 
-            (click)="volverAlPaciente()">
-            <ion-icon slot="start" name="arrow-back"></ion-icon>
-            Volver al Paciente
-          </ion-button>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+    @if (!estaCargando) {
+      <ion-grid class="botones-accion">
+        <ion-row>
+          <ion-col size="6">
+            <ion-button
+              expand="block"
+              (click)="obtenerUbicacionActual()"
+              [disabled]="estaCargando">
+              <ion-icon slot="start" name="refresh"></ion-icon>
+              Actualizar Ubicación
+            </ion-button>
+          </ion-col>
+          <ion-col size="6">
+            <ion-button
+              expand="block"
+              (click)="iniciarSeguimientoUbicacion()"
+              [disabled]="!ubicacionActual">
+              <ion-icon slot="start" name="navigate"></ion-icon>
+              Seguir Ubicación
+            </ion-button>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12">
+            <ion-button
+              expand="block"
+              (click)="guardarVisitaDomiciliaria()"
+              [disabled]="!ubicacionActual">
+              <ion-icon slot="start" name="save"></ion-icon>
+              Guardar Visita
+            </ion-button>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="12">
+            <ion-button
+              expand="block"
+              fill="outline"
+              (click)="volverAlPaciente()">
+              <ion-icon slot="start" name="arrow-back"></ion-icon>
+              Volver al Paciente
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    }
 
     <!-- ESTADO SIN UBICACIÓN -->
-    <div *ngIf="!ubicacionActual && !estaCargando" class="empty-state ion-text-center ion-padding">
-      <ion-icon name="location-outline" size="large" color="medium"></ion-icon>
-      <h3>Ubicación no disponible</h3>
-      <p>Usa el botón "Actualizar Ubicación" para obtener tu ubicación actual</p>
-    </div>
+    @if (!ubicacionActual && !estaCargando) {
+      <div class="empty-state ion-text-center ion-padding">
+        <ion-icon name="location-outline" size="large" color="medium"></ion-icon>
+        <h3>Ubicación no disponible</h3>
+        <p>Usa el botón "Actualizar Ubicación" para obtener tu ubicación actual</p>
+      </div>
+    }
 
   </div>
 </ion-content>

@@ -7,32 +7,37 @@
 
   <!-- Escala numérica compacta -->
   <div class="escala-numerica">
-    <div 
-      *ngFor="let escala of escalas"
-      class="numero-eva"
-      [class.selected]="valor === escala.valor"
-      [class.readonly]="readonly"
-      (click)="seleccionarValor(escala.valor)">
-      
-      <div class="circulo-numero" [class]="'color-' + getColorEscala(escala.valor)">
-        {{ escala.valor }}
+    @for (escala of escalas; track escala) {
+      <div
+        class="numero-eva"
+        [class.selected]="valor === escala.valor"
+        [class.readonly]="readonly"
+        (click)="seleccionarValor(escala.valor)">
+        <div class="circulo-numero" [class]="'color-' + getColorEscala(escala.valor)">
+          {{ escala.valor }}
+        </div>
+        @if (escala.texto.includes('-')) {
+          <div class="etiqueta-nivel">
+            {{ escala.texto.split('-')[1].trim() }}
+          </div>
+        }
       </div>
-      
-      <div class="etiqueta-nivel" *ngIf="escala.texto.includes('-')">
-        {{ escala.texto.split('-')[1].trim() }}
-      </div>
-    </div>
+    }
   </div>
 
   <!-- Indicador de selección -->
-  <div class="indicador-seleccion" *ngIf="valor !== null && valor !== undefined">
-    <ion-badge [color]="getColorEscala(valor)">
-      {{ getTextoEscala() }}
-    </ion-badge>
-  </div>
+  @if (valor !== null && valor !== undefined) {
+    <div class="indicador-seleccion">
+      <ion-badge [color]="getColorEscala(valor)">
+        {{ getTextoEscala() }}
+      </ion-badge>
+    </div>
+  }
 
   <!-- Estado readonly -->
-  <div *ngIf="readonly" class="readonly-notice">
-    <ion-note>Nivel de dolor registrado</ion-note>
-  </div>
+  @if (readonly) {
+    <div class="readonly-notice">
+      <ion-note>Nivel de dolor registrado</ion-note>
+    </div>
+  }
 </div>

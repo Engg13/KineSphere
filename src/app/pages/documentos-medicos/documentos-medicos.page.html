@@ -28,33 +28,36 @@
     </ion-grid>
 
     <!-- LISTA DE DOCUMENTOS -->
-    <div *ngIf="documentos.length > 0" class="documentos-list">
-      <h3>Documentos Guardados ({{documentos.length}})</h3>
-      
-      <ion-list>
-        <ion-item *ngFor="let doc of documentos" class="documento-item">
-          <ion-thumbnail slot="start">
-            <img [src]="doc.imagen" (click)="verDocumento(doc)" />
-          </ion-thumbnail>
-          
-          <ion-label>
-            <h3>Documento Médico</h3>
-            <p>{{ doc.fecha }}</p>
-            <p>Paciente ID: {{ doc.pacienteId }}</p>
-          </ion-label>
-          
-          <ion-button slot="end" fill="clear" color="danger" (click)="eliminarDocumento(doc.id)">
-            <ion-icon name="trash"></ion-icon>
-          </ion-button>
-        </ion-item>
-      </ion-list>
-    </div>
+    @if (documentos.length > 0) {
+      <div class="documentos-list">
+        <h3>Documentos Guardados ({{documentos.length}})</h3>
+        <ion-list>
+          @for (doc of documentos; track doc) {
+            <ion-item class="documento-item">
+              <ion-thumbnail slot="start">
+                <img [src]="doc.imagen" (click)="verDocumento(doc)" />
+              </ion-thumbnail>
+              <ion-label>
+                <h3>Documento Médico</h3>
+                <p>{{ doc.fecha }}</p>
+                <p>Paciente ID: {{ doc.pacienteId }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="clear" color="danger" (click)="eliminarDocumento(doc.id)">
+                <ion-icon name="trash"></ion-icon>
+              </ion-button>
+            </ion-item>
+          }
+        </ion-list>
+      </div>
+    }
 
     <!-- ESTADO VACÍO -->
-    <div *ngIf="documentos.length === 0" class="empty-state ion-text-center">
-      <ion-icon name="document-attach-outline" size="large" color="medium"></ion-icon>
-      <h3>No hay documentos</h3>
-      <p>Usa los botones arriba para agregar documentos médicos</p>
-    </div>
+    @if (documentos.length === 0) {
+      <div class="empty-state ion-text-center">
+        <ion-icon name="document-attach-outline" size="large" color="medium"></ion-icon>
+        <h3>No hay documentos</h3>
+        <p>Usa los botones arriba para agregar documentos médicos</p>
+      </div>
+    }
   </div>
 </ion-content>

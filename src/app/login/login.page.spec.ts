@@ -1,32 +1,46 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IonicModule } from '@ionic/angular'; 
 import { LoginPage } from './login.page';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core'; 
+import { IonicModule } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
 
 describe('LoginPage', () => {
   let component: LoginPage;
   let fixture: ComponentFixture<LoginPage>;
 
-  beforeEach(async () => { 
-    // CONFIGURAR EL TestBed 
+  beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [LoginPage], 
+      declarations: [LoginPage],
       imports: [
-        IonicModule.forRoot(),   
-        FormsModule,             
-        ReactiveFormsModule      
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA] 
-    }).compileComponents(); 
+        IonicModule.forRoot(),
+        FormsModule
+      ]
+    }).compileComponents();
 
-    
     fixture = TestBed.createComponent(LoginPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('debería crear el componente', () => {
+    // Forma más explícita que evita problemas de tipos
+    expect(component).not.toBeNull();
+    expect(component).not.toBeUndefined();
+    expect(component instanceof LoginPage).toBe(true);
+  });
+
+  it('debería tener propiedades inicializadas', () => {
+    expect(component.username).toEqual('');
+    expect(component.password).toEqual('');
+    expect(component.showPwd).toBe(false);
+  });
+
+  it('debería cambiar visibilidad de contraseña', () => {
+    const initialState = component.showPwd;
+    
+    component.togglePwd();
+    expect(component.showPwd).toBe(!initialState);
+    
+    component.togglePwd();
+    expect(component.showPwd).toBe(initialState);
   });
 });

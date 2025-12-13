@@ -3,113 +3,130 @@
 
 <ion-content [fullscreen]="true" class="ion-padding">
   <!-- Header personalizado -->
-  <div class="custom-header">
+  <div class="custom-header" data-test="app-header">
     <div class="main-title">
-      <h1>KINESPHERE</h1>
+      <h1 data-test="app-title">KINESPHERE</h1>
     </div>
     <div class="subtitle">
-      <p>Seguimiento de pacientes</p>
+      <p data-test="app-subtitle">Seguimiento de pacientes</p>
     </div>
   </div>
 
   <div class="login-container">
-    
+
     <!-- Logo o ícono -->
-    <div class="logo-section">
-      <ion-icon name="walk-outline" size="large" color="success"></ion-icon>
-      <h2>Bienvenido</h2>
-      <p>Ingresa a tu cuenta para continuar</p>
+    <div class="logo-section" data-test="welcome-section">
+      <ion-icon name="walk-outline" size="large" color="success" data-test="app-icon"></ion-icon>
+      <h2 data-test="welcome-title">Bienvenido</h2>
+      <p data-test="welcome-subtitle">Ingresa a tu cuenta para continuar</p>
     </div>
-  
 
     <!-- Formulario de Login -->
-    <ion-card>
+    <ion-card data-test="login-card">
       <ion-card-content>
-          <form (ngSubmit)="login()">
-            <ion-item>
-              <!-- Campo Usuario -->
-              <ion-icon name="person-circle-outline" slot="start" color="medium"></ion-icon>
-              <ion-label position="stacked">Usuario</ion-label>
-              <ion-input 
-                type="text" 
-                placeholder="Ingresa tu usuario"
-                [(ngModel)]="username" 
-                name="username"
-                #usernameRef="ngModel"
-                required
-                minlength="3"
-                maxlength="8"
-                pattern="[a-zA-Z0-9]*">
-              </ion-input>
-            </ion-item>
+        <form (ngSubmit)="login()" data-test="login-form">
+          <!-- Campo Usuario -->
+          <ion-item data-test="username-item">
+            <ion-icon name="person-circle-outline" slot="start" color="medium" data-test="username-icon"></ion-icon>
+            <ion-label position="stacked" data-test="username-label">Usuario</ion-label>
+            <ion-input
+              data-test="username-input"
+              type="text"
+              placeholder="Ingresa tu usuario"
+              [(ngModel)]="username"
+              name="username"
+              #usernameRef="ngModel"
+              required
+              minlength="3"
+              maxlength="8"
+              pattern="[a-zA-Z0-9]*">
+            </ion-input>
+          </ion-item>
 
-            <ion-note color="danger" *ngIf="usernameRef.invalid && usernameRef.touched">
+          @if (usernameRef.invalid && usernameRef.touched) {
+            <ion-note color="danger" data-test="username-error">
               El usuario debe tener entre 3 y 8 caracteres y ser alfanumérico
             </ion-note>
+          }
 
-            <!-- Campo Contraseña -->
-            <ion-item>
-              <ion-icon name="key-outline" slot="start" color="medium"></ion-icon>
-              <ion-label position="stacked">Contraseña</ion-label>
-              <ion-input 
-                [type]="showPwd ? 'text' : 'password'" 
-                placeholder="Ingresa tu contraseña de 4 digitos"
-                [(ngModel)]="password" 
-                name="password"
-                #passwordRef="ngModel"
-                required
-                minlength="4"
-                maxlength="4"
-                pattern="[0-9]*"
-                autocomplete="current-password">
-              </ion-input>
-              
-              <!-- Botón para mostrar/ocultar contraseña -->
-              <ion-button fill="clear" slot="end" (click)="togglePwd()" class="eye-button">
-                <ion-icon [name]="showPwd ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
-              </ion-button>
-            </ion-item>
+          <!-- Campo Contraseña -->
+          <ion-item data-test="password-item">
+            <ion-icon name="key-outline" slot="start" color="medium" data-test="password-icon"></ion-icon>
+            <ion-label position="stacked" data-test="password-label">Contraseña</ion-label>
+            <ion-input
+              data-test="password-input"
+              [type]="showPwd ? 'text' : 'password'"
+              placeholder="Ingresa tu contraseña de 4 digitos"
+              [(ngModel)]="password"
+              name="password"
+              #passwordRef="ngModel"
+              required
+              minlength="4"
+              maxlength="4"
+              pattern="[0-9]*"
+              autocomplete="current-password">
+            </ion-input>
 
-            <ion-note color="danger" *ngIf="passwordRef.invalid && passwordRef.touched">
+            <!-- Botón para mostrar/ocultar contraseña -->
+            <ion-button 
+              data-test="toggle-password-btn"
+              fill="clear" 
+              slot="end" 
+              (click)="togglePwd()" 
+              class="eye-button">
+              <ion-icon 
+                [name]="showPwd ? 'eye-off-outline' : 'eye-outline'"
+                data-test="toggle-password-icon">
+              </ion-icon>
+            </ion-button>
+          </ion-item>
+
+          @if (passwordRef.invalid && passwordRef.touched) {
+            <ion-note color="danger" data-test="password-error">
               Debe ser un número de 4 dígitos
             </ion-note>
+          }
 
-            <!-- Recordar contraseña -->
-            <ion-item lines="none">
-              <ion-checkbox 
-                slot="start" 
-                [(ngModel)]="rememberMe"
-                name="rememberMe">
-              </ion-checkbox>
-              <ion-label>Recordar mis datos</ion-label>
-            </ion-item>
+          <!-- Recordar contraseña -->
+          <ion-item lines="none" data-test="remember-item">
+            <ion-checkbox
+              data-test="remember-checkbox"
+              slot="start"
+              [(ngModel)]="rememberMe"
+              name="rememberMe">
+            </ion-checkbox>
+            <ion-label data-test="remember-label">Recordar mis datos</ion-label>
+          </ion-item>
 
-            <!-- Botón de Login -->
-            <ion-button 
-              type="button" 
-              expand="block" 
-              class="ion-margin-top login-button"
-              (click)="login()"
-              [disabled]="!username || !password">
-              Ingresar
-            </ion-button>
-          </form> 
-        
+          <!-- Botón de Login -->
+          <ion-button
+            data-test="login-button"
+            type="button"
+            expand="block"
+            class="ion-margin-top login-button"
+            (click)="login()"
+            [disabled]="!username || !password">
+            Ingresar
+          </ion-button>
+        </form>
       </ion-card-content>
     </ion-card>
 
     <!-- Enlaces adicionales -->
-    <div class="links-section">   
-      <ion-button fill="clear" size="small" routerLink="/register" color="success">
+    <div class="links-section" data-test="links-section">
+      <ion-button 
+        data-test="register-link"
+        fill="clear" 
+        size="small" 
+        routerLink="/register" 
+        color="success">
         Crea tu cuenta gratis
       </ion-button>
-    </div> 
-
-    <!-- Separador -->
-    <div class="separator">
-      <span></span>
     </div>
 
-  </div> 
-  
+    <!-- Separador -->
+    <div class="separator" data-test="separator">
+      <span></span>
+    </div>
+  </div>
 </ion-content>

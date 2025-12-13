@@ -1,151 +1,154 @@
 <ion-content [fullscreen]="true">
   <!-- ESTADO DE CARGA -->
-  <div *ngIf="estaCargando" class="loading-container ion-text-center ion-padding">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Cargando datos del paciente...</p>
-  </div>
+  @if (estaCargando) {
+    <div class="loading-container ion-text-center ion-padding">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando datos del paciente...</p>
+    </div>
+  }
 
   <!-- CONTENIDO PRINCIPAL -->
-  <div *ngIf="!estaCargando && paciente" class="ion-padding">
-    
-    <!-- TARJETA DE INFORMACIÓN DEL PACIENTE -->
-    <ion-card class="paciente-card">
-      <ion-card-header>
-        <ion-card-title>
-          <ion-avatar slot="start" class="avatar-large">
-            <ion-icon name="person-circle" size="large"></ion-icon>
-          </ion-avatar>
-          {{ paciente.nombre }}
-        </ion-card-title>
-        <ion-card-subtitle>
-          <ion-badge [color]="paciente.activo ? 'success' : 'medium'">
-            {{ paciente.activo ? 'Activo' : 'Finalizado' }}
-          </ion-badge>
-          • {{ paciente.diagnostico }}
-        </ion-card-subtitle>
-      </ion-card-header>
-
-      <ion-card-content>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="6">
-              <p><strong>Edad:</strong> {{ paciente.edad }} años</p>
-              <p><strong>RUT:</strong> {{ paciente.rut }}</p>
-              <p><strong>Teléfono:</strong> {{ paciente.telefono }}</p>
-            </ion-col>
-            <ion-col size="6">
-              <p><strong>Email:</strong> {{ paciente.email }}</p>
-              <p><strong>Fecha Ingreso:</strong> {{ paciente.fechaIngreso }}</p>
-              <p><strong>Sesiones:</strong> {{ paciente.sesionesCompletadas }}/{{ paciente.sesionesPlanificadas }}</p>
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="12">
-              <p><strong>Dirección:</strong> {{ paciente.direccion }}</p>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-
-        <!-- BOTONES DE ACCIÓN RÁPIDA -->
-        <ion-grid class="botones-rapidos">
-          <ion-row>
-            <ion-col size="4">
-              <ion-button expand="block" fill="clear"  (click)="llamarPaciente()">
-                <ion-icon name="call"></ion-icon>
-                Llamar
+  @if (!estaCargando && paciente) {
+    <div class="ion-padding">
+      <!-- TARJETA DE INFORMACIÓN DEL PACIENTE -->
+      <ion-card class="paciente-card">
+        <ion-card-header>
+          <ion-card-title>
+            <ion-avatar slot="start" class="avatar-large">
+              <ion-icon name="person-circle" size="large"></ion-icon>
+            </ion-avatar>
+            {{ paciente.nombre }}
+          </ion-card-title>
+          <ion-card-subtitle>
+            <ion-badge [color]="paciente.activo ? 'success' : 'medium'">
+              {{ paciente.activo ? 'Activo' : 'Finalizado' }}
+            </ion-badge>
+            • {{ paciente.diagnostico }}
+          </ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="6">
+                <p><strong>Edad:</strong> {{ paciente.edad }} años</p>
+                <p><strong>RUT:</strong> {{ paciente.rut }}</p>
+                <p><strong>Teléfono:</strong> {{ paciente.telefono }}</p>
+              </ion-col>
+              <ion-col size="6">
+                <p><strong>Email:</strong> {{ paciente.email }}</p>
+                <p><strong>Fecha Ingreso:</strong> {{ paciente.fechaIngreso }}</p>
+                <p><strong>Sesiones:</strong> {{ paciente.sesionesCompletadas }}/{{ paciente.sesionesPlanificadas }}</p>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="12">
+                <p><strong>Dirección:</strong> {{ paciente.direccion }}</p>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+          <!-- BOTONES DE ACCIÓN RÁPIDA -->
+          <ion-grid class="botones-rapidos">
+            <ion-row>
+              <ion-col size="4">
+                <ion-button expand="block" fill="clear"  (click)="llamarPaciente()">
+                  <ion-icon name="call"></ion-icon>
+                  Llamar
+                </ion-button>
+              </ion-col>
+              <ion-col size="4">
+                <ion-button expand="block" fill="clear"  (click)="enviarEmail()">
+                  <ion-icon name="mail"></ion-icon>
+                  Email
+                </ion-button>
+              </ion-col>
+              <ion-col size="4">
+                <ion-button expand="block" fill="clear"  (click)="editarPaciente()">
+                  <ion-icon name="create"></ion-icon>
+                  Editar
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+      <!-- BOTONES PRINCIPALES DE ACCIÓN -->
+      <ion-grid class="botones-principales">
+        <ion-row>
+          <ion-col size="6">
+            <ion-button expand="block" (click)="nuevaSesion()">
+              <ion-icon slot="start" name="add-circle"></ion-icon>
+              Nueva Sesión
+            </ion-button>
+          </ion-col>
+          <ion-col size="6">
+            <ion-button expand="block"  (click)="irADocumentos()">
+              <ion-icon slot="start" name="document-attach"></ion-icon>
+              📄 Documentos
+            </ion-button>
+          </ion-col>
+        </ion-row>
+        <!--  BOTÓN VISITA DOMICILIARIA -->
+        <ion-row>
+          <ion-col size="6">
+            <ion-button expand="block"  (click)="irAVisitaDomiciliaria()">
+              <ion-icon slot="start" name="navigate"></ion-icon>
+              🏠 Visita Domicilio
+            </ion-button>
+          </ion-col>
+          <ion-col size="6">
+            <ion-button expand="block" fill="outline" (click)="volverALista()">
+              <ion-icon slot="start" name="arrow-back"></ion-icon>
+              Volver a Lista
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+      <!-- HISTORIAL DE SESIONES -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>
+            <ion-icon name="time" slot="start"></ion-icon>
+            Historial de Sesiones
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          @if (historialSesiones.length > 0) {
+            <div>
+              <ion-list>
+                @for (sesion of historialSesiones; track sesion) {
+                  <ion-item>
+                    <ion-label>
+                      <h3>📅 {{ sesion.fecha }}</h3>
+                      <p>EVA: {{ sesion.eva }}/10</p>
+                      <p>{{ sesion.observaciones }}</p>
+                    </ion-label>
+                  </ion-item>
+                }
+              </ion-list>
+            </div>
+          }
+          @if (historialSesiones.length === 0) {
+            <div class="empty-state">
+              <p>No hay sesiones registradas</p>
+              <ion-button (click)="nuevaSesion()" fill="outline">
+                Agregar Primera Sesión
               </ion-button>
-            </ion-col>
-            <ion-col size="4">
-              <ion-button expand="block" fill="clear"  (click)="enviarEmail()">
-                <ion-icon name="mail"></ion-icon>
-                Email
-              </ion-button>
-            </ion-col>
-            <ion-col size="4">
-              <ion-button expand="block" fill="clear"  (click)="editarPaciente()">
-                <ion-icon name="create"></ion-icon>
-                Editar
-              </ion-button>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- BOTONES PRINCIPALES DE ACCIÓN -->
-    <ion-grid class="botones-principales">
-      <ion-row>
-        <ion-col size="6">
-          <ion-button expand="block" (click)="nuevaSesion()">
-            <ion-icon slot="start" name="add-circle"></ion-icon>
-            Nueva Sesión
-          </ion-button>
-        </ion-col>
-        <ion-col size="6">
-          <ion-button expand="block"  (click)="irADocumentos()">
-            <ion-icon slot="start" name="document-attach"></ion-icon>
-            📄 Documentos
-          </ion-button>
-        </ion-col>
-      </ion-row>
-      
-      <!--  BOTÓN VISITA DOMICILIARIA -->
-      <ion-row>
-        <ion-col size="6">
-          <ion-button expand="block"  (click)="irAVisitaDomiciliaria()">
-            <ion-icon slot="start" name="navigate"></ion-icon>
-            🏠 Visita Domicilio
-          </ion-button>
-        </ion-col>
-        <ion-col size="6">
-          <ion-button expand="block" fill="outline" (click)="volverALista()">
-            <ion-icon slot="start" name="arrow-back"></ion-icon>
-            Volver a Lista
-          </ion-button>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-
-    <!-- HISTORIAL DE SESIONES -->
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>
-          <ion-icon name="time" slot="start"></ion-icon>
-          Historial de Sesiones
-        </ion-card-title>
-      </ion-card-header>
-
-      <ion-card-content>
-        <div *ngIf="historialSesiones.length > 0">
-          <ion-list>
-            <ion-item *ngFor="let sesion of historialSesiones">
-              <ion-label>
-                <h3>📅 {{ sesion.fecha }}</h3>
-                <p>EVA: {{ sesion.eva }}/10</p>
-                <p>{{ sesion.observaciones }}</p>
-              </ion-label>
-            </ion-item>
-          </ion-list>
-        </div>
-        
-        <div *ngIf="historialSesiones.length === 0" class="empty-state">
-          <p>No hay sesiones registradas</p>
-          <ion-button (click)="nuevaSesion()" fill="outline">
-            Agregar Primera Sesión
-          </ion-button>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-  </div>
+            </div>
+          }
+        </ion-card-content>
+      </ion-card>
+    </div>
+  }
 
   <!-- ESTADO DE ERROR -->
-  <div *ngIf="!estaCargando && !paciente" class="error-state ion-text-center ion-padding">
-    <ion-icon name="warning-outline" size="large" color="danger"></ion-icon>
-    <h3>No se pudo cargar el paciente</h3>
-    <p>El paciente solicitado no existe o no se pudo cargar</p>
-    <ion-button (click)="volverALista()" color="primary">
-      Volver a la lista
-    </ion-button>
-  </div>
+  @if (!estaCargando && !paciente) {
+    <div class="error-state ion-text-center ion-padding">
+      <ion-icon name="warning-outline" size="large" color="danger"></ion-icon>
+      <h3>No se pudo cargar el paciente</h3>
+      <p>El paciente solicitado no existe o no se pudo cargar</p>
+      <ion-button (click)="volverALista()" color="primary">
+        Volver a la lista
+      </ion-button>
+    </div>
+  }
 </ion-content>
