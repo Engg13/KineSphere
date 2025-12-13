@@ -1,71 +1,91 @@
-<!-- src/app/pages/ejercicios/ejercicios.page.html -->
 <ion-header>
   <ion-toolbar color="primary">
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/dashboard" text="Volver"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Ejercicios Terapéuticos</ion-title>
+    <ion-title>
+      <ion-icon name="barbell-outline" slot="start"></ion-icon>
+      Biblioteca de Ejercicios
+    </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Barra de búsqueda -->
-  <ion-searchbar
-    [(ngModel)]="terminoBusqueda"
-    (ionInput)="filtrarEjercicios()"
-    (ionClear)="limpiarBusqueda()"
-    placeholder="Buscar ejercicios..."
-    animated
-    debounce="300"
-    class="search-bar">
-  </ion-searchbar>
-
-  <!-- Loading -->
-  <div *ngIf="estaCargando" class="cargando-container">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Cargando ejercicios...</p>
-  </div>
-
-  <!-- Lista de ejercicios -->
-  <ion-list *ngIf="!estaCargando && ejerciciosFiltrados.length > 0">
-    <ion-item 
-      *ngFor="let ejercicio of ejerciciosFiltrados" 
-      (click)="seleccionarEjercicio(ejercicio)"
-      button
-      detail
-      class="ejercicio-item">
-      
-      <ion-label class="ion-text-wrap">
-        <h2 class="ejercicio-nombre">{{ ejercicio.nombre }}</h2>
-        
-        <p class="ejercicio-descripcion">
-          {{ ejercicio.descripcion ? (ejercicio.descripcion | slice:0:100) : 'Descripción no disponible' }}
-          {{ ejercicio.descripcion && ejercicio.descripcion.length > 100 ? '...' : '' }}
-        </p>
-        
-        <div class="ejercicio-meta">
-          <ion-chip color="primary" outline size="small">
-            <ion-label>{{ obtenerNombreCategoria(ejercicio.categoria) }}</ion-label>
-          </ion-chip>
-          
-          <ion-text color="medium">
-            <small>ID: {{ ejercicio.id }}</small>
-          </ion-text>
-        </div>
-      </ion-label>
-    </ion-item>
-  </ion-list>
-
-  <!-- Estado vacío -->
-  <div *ngIf="!estaCargando && ejerciciosFiltrados.length === 0" class="estado-vacio">
-    <ion-icon name="barbell-outline" size="large" color="medium"></ion-icon>
-    <h3>No se encontraron ejercicios</h3>
-    <p *ngIf="terminoBusqueda">No hay resultados para "{{ terminoBusqueda }}"</p>
-    <p *ngIf="!terminoBusqueda">No hay ejercicios disponibles en este momento</p>
-    
-    <ion-button *ngIf="terminoBusqueda" fill="clear" (click)="limpiarBusqueda()">
-      <ion-icon slot="start" name="refresh-outline"></ion-icon>
-      Mostrar todos
+  <!-- BOTÓN DE VOLVER EN LA PARTE SUPERIOR DEL CONTENIDO -->
+  <div class="back-button-container" style="margin-bottom: 20px;">
+    <ion-button (click)="volverAtras()" fill="outline" color="medium">
+      <ion-icon name="arrow-back" slot="start"></ion-icon>
+      Volver
     </ion-button>
   </div>
+
+  <!-- BÚSQUEDA -->
+  <div class="search-section">
+    <ion-searchbar
+      [(ngModel)]="terminoBusqueda"
+      (ionChange)="filtrarEjercicios()"
+      placeholder="Buscar ejercicios..."
+      animated>
+    </ion-searchbar>
+  </div>
+
+  <!-- ESTADOS -->
+  <ng-container *ngIf="!loading.ejercicios && !error; else loadingError">
+    
+    <!-- SIN RESULTADOS -->
+    <div *ngIf="hayResultadosBusqueda" class="no-results">
+      <ion-icon name="fitness-outline"></ion-icon>
+      <h3>No hay coincidencias</h3>
+      <p>No encontramos ejercicios con "{{terminoBusqueda}}"</p>
+      <ion-button fill="clear" (click)="limpiarBusqueda()">
+        Ver todos
+      </ion-button>
+    </div>
+
+    <!-- LISTA - SOLO SI HAY EJERCICIOS -->
+    <ng-container *ngIf="ejerciciosFiltrados && ejerciciosFiltrados.length > 0">
+      <ion-list lines="none">
+        <ion-item 
+          *ngFor="let ejercicio of ejerciciosFiltrados; trackBy: trackById"
+          (click)="seleccionarEjercicio(ejercicio)"
+          button
+          detail>
+          
+          <ion-icon 
+            slot="start" 
+            [name]="getExerciseIcon(ejercicio.categoria)" 
+            color="primary">
+          </ion-icon>
+          
+          <ion-label>
+            <h2>{{ejercicio.nombre}}</h2>
+            <p>{{ejercicio.descripcion | slice:0:100}}...</p>
+            
+            <div>
+              <ion-badge color="light">
+                {{obtenerNombreCategoria(ejercicio.categoria)}}
+              </ion-badge>
+            </div>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ng-container>
+
+  </ng-container>
+
+  <!-- LOADING/ERROR TEMPLATE -->
+  <ng-template #loadingError>
+    <!-- LOADING STATE -->
+    <div *ngIf="loading.ejercicios" class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando ejercicios...</p>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div *ngIf="error && !loading.ejercicios" class="error-state">
+      <ion-icon name="cloud-offline-outline"></ion-icon>
+      <h3>Error</h3>
+      <p>{{error}}</p>
+      <ion-button (click)="recargarDatos()">
+        Reintentar
+      </ion-button>
+    </div>
+  </ng-template>
 </ion-content>

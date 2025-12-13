@@ -11,32 +11,32 @@ const routes: Routes = [
   {
     path: 'dashboard',
     loadChildren: () => import('./pages/dashboard/dashboard.module').then(m => m.DashboardPageModule),
-    canActivate: [AuthGuard]  // ✅ PROTEGIDO
+    canActivate: [AuthGuard]  
   },
   {
     path: 'pacientes-lista',
     loadChildren: () => import('./pages/pacientes-lista/pacientes-lista.module').then(m => m.PacientesListaPageModule),
-    canActivate: [AuthGuard]  // ✅ PROTEGIDO
+    canActivate: [AuthGuard]  
   },
   {
     path: 'paciente-detalle',
     loadChildren: () => import('./pages/paciente-detalle/paciente-detalle.module').then(m => m.PacienteDetallePageModule),
-    canActivate: [AuthGuard]  // ✅ PROTEGIDO
+    canActivate: [AuthGuard]  
   },
   {
     path: 'sesion',
     loadChildren: () => import('./pages/sesion/sesion.module').then(m => m.SesionPageModule),
-    canActivate: [AuthGuard]  // ✅ PROTEGIDO
+    canActivate: [AuthGuard]  
   },
   {
     path: 'ejercicios',
     loadChildren: () => import('./pages/ejercicios/ejercicios.module').then(m => m.EjerciciosPageModule),
-    canActivate: [AuthGuard]  // ✅ PROTEGIDO
+    canActivate: [AuthGuard]  
   },
   {
     path: 'evaluacion-final',
     loadChildren: () => import('./pages/evaluacion-final/evaluacion-final.module').then(m => m.EvaluacionFinalPageModule),
-    canActivate: [AuthGuard]  // ✅ PROTEGIDO
+    canActivate: [AuthGuard]  
   },
   {
     path: '',

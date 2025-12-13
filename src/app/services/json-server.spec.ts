@@ -1,13 +1,27 @@
 import { TestBed } from '@angular/core/testing';
-
-import { JsonServer } from './json-server';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { JsonServerService } from './json-server.service';
 
 describe('JsonServer', () => {
-  let service: JsonServer;
+  let service: JsonServerService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(JsonServer);
+    TestBed.configureTestingModule({
+      providers: [
+        JsonServerService,
+        provideHttpClient(withInterceptorsFromDi()), 
+        provideHttpClientTesting()                    
+      ]
+    });
+
+    service = TestBed.inject(JsonServerService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
   it('should be created', () => {

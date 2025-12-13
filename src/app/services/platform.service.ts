@@ -86,7 +86,7 @@ export class PlatformService {
   // ✅ FORZAR MODO WEB PARA DESARROLLO
   shouldUseSQLite(): boolean {
     // ✅ TEMPORAL: Forzar modo web para desarrollo/video
-    const forceWebMode = true; // Cambiar a false cuando sea para producción
+    const forceWebMode = false; // Cambiar a false cuando sea para producción
     
     if (forceWebMode) {
       console.log('🌐 MODO WEB Usando localStorage');

@@ -10,7 +10,16 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "test:e2e": "npm run webdriver-update && protractor e2e/protractor.conf.js",
+    "e2e": "protractor e2e/protractor.conf.js",
+    "e2e:login": "protractor e2e/protractor.conf.js --specs=e2e/src/01-login-flow.e2e-spec.ts",
+    "e2e:pacientes": "protractor e2e/protractor.conf.js --specs=e2e/src/02-pacientes-crud.e2e-spec.ts",
+    "e2e:headless": "protractor e2e/protractor.conf.js --capabilities.chromeOptions.args='--headless'",
+    "webdriver-update": "webdriver-manager update --versions.chrome=119.0.6045.105",
+    "webdriver-start": "webdriver-manager start",
+    "test:all": "npm test && echo '✅ Pruebas unitarias OK' && npm run e2e:headless",
+    "test:ci": "npm test -- --no-watch --browsers=ChromeHeadless && npm run e2e:headless"
   },
   "private": true,
   "dependencies": {
@@ -53,6 +62,8 @@
     "@capacitor/cli": "7.4.4",
     "@ionic/angular-toolkit": "^12.0.0",
     "@types/jasmine": "~5.1.0",
+    "@types/jasminewd2": "^2.0.3",
+    "@types/node": "^18.0.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.16.0",
@@ -66,6 +77,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "ts-node": "^10.9.0",
     "typescript": "~5.8.0"
   },
   "description": "An Ionic project"
