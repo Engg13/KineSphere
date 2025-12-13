@@ -1,0 +1,72 @@
+﻿<ion-header>
+  <ion-toolbar>
+    <ion-title>Configuración KineSphere</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Información General</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list>
+        <ion-item>
+          <ion-label>Nombre App</ion-label>
+          <ion-text color="primary">{{config?.appName}}</ion-text>
+        </ion-item>
+        <ion-item>
+          <ion-label>Versión</ion-label>
+          <ion-text color="primary">{{config?.appVersion}}</ion-text>
+        </ion-item>
+        <ion-item>
+          <ion-label>Entorno</ion-label>
+          <ion-badge [color]="getEnvColor()">{{config?.environment}}</ion-badge>
+        </ion-item>
+        <ion-item>
+          <ion-label>Plataforma</ion-label>
+          <ion-badge color="secondary">{{config?.platform}}</ion-badge>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Configuración API</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-item>
+        <ion-label>Base URL</ion-label>
+        <ion-text>{{config?.api?.baseUrl}}</ion-text>
+      </ion-item>
+      <ion-item>
+        <ion-label>Endpoint Auth</ion-label>
+        <ion-text>{{authEndpoint}}</ion-text>
+      </ion-item>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Funcionalidades Habilitadas</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list>
+        <ion-item *ngFor="let feature of featuresList">
+          <ion-label>{{feature.name}}</ion-label>
+          <ion-toggle [checked]="feature.enabled" disabled></ion-toggle>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Configuración Específica de Plataforma</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <pre>{{platformConfig | json}}</pre>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

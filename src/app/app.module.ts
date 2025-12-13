@@ -18,6 +18,7 @@ import { SQLite } from '@awesome-cordova-plugins/sqlite/ngx';
 import { DatabaseService } from './services/database.service';
 import { JsonServerService } from './services/json-server.service';
 import { PlatformService } from './services/platform.service';
+import { ConfigService } from './core/config/config.service';
 
 // Componentes
 
@@ -48,6 +49,7 @@ import { PlatformService } from './services/platform.service';
     DatabaseService,
     JsonServerService,
     PlatformService,
+    ConfigService,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideHttpClient(withInterceptorsFromDi())
   ],

@@ -61,6 +61,11 @@ const routes: Routes = [
     path: 'documentos-medicos',
     loadChildren: () => import('./pages/documentos-medicos/documentos-medicos.module').then( m => m.DocumentosMedicosPageModule)
   },
+
+  {
+  path: 'config-test',
+  loadChildren: () => import('./pages/config-test/config-test.module').then(m => m.ConfigTestPageModule)
+  },
   
   {
     path: '**',
