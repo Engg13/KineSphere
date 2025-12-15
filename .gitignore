@@ -68,3 +68,9 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Archivos de firma de Android - NUNCA SUBIR
+*.keystore
+*.jks
+keystore.properties
+key.properties
