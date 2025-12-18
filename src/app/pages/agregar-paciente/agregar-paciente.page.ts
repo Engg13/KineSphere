@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { NavController, ToastController, Platform } from '@ionic/angular';
 import { JsonServerService } from '../../services/json-server.service';
 import { DatabaseService } from '../../services/database.service';
@@ -25,6 +25,10 @@ export class AgregarPacientePage {
     fechaCreacion: new Date().toISOString()
   };
 
+  // Propiedades para control del teclado
+  tecladoVisible = false;
+  @ViewChild('diagnosticoTextarea') diagnosticoTextarea!: ElementRef;
+
   constructor(
     private navCtrl: NavController,
     private toastController: ToastController,
@@ -33,12 +37,87 @@ export class AgregarPacientePage {
     private databaseService: DatabaseService
   ) {}
 
-  //  Actualizar edad automáticamente cuando cambia la fecha
+  // === MÉTODOS PARA MANEJAR EL TECLADO ===
+
+  ionViewDidEnter() {
+    this.configurarEventosTeclado();
+  }
+
+  configurarEventosTeclado() {
+    if (typeof (window as any).Keyboard !== 'undefined') {
+      (window as any).Keyboard.addListener('keyboardWillShow', () => {
+        this.tecladoVisible = true;
+      });
+      
+      (window as any).Keyboard.addListener('keyboardWillHide', () => {
+        this.tecladoVisible = false;
+      });
+    }
+    
+    else if ((window as any).cordova?.plugins?.Keyboard) {
+      (window as any).cordova.plugins.Keyboard.showFormAccessoryBar(false);
+    }
+  }
+
+  onEnterDiagnostico(event: KeyboardEvent | any) {
+    event.preventDefault();
+    this.cerrarTeclado();
+    
+    setTimeout(() => {
+      this.moverFocoAlBotonGuardar();
+    }, 100);
+  }
+
+  cerrarTeclado() {
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement) {
+      activeElement.blur();
+    }
+    
+    if (typeof (window as any).Keyboard !== 'undefined') {
+      try {
+        (window as any).Keyboard.hide();
+      } catch (error) {}
+    }
+    
+    else if ((window as any).cordova?.plugins?.Keyboard) {
+      try {
+        (window as any).cordova.plugins.Keyboard.hide();
+      } catch (error) {}
+    }
+    
+    else {
+      const inputs = document.querySelectorAll('ion-input, ion-textarea');
+      inputs.forEach(input => {
+        (input as HTMLElement).blur();
+      });
+    }
+  }
+
+  moverFocoAlBotonGuardar() {
+    const guardarBtn = document.querySelector('ion-button[expand="block"]') as HTMLElement;
+    if (guardarBtn) {
+      guardarBtn.focus();
+    }
+  }
+
+  onTapOutside(event: any) {
+    const clickedElement = event.target as HTMLElement;
+    const esCampoTexto = clickedElement.closest('ion-input') || 
+                         clickedElement.closest('ion-textarea') ||
+                         clickedElement.closest('ion-range');
+    
+    if (!esCampoTexto) {
+      this.cerrarTeclado();
+    }
+  }
+
+  // === MÉTODOS DEL FORMULARIO ===
+
   actualizarEdad() {
     this.paciente.edad = this.calcularEdad();
   }
 
-  // Generar ID único basado en RUT
   generarIdPaciente(): string {
     if (!this.paciente.rut) return 'ID-XXXX';
     
@@ -47,7 +126,6 @@ export class AgregarPacientePage {
     return `PAC-${ultimosDigitos}`;
   }
 
-  // Validar formulario
   formularioValido(): boolean {
     return !!(
       this.paciente.nombre && 
@@ -57,7 +135,6 @@ export class AgregarPacientePage {
     );
   }
 
-  // Calcular edad desde fecha de nacimiento
   calcularEdad(): number {
     if (!this.paciente.fechaNacimiento) return 0;
     
@@ -75,7 +152,7 @@ export class AgregarPacientePage {
     return edad;
   }
 
-  //  Intentar ambas plataformas inteligentemente
+  // === MÉTODO PRINCIPAL - SIMPLIFICADO Y FUNCIONAL ===
   async guardarPaciente() {
     if (!this.formularioValido()) {
       this.mostrarToast('Por favor completa los campos obligatorios', 'warning');
@@ -83,144 +160,90 @@ export class AgregarPacientePage {
     }
 
     try {
-      // Agregar ID único y asegurar edad actualizada
+      // 1. CALCULAR EDAD (CRÍTICO)
+      const edadCalculada = this.calcularEdad();
+      console.log(`📅 Edad calculada para guardar: ${edadCalculada} años`);
+      
+      // 2. GENERAR ID ÚNICO
+      const idPaciente = this.generarIdPaciente();
+      
+      // 3. CREAR OBJETO COMPLETO DEL PACIENTE CON EDAD INCLUIDA
       const pacienteCompleto = {
         ...this.paciente,
-        id: this.generarIdPaciente(),
-        edad: this.calcularEdad()
+        id: idPaciente,
+        edad: edadCalculada, // ← ¡ESTA ES LA CLAVE! La edad calculada se guarda aquí
+        fechaCreacion: new Date().toISOString(),
+        // Campos adicionales para compatibilidad
+        pacienteId: idPaciente,
+        fechaIngreso: new Date().toLocaleDateString('es-CL')
       };
 
-      console.log('🔄 Iniciando guardado de paciente:', pacienteCompleto);
+      console.log('💾 Paciente completo para guardar:', pacienteCompleto);
+      console.log('🔍 Verificando campo "edad":', pacienteCompleto.edad, 'tipo:', typeof pacienteCompleto.edad);
 
-      // ESTRATEGIA INTELIGENTE: Intentar ambas plataformas
-      const resultado = await this.intentarGuardadoEnAmbasPlataformas(pacienteCompleto);
+      // 4. ESTRATEGIA DE GUARDADO INTELIGENTE
+      let guardadoExitoso = false;
+      let mensajeFinal = '';
+      
+      // Primero intentar SQLite (para emulador móvil)
+      try {
+        console.log('📱 Intentando guardar en SQLite...');
+        await this.databaseService.addPaciente(pacienteCompleto);
+        guardadoExitoso = true;
+        mensajeFinal = '✅ Paciente guardado en dispositivo (SQLite)';
+        console.log('✅ Éxito en SQLite');
+      } catch (errorSQLite) {
+        console.log('📱 SQLite no disponible:', errorSQLite);
+        
+        // Fallback a JSON Server
+        try {
+          console.log('🌐 Intentando guardar en JSON Server...');
+          await firstValueFrom(this.jsonServerService.createPaciente(pacienteCompleto));
+          guardadoExitoso = true;
+          mensajeFinal = '✅ Paciente guardado en servidor (JSON Server)';
+          console.log('✅ Éxito en JSON Server');
+        } catch (errorJson) {
+          console.error('❌ Error en JSON Server:', errorJson);
+          mensajeFinal = '❌ Error: No se pudo guardar en ninguna base de datos';
+        }
+      }
 
-      if (resultado.exito) {
-        this.mostrarToast(resultado.mensaje, 'success');
-        this.navCtrl.navigateRoot('/pacientes-lista');
+      // 5. MOSTRAR RESULTADO
+      if (guardadoExitoso) {
+        this.mostrarToast(mensajeFinal, 'success');
+        
+        // 6. NAVEGACIÓN DESPUÉS DE ÉXITO
+        setTimeout(() => {
+          this.navCtrl.navigateRoot('/pacientes-lista');
+        }, 1200);
+        
       } else {
-        this.mostrarToast(resultado.mensaje, 'warning');
+        this.mostrarToast(mensajeFinal, 'danger');
       }
       
     } catch (error) {
-      console.error('❌ Error crítico guardando paciente:', error);
-      this.mostrarToast('Error crítico al guardar el paciente', 'danger');
+      console.error('❌ Error crítico en guardarPaciente:', error);
+      this.mostrarToast('Error crítico al procesar el paciente', 'danger');
     }
   }
 
-  // Método inteligente que intenta ambas plataformas
-  private async intentarGuardadoEnAmbasPlataformas(paciente: any): Promise<{exito: boolean, mensaje: string}> {
-    const resultados = {
-      web: { exito: false, error: '' },
-      movil: { exito: false, error: '' }
-    };
+  // === MÉTODOS AUXILIARES SIMPLIFICADOS ===
 
-    console.log('🔍 Evaluando plataformas disponibles...');
-
-    // 1. PRIMERO intentar JSON Server (Web)
-    try {
-      console.log('🌐 Intentando guardar en JSON Server...');
-      await this.guardarEnJsonServer(paciente);
-      resultados.web.exito = true;
-      console.log('✅ JSON Server: Éxito');
-    } catch (errorWeb) {
-      resultados.web.error = errorWeb as any|| 'Error desconocido';
-      console.log('❌ JSON Server falló:', resultados.web.error);
-    }
-
-    // 2. LUEGO intentar SQLite (Móvil)
-    try {
-      console.log('📱 Intentando guardar en SQLite...');
-      await this.guardarEnSQLite(paciente);
-      resultados.movil.exito = true;
-      console.log('✅ SQLite: Éxito');
-    } catch (errorMovil) {
-      resultados.movil.error = errorMovil as any || 'Error desconocido';
-      console.log('❌ SQLite falló:', resultados.movil.error);
-    }
-
-    // 3. ANALIZAR RESULTADOS
-    return this.analizarResultadosGuardado(resultados);
-  }
-
-  // Analizar resultados y determinar mensaje
-  private analizarResultadosGuardado(resultados: any): {exito: boolean, mensaje: string} {
-    const plataformasExitosas = [];
-    if (resultados.web.exito) plataformasExitosas.push('web');
-    if (resultados.movil.exito) plataformasExitosas.push('móvil');
-
-    if (plataformasExitosas.length > 0) {
-      const plataformasTexto = plataformasExitosas.join(' y ');
-      return {
-        exito: true,
-        mensaje: `✅ Paciente guardado exitosamente (${plataformasTexto})`
-      };
-    }
-
-    // Si ambas fallaron
-    const esModoWeb = !this.platform.is('cordova') && !this.platform.is('capacitor');
-    
-    if (esModoWeb) {
-      return {
-        exito: false,
-        mensaje: '❌ No se pudo guardar. Asegúrate de tener json-server corriendo en puerto 3000'
-      };
-    } else {
-      return {
-        exito: false,
-        mensaje: '❌ Error en el dispositivo. Reinicia la aplicación e intenta nuevamente'
-      };
-    }
-  }
-
-  // Guardar en JSON Server (Web)
-  private async guardarEnJsonServer(paciente: any): Promise<void> {
-    try {
-      const respuesta = await firstValueFrom(this.jsonServerService.createPaciente(paciente));
-      console.log('✅ Guardado exitoso en JSON Server:', respuesta);
-    } catch (error) {
-      console.error('❌ Error guardando en JSON Server:', error);
-      throw new Error('JSON Server no disponible');
-    }
-}
-
-  // Guardar en SQLite (Móvil)
-  private async guardarEnSQLite(paciente: any): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Verificar si SQLite está disponible
-        if (!await this.sqliteDisponible()) {
-          reject(new Error('SQLite no inicializado'));
-          return;
-        }
-
-        await this.databaseService.addPaciente(paciente);
-        console.log('✅ Guardado exitoso en SQLite');
-        resolve();
-      } catch (error) {
-        console.error('❌ Error guardando en SQLite:', error);
-        reject(new Error('Error en base de datos local'));
-      }
-    });
-  }
-
-  // Verificar si SQLite está disponible
   private async sqliteDisponible(): Promise<boolean> {
     try {
-      // Intentar una operación simple de SQLite
+      // Intentar una operación simple para verificar
       await this.databaseService.getPacientes();
       return true;
     } catch (error) {
-      console.log('ℹ️ SQLite no disponible (modo web):', (error as any).message);
+      console.log('📱 SQLite no disponible en este momento');
       return false;
     }
   }
 
-  // Mostrar notificación
   async mostrarToast(mensaje: string, color: string = 'primary') {
     const toast = await this.toastController.create({
       message: mensaje,
-      duration: 4000,
+      duration: 3000,
       color: color,
       position: 'bottom',
       buttons: [
@@ -238,29 +261,25 @@ export class AgregarPacientePage {
     this.navCtrl.navigateRoot('/pacientes-lista');
   }
 
-  // Formatear RUT automáticamente
+  // === MÉTODOS DE FORMATEO (MANTENIDOS) ===
+
   formatearRut() {
     if (!this.paciente.rut) return;
     
-    // Limpiar el RUT (solo números y K)
     let rutLimpio = this.paciente.rut.replace(/[^0-9kK]/g, '');
     
     if (rutLimpio.length > 0) {
-      // Separar número y dígito verificador
       let cuerpo = rutLimpio.slice(0, -1);
       let dv = rutLimpio.slice(-1).toUpperCase();
       
-      // Formatear con puntos
       if (cuerpo.length > 0) {
         cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
       }
       
-      // Asignar el RUT formateado
       this.paciente.rut = cuerpo + '-' + dv;
     }
   }
 
-  // Validar formato de RUT
   validarRut(): boolean {
     if (!this.paciente.rut) return false;
     
@@ -270,39 +289,47 @@ export class AgregarPacientePage {
     return true; 
   }
 
-  // Formatear teléfono automáticamente
   formatearTelefono() {
     if (!this.paciente.telefono) return;
     
-    // Limpiar el teléfono 
     let telefonoLimpio = this.paciente.telefono.replace(/[^0-9]/g, '');
     
     if (telefonoLimpio.length > 0) {
-      // Si empieza con 9, asumir que es celular y agregar +56
       if (telefonoLimpio.startsWith('9') && telefonoLimpio.length === 9) {
         this.paciente.telefono = '+56 ' + telefonoLimpio;
       }
-      // Si ya tiene código de país, formatear con espacios
       else if (telefonoLimpio.startsWith('569') && telefonoLimpio.length === 11) {
         this.paciente.telefono = '+56 9 ' + telefonoLimpio.slice(3);
       }
-      // Si ya tiene +56, mantenerlo
       else if (telefonoLimpio.startsWith('56') && telefonoLimpio.length === 11) {
         this.paciente.telefono = '+56 9 ' + telefonoLimpio.slice(2);
       }
     }
   }
 
-  // Validar teléfono chileno
   validarTelefonoChileno(): boolean {
     if (!this.paciente.telefono) return false;
     
     const telefonoLimpio = this.paciente.telefono.replace(/[^0-9]/g, '');
-    
-    // Validar formatos chilenos:
-    // - Celular: 9XXXXXXXX (9 dígitos)
-    // - Celular con código: 569XXXXXXXX (11 dígitos)
-    // - Fijo: 2XXXXXXXX (9 dígitos)
     return telefonoLimpio.length === 9 || telefonoLimpio.length === 11;
+  }
+
+  // === MÉTODO DE DEPURACIÓN (OPCIONAL) ===
+  
+  async verificarGuardado() {
+    try {
+      console.log('🔍 Verificando guardado en SQLite...');
+      const pacientes = await this.databaseService.getPacientes();
+      console.log(`📊 Total pacientes en SQLite: ${pacientes.length}`);
+      
+      if (pacientes.length > 0) {
+        console.log('📋 Últimos 3 pacientes:');
+        pacientes.slice(-3).forEach((p, i) => {
+          console.log(`${i+1}. ${p.nombre} - Edad: ${p.edad} - ID: ${p.id}`);
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error verificando SQLite:', error);
     }
   }
+}

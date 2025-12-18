@@ -1,29 +1,39 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>KineSphere - Sesión</ion-title>
-  </ion-toolbar>
+<ion-header [translucent]="true" class="ion-no-border custom-header-container">
+  <div class="custom-header">
+    <div class="main-title">
+      <h1>Registro de Sesión</h1>
+    </div>
+    <div class="subtitle">
+      <!-- Mostrar nombre dinámico -->
+      @if (pacienteNombre && pacienteNombre !== 'Paciente') {
+        <p>Sesión {{ numeroSesion }} - {{ pacienteNombre }}</p>
+      } @else {
+        <p>Sesión {{ numeroSesion }}</p>
+        <ion-note color="warning">Paciente no especificado</ion-note>
+      }
+    </div>
+  </div>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" (click)="onContentClick($event)">
   <div class="ion-padding">
-    <!-- HEADER PERSONALIZADO -->
-    <div class="custom-header">
-      <div class="main-title">
-        <h1>Registro de Sesión</h1>
-      </div>
-      <div class="subtitle">
-        <p>Sesión {{ numeroSesion }} - {{ pacienteNombre }}</p>
-      </div>
-    </div>
-
     <!-- FORMULARIO DE SESIÓN -->
     <ion-card class="animated-item">
+      <!-- ENCABEZADO DEL CARD -->
       <ion-card-header>
         <ion-card-title>📝 Evaluación</ion-card-title>
+        <!-- Mostrar nombre del paciente si está disponible -->
+        @if (pacienteNombre && pacienteNombre !== 'Paciente') {
+          <ion-card-subtitle>
+            <ion-icon name="person" slot="start"></ion-icon>
+            {{ pacienteNombre }}
+          </ion-card-subtitle>
+        }
       </ion-card-header>
+      
+      <!-- CONTENIDO DEL CARD -->
       <ion-card-content>
-
-        <!-- ESCALA EVA CON BARRA DE RANGO (NUEVO) -->
+        <!-- ESCALA EVA CON BARRA DE RANGO -->
         <div class="seccion-formulario">
           <ion-item>
             <ion-label position="stacked">
@@ -78,14 +88,21 @@
           <ion-item>
             <ion-label position="stacked">Observaciones de la sesión</ion-label>
             <ion-textarea
+              #observacionesTextarea
               [(ngModel)]="sesionData.observaciones"
               placeholder="Registre observaciones relevantes, progresos, dificultades..."
               rows="3"
-              autoGrow="true">
+              autoGrow="true"
+              enterkeyhint="done"
+              (keydown.enter)="onEnterObservaciones($event)">
             </ion-textarea>
+            
+            <!-- Nota de ayuda -->
+            <ion-note slot="helper" color="medium" style="font-size: 0.8rem;">
+              Presiona "Listo" para cerrar teclado
+            </ion-note>
           </ion-item>
         </div>
-
       </ion-card-content>
     </ion-card>
 
@@ -93,8 +110,7 @@
     <div class="botones-spacer"></div>
   </div>
 
-
-  <!--  BOTONES FIJOS  -->
+  <!-- BOTONES FIJOS -->
   <div class="botones-fijos">
     <ion-grid>
       <ion-row>

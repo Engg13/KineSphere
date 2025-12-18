@@ -1,25 +1,192 @@
-.buttons-container {
-  position: sticky;
-  bottom: 0;
-  background: var(--ion-background-color);
-  padding: 16px 0;
-  border-top: 1px solid var(--ion-color-light);
+/* ===== HEADER FIJADO ===== */
+.custom-header-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding-top: var(--ion-safe-area-top, 20px);
+  background: #ffffff;
 }
 
-ion-list {
-  background: transparent;
+.custom-header {
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-ion-item {
-  --background: transparent;
-  --padding-start: 0;
-  --inner-padding-end: 0;
+.custom-header .main-title {
+  background: #2dd36f;
+  padding: 14px 16px;
+  text-align: center;
 }
 
-ion-label h3 {
-  margin-bottom: 4px;
+.custom-header .main-title h1 {
+  margin: 0;
+  color: black;
+  font-size: 1.8rem;
+  font-weight: bold;
+  line-height: 1.2;
 }
 
-ion-label p {
-  margin: 2px 0;
+.custom-header .subtitle {
+  background: rgba(45, 211, 111, 0.6);
+  padding: 8px 16px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.custom-header .subtitle span {
+  margin: 0;
+  color: black;
+  font-size: 0.9rem;
+}
+
+/* ===== CONTENIDO DESPLAZABLE ===== */
+.scrollable-content {
+  --padding-top: 140px;
+  --padding-bottom: 20px;
+}
+
+.content-wrapper {
+  padding: 0 16px;
+}
+
+/* ===== SESIONES SIMPLIFICADAS ===== */
+.sesiones-simple {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.sesiones-simple strong {
+  margin-right: 6px;
+}
+
+.sesiones-simple ion-badge {
+  font-weight: bold;
+  min-width: 24px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.sesiones-simple span {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+/* ===== TARJETA DE PACIENTE ===== */
+.paciente-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.avatar-large {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  
+  ion-icon {
+    font-size: 60px;
+    color: var(--ion-color-medium);
+  }
+}
+
+/* ===== BOTONES ===== */
+.botones-rapidos {
+  margin-top: 15px;
+  
+  ion-button {
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    font-size: 0.85rem;
+  }
+}
+
+.botones-principales {
+  margin: 20px 0;
+  
+  ion-row {
+    margin-bottom: 10px;
+  }
+}
+
+/* ===== HISTORIAL DE SESIONES ===== */
+.observaciones {
+  font-style: italic;
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+  margin-top: 5px;
+  padding-left: 10px;
+  border-left: 2px solid var(--ion-color-light);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--ion-color-medium);
+  
+  p {
+    margin-bottom: 20px;
+  }
+}
+
+/* ===== ESTADOS ===== */
+.error-state {
+  padding-top: 50px;
+  
+  ion-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+  }
+  
+  h3 {
+    margin: 10px 0;
+    color: var(--ion-color-danger);
+  }
+}
+
+.loading-container {
+  padding-top: 50px;
+  
+  ion-spinner {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 20px;
+  }
+  
+  p {
+    color: var(--ion-color-medium);
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-height: 700px) {
+  .scrollable-content {
+    --padding-top: 120px;
+  }
+  
+  .custom-header .main-title h1 {
+    font-size: 1.5rem;
+  }
+  
+  .custom-header .main-title {
+    padding: 10px 16px;
+  }
+}
+
+/* ===== PLATAFORMA ESPECÍFICA ===== */
+.ios .custom-header-container {
+  padding-top: calc(var(--ion-safe-area-top, 25px) + 5px);
+}
+
+.md .custom-header {
+  border-radius: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }

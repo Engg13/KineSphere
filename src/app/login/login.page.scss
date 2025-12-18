@@ -1,38 +1,76 @@
+/* ===== HEADER  ===== */
+.custom-header-container {
+  padding-top: var(--ion-safe-area-top, 20px); 
+  background: #ffffff; 
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+}
+
 .custom-header {
-  border-radius: 8px;
-  margin-bottom: 20px;
+  border-radius: 0 0 12px 12px; 
+  margin-bottom: 0;
   overflow: hidden;
+  background: white; 
 }
 
 .custom-header .main-title {
   background: #2dd36f;
-  padding: 16px;
+  padding: 14px 16px;
   text-align: center;
 }
 
 .custom-header .main-title h1 {
   margin: 0;
   color: black;
-  font-size: 3.0rem;
+  font-size: 2.2rem; 
   font-weight: bold;
+  line-height: 1.1;
+  letter-spacing: 0.5px;
 }
 
 .custom-header .subtitle {
   background: rgba(45, 211, 111, 0.6);
-  padding: 8px;
+  padding: 6px 16px;
   text-align: center;
 }
 
 .custom-header .subtitle p {
   margin: 0;
   color: black;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ===== CONTENIDO ===== */
+.login-content {
+  --padding-top: 20px; 
+  --padding-bottom: 20px;
+}
+
+.login-container {
+  padding-top: 10px;
+  animation: contenidoEntrante 0.8s ease-out;
+  min-height: calc(100vh - 20px); 
+}
+
+/* ===== LOGO SECTION ===== */
+.logo-section {
+  text-align: center;
+  margin-bottom: 25px;
+  animation: slideInUp 0.8s ease-out;
+}
+
+.logo-section ion-icon {
+  font-size: 64px;
+  margin-bottom: 10px;
+  animation: iconBounce 1.2s ease-in-out;
 }
 
 .logo-section h2 {
   animation: tituloEntrante 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   text-align: center;
-  font-size: 2.5rem;
+  font-size: 1.8rem;
+  margin: 10px 0 5px 0;
+  color: var(--ion-color-dark);
 }
 
 .logo-section p {
@@ -40,8 +78,25 @@
   text-align: center;
   opacity: 0;
   animation-fill-mode: forwards;
+  color: var(--ion-color-medium);
+  font-size: 0.95rem;
+  margin: 0;
 }
 
+/* ===== CARD Y FORMULARIO ===== */
+ion-card {
+  animation: cardEntrante 0.9s ease-out 0.2s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+ion-card-content {
+  padding: 20px;
+}
+
+/* ===== ANIMACIONES ===== */
 @keyframes tituloEntrante {
   0% {
     opacity: 0;
@@ -64,14 +119,55 @@
   }
 }
 
+@keyframes contenidoEntrante {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
+@keyframes cardEntrante {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ===== MANTENER TUS ESTILOS DE FUENTE ===== */
 ion-card, ion-card-header, ion-card-title, ion-card-content,
 ion-item, ion-label, ion-input, ion-button, ion-list,
 ion-toolbar, ion-title, h2, p, strong, span, div {
   font-family: 'Courier New', Courier, monospace !important;
 }
 
-/* Específico para elementos del login */
 ion-card ion-card-title,
 ion-card ion-card-content, 
 ion-item ion-label,
@@ -82,39 +178,139 @@ ion-input .native-input,
   font-family: 'Courier New', Courier, monospace !important;
 }
 
-/* SOLUCIÓN BOTÓN LOGIN - Forzar colores */
+/* ===== BOTÓN LOGIN ===== */
 .login-button {
   --background: #2dd36f !important;
   --background-activated: #28ba62 !important;
   --background-hover: #28ba62 !important;
-  --color: #000000 !important; /* Texto NEGRO */
+  --color: #000000 !important;
   --border-radius: 8px;
   --border-color: #000000;
   --border-style: solid;
   --border-width: 1px;
+  --box-shadow: 0 4px 6px rgba(45, 211, 111, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
   
-  /* Forzar color del texto */
+  &:active {
+    transform: scale(0.98);
+    --box-shadow: 0 2px 4px rgba(45, 211, 111, 0.3);
+  }
+  
   .button-native {
     color: #000000 !important;
   }
   
-  /* Forzar color del span interno */
   span, .button-inner {
     color: #000000 !important;
     font-weight: bold;
+    font-size: 1rem;
   }
 }
 
-/* Estado deshabilitado */
 .login-button[disabled] {
   --background: #cccccc !important;
   --color: #666666 !important;
+  --box-shadow: none;
 }
 
-/* Estilo ojo psswrd */
+/* ===== BOTÓN OJO ===== */
 .eye-button {
   --padding-start: 8px;
   --padding-end: 8px;
   margin: 0;
   height: auto;
+  --color: var(--ion-color-medium);
+  
+  &:hover {
+    --color: var(--ion-color-primary);
+  }
+}
+
+/* ===== LINKS SECTION ===== */
+.links-section {
+  text-align: center;
+  margin: 20px 0;
+  animation: fadeIn 1s ease-out 0.5s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 25px 0;
+  
+  span {
+    flex: 1;
+    height: 1px;
+    background: var(--ion-color-light-shade);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-height: 700px) {
+  .custom-header .main-title h1 {
+    font-size: 1.8rem;
+  }
+  
+  .custom-header .main-title {
+    padding: 10px 16px;
+  }
+  
+  .custom-header .subtitle {
+    padding: 4px 16px;
+  }
+  
+  .logo-section h2 {
+    font-size: 1.5rem;
+  }
+  
+  .login-content {
+    --padding-top: 10px;
+  }
+}
+
+@media (max-width: 350px) {
+  .custom-header .main-title h1 {
+    font-size: 1.6rem;
+  }
+  
+  .logo-section ion-icon {
+    font-size: 48px;
+  }
+}
+
+/* ===== PLATAFORMA ESPECÍFICA ===== */
+.ios .custom-header-container {
+  padding-top: calc(var(--ion-safe-area-top, 25px) + 5px);
+}
+
+.md .custom-header {
+  border-radius: 0; 
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== VALIDACIONES ===== */
+ion-note[color="danger"] {
+  display: block;
+  margin-top: 5px;
+  margin-left: 16px;
+  font-size: 0.8rem;
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }

@@ -106,3 +106,45 @@ ion-badge {
   margin-top: 5px;
   display: block;
 }
+
+
+// Cuando el teclado está visible
+.keyboard-visible {
+  .buttons-container {
+    position: sticky;
+    bottom: 0;
+    background: var(--ion-background-color);
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.3s ease;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+// Botón flotante cuando el teclado está abierto 
+.keyboard-action-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1001;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+// Asegurar que el textarea sea visible
+ion-textarea {
+  --padding-bottom: 8px;
+  
+  textarea {
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.4;
+  }
+}

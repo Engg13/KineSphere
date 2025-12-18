@@ -97,11 +97,18 @@
       <ion-item class="form-item animated-item">
         <ion-label position="stacked">Diagnóstico *</ion-label>
         <ion-textarea
+          #diagnosticoTextarea
           [(ngModel)]="paciente.diagnostico"
           placeholder="Descripción del diagnóstico..."
           rows="3"
+          enterkeyhint="done"
+          (keydown.enter)="onEnterDiagnostico($event)"
           required>
         </ion-textarea>
+        <!-- Nota de ayuda  -->
+        <ion-note slot="helper" color="medium" style="font-size: 0.8rem;">
+          Presiona "Listo" o "Enter" para cerrar teclado
+        </ion-note>
       </ion-item>
 
       <!-- Sesiones planificadas -->

@@ -22,10 +22,6 @@
     cy.get('ion-input[placeholder="Ingresa tu contraseña de 4 digitos"]')
       .type('1234');
     
-    // Método alternativo si el anterior falla:
-    // cy.get('ion-input').eq(0).type('admin');
-    // cy.get('ion-input').eq(1).type('1234');
-    
     // Hacer clic en login
     cy.get('ion-button').contains('Ingresar').click();
     

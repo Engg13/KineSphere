@@ -1,8 +1,5 @@
-<ion-header [translucent]="true">
-</ion-header>
-
-<ion-content [fullscreen]="true" class="ion-padding">
-  <!-- Header personalizado -->
+<ion-header [translucent]="true" class="ion-no-border custom-header-container">
+  <!-- Header personalizado dentro del ion-header -->
   <div class="custom-header" data-test="app-header">
     <div class="main-title">
       <h1 data-test="app-title">KINESPHERE</h1>
@@ -11,7 +8,9 @@
       <p data-test="app-subtitle">Seguimiento de pacientes</p>
     </div>
   </div>
+</ion-header>
 
+<ion-content [fullscreen]="true" class="ion-padding login-content">
   <div class="login-container">
 
     <!-- Logo o ícono -->
@@ -101,10 +100,9 @@
           <!-- Botón de Login -->
           <ion-button
             data-test="login-button"
-            type="button"
+            type="submit"
             expand="block"
             class="ion-margin-top login-button"
-            (click)="login()"
             [disabled]="!username || !password">
             Ingresar
           </ion-button>

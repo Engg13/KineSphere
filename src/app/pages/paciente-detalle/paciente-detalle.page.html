@@ -1,4 +1,17 @@
-<ion-content [fullscreen]="true">
+<ion-header [translucent]="true" class="ion-no-border custom-header-container">
+  <!-- HEADER PERSONALIZADO DENTRO DE ION-HEADER -->
+  <div class="custom-header">
+    <div class="main-title">
+      <h1>Detalle del Paciente</h1>
+    </div>
+    <div class="subtitle">
+      <ion-icon name="person" slot="start"></ion-icon>
+      <span>Gestión y seguimiento</span>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="scrollable-content">
   <!-- ESTADO DE CARGA -->
   @if (estaCargando) {
     <div class="loading-container ion-text-center ion-padding">
@@ -9,7 +22,7 @@
 
   <!-- CONTENIDO PRINCIPAL -->
   @if (!estaCargando && paciente) {
-    <div class="ion-padding">
+    <div class="content-wrapper">
       <!-- TARJETA DE INFORMACIÓN DEL PACIENTE -->
       <ion-card class="paciente-card">
         <ion-card-header>
@@ -30,14 +43,37 @@
           <ion-grid>
             <ion-row>
               <ion-col size="6">
-                <p><strong>Edad:</strong> {{ paciente.edad }} años</p>
+                <!-- EDAD - solo una vez -->
+                <p><strong>Edad:</strong> 
+                  @if (paciente.edad && paciente.edad > 0) {
+                    {{ paciente.edad }} años
+                  } @else {
+                    No registrada
+                  }
+                </p>
                 <p><strong>RUT:</strong> {{ paciente.rut }}</p>
                 <p><strong>Teléfono:</strong> {{ paciente.telefono }}</p>
               </ion-col>
               <ion-col size="6">
                 <p><strong>Email:</strong> {{ paciente.email }}</p>
-                <p><strong>Fecha Ingreso:</strong> {{ paciente.fechaIngreso }}</p>
-                <p><strong>Sesiones:</strong> {{ paciente.sesionesCompletadas }}/{{ paciente.sesionesPlanificadas }}</p>
+                
+                <!-- FECHA INGRESO -->
+                <p><strong>Fecha Ingreso:</strong> 
+                  @if (paciente.fechaIngreso) {
+                    {{ formatearFecha(paciente.fechaIngreso) }}
+                  } @else {
+                    No registrada
+                  }
+                </p>
+                
+                <!-- SESIONES SIMPLIFICADAS -->
+                <div class="sesiones-simple">
+                  <strong>Sesiones:</strong>
+                  <ion-badge color="primary">{{ paciente.sesionesCompletadas || 0 }}</ion-badge>
+                  <span>de</span>
+                  <ion-badge color="secondary">{{ paciente.sesionesPlanificadas || 10 }}</ion-badge>
+                  <span>completadas</span>
+                </div>
               </ion-col>
             </ion-row>
             <ion-row>
@@ -115,13 +151,18 @@
           @if (historialSesiones.length > 0) {
             <div>
               <ion-list>
-                @for (sesion of historialSesiones; track sesion) {
+                @for (sesion of historialSesiones; track sesion.id || $index) {
                   <ion-item>
                     <ion-label>
-                      <h3>📅 {{ sesion.fecha }}</h3>
-                      <p>EVA: {{ sesion.eva }}/10</p>
-                      <p>{{ sesion.observaciones }}</p>
+                      <h3>📅 {{ sesion.fecha_registro || sesion.fecha | date:'dd/MM/yyyy' }}</h3>
+                      <p>EVA: {{ (sesion.nivel_dolor !== null && sesion.nivel_dolor !== undefined) ? sesion.nivel_dolor : sesion.eva || '0' }}/10</p>
+                      @if (sesion.observaciones) {
+                        <p class="observaciones">{{ sesion.observaciones }}</p>
+                      }
                     </ion-label>
+                    <ion-badge slot="end" color="primary">
+                      Sesión {{ sesion.numero_sesion || 'N/A' }}
+                    </ion-badge>
                   </ion-item>
                 }
               </ion-list>
