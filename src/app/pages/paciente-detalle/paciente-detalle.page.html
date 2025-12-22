@@ -61,8 +61,10 @@
                 <p><strong>Fecha Ingreso:</strong> 
                   @if (paciente.fechaIngreso) {
                     {{ formatearFecha(paciente.fechaIngreso) }}
+                  } @else if (paciente.fechaCreacion) {
+                    {{ formatearFecha(paciente.fechaCreacion) }}
                   } @else {
-                    No registrada
+                    {{ formatearFecha(fechaActual) }}
                   }
                 </p>
                 

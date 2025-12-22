@@ -15,6 +15,7 @@ export class PacienteDetallePage implements OnInit {
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
   pacienteId: string = '';
+  fechaActual = new Date().toISOString();
 
   constructor(
     private navCtrl: NavController,
@@ -25,6 +26,9 @@ export class PacienteDetallePage implements OnInit {
 
   ngOnInit() {
     this.cargarPacienteDesdeParams();
+    if (this.paciente && !this.paciente.fechaIngreso && !this.paciente.fechaCreacion) {
+      this.paciente.fechaIngreso = this.fechaActual;
+    }
   }
 
   private async cargarPacienteDesdeParams() {
@@ -43,7 +47,7 @@ export class PacienteDetallePage implements OnInit {
     });
   }
 
-  // ✅ MÉTODO PRINCIPAL: CARGAR DESDE SQLite (EMULADOR MÓVIL)
+  //  MÉTODO PRINCIPAL: CARGAR DESDE SQLite 
   private async cargarPacienteSQLite(id: string) { 
     try {
       console.log('📱 Cargando paciente desde SQLite, ID:', id);
@@ -65,7 +69,7 @@ export class PacienteDetallePage implements OnInit {
         console.log('✅ Paciente cargado desde SQLite:', paciente);
         this.paciente = paciente;
         
-        // ✅ ASEGURAR QUE LA EDAD SE MUESTRE
+        //  ASEGURAR QUE LA EDAD SE MUESTRE
         this.verificarYCorregirEdad();
         
         // Cargar historial de sesiones
@@ -86,7 +90,7 @@ export class PacienteDetallePage implements OnInit {
     }
   }
 
-  // ✅ VERIFICAR Y CORREGIR EDAD SI ES NECESARIO
+  //  VERIFICAR Y CORREGIR EDAD SI ES NECESARIO
   private verificarYCorregirEdad() {
     if (!this.paciente) return;
     
@@ -120,7 +124,7 @@ export class PacienteDetallePage implements OnInit {
     }
   }
 
-  // ✅ MÉTODO PARA CALCULAR EDAD (IGUAL QUE EN AGREGAR-PACIENTE)
+  //  MÉTODO PARA CALCULAR EDAD (IGUAL QUE EN AGREGAR-PACIENTE)
   private calcularEdad(fechaNacimiento: string): number {
     if (!fechaNacimiento) return 0;
     
@@ -145,7 +149,7 @@ export class PacienteDetallePage implements OnInit {
     }
   }
 
-  // ✅ BUSCAR PACIENTE POR ID STRING (SI SQLite GUARDÓ COMO TEXTO)
+  //  BUSCAR PACIENTE POR ID STRING (SI SQLite GUARDÓ COMO TEXTO)
   private async buscarPacientePorIdString(id: string) {
     try {
       const todosPacientes = await this.databaseService.getPacientes();
@@ -172,7 +176,7 @@ export class PacienteDetallePage implements OnInit {
     }
   }
 
-  // ✅ DATOS DE DEMOSTRACIÓN (POR SI FALLA SQLite)
+  //  DATOS DE DEMOSTRACIÓN 
   private async cargarPacienteDemo() {
     console.log('🎭 Cargando paciente de demostración');
     
@@ -222,7 +226,7 @@ export class PacienteDetallePage implements OnInit {
     console.log('✅ Paciente demo cargado');
   }
 
-  // ✅ CARGAR HISTORIAL DE SESIONES DESDE SQLite
+  //  CARGAR HISTORIAL DE SESIONES DESDE SQLite
   private async cargarHistorialSesionesSQLite(pacienteId: number) {
     try {
       console.log('📱 Cargando sesiones desde SQLite para paciente:', pacienteId);
@@ -232,7 +236,7 @@ export class PacienteDetallePage implements OnInit {
       
       console.log('📊 Historial cargado:', this.historialSesiones.length, 'sesiones');
       
-      // ✅ ACTUALIZAR CONTADOR DE SESIONES EN EL PACIENTE
+      //  ACTUALIZAR CONTADOR DE SESIONES EN EL PACIENTE
       if (this.paciente) {
         this.paciente.sesionesCompletadas = this.historialSesiones.length;
         console.log(`🔄 Sesiones completadas actualizadas: ${this.paciente.sesionesCompletadas}`);
@@ -244,7 +248,7 @@ export class PacienteDetallePage implements OnInit {
     }
   }
 
-  // ✅ MÉTODO PARA FORMATEAR FECHA (USADO EN HTML)
+  //  MÉTODO PARA FORMATEAR FECHA 
   formatearFecha(fechaString: string): string {
     if (!fechaString) return 'No registrada';
     
@@ -254,7 +258,7 @@ export class PacienteDetallePage implements OnInit {
         return fechaString;
       }
       
-      // Si es ISO string, formatearlo
+      // Si es ISO string, formatear
       const fecha = new Date(fechaString);
       if (isNaN(fecha.getTime())) {
         return fechaString;

@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <!-- ✅ PULL-TO-REFRESH -->
+    <!-- PULL-TO-REFRESH -->
     <ion-refresher slot="fixed" (ionRefresh)="recargarPacientes($event)">
       <ion-refresher-content
         pullingIcon="chevron-down-circle-outline"
@@ -74,7 +74,11 @@
                 <ion-badge [color]="paciente.activo ? 'success' : 'medium'">
                   {{ paciente.activo ? 'Activo' : 'Finalizado' }}
                 </ion-badge>
-                • Sesiones: {{ paciente.sesionesCompletadas || 0 }}/{{ paciente.sesionesPlanificadas || 0 }}
+               
+                • Sesiones: {{ paciente.num_sesiones || paciente.sesionesCompletadas || 0 }}
+                @if (paciente.sesionesPlanificadas && paciente.sesionesPlanificadas > 0) {
+                  / {{ paciente.sesionesPlanificadas }}
+                }
                 • RUT: {{ paciente.rut }}
               </p>
             </ion-label>
@@ -98,7 +102,7 @@
         class="ion-margin-top"
         [disabled]="estaCargando">
         <ion-icon slot="start" name="cloud-download"></ion-icon>
-        Cargar Pacientes de Ejemplo (5)
+        Cargar Pacientes de Ejemplo (3)
       </ion-button>
 
       <ion-button
@@ -116,7 +120,7 @@
 
   <!-- FAB BUTTON -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button color="primary" (click)="agregarPaciente()">
+    <ion-fab-button (click)="agregarPaciente()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>

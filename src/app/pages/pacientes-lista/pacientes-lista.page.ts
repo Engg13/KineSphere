@@ -61,8 +61,17 @@ export class PacientesListaPage {
 
   private async cargarDesdeSQLite() {
     try {
-      this.pacientes = await this.databaseService.getPacientes();
-      console.log(`📊 ${this.pacientes.length} pacientes cargados desde SQLite (NATIVO)`);
+      // USAR ESTE MÉTODO QUE INCLUYE EL NÚMERO DE SESIONES
+      this.pacientes = await this.databaseService.getPacientesConConteoSesiones();
+      
+      console.log(`📊 ${this.pacientes.length} pacientes cargados desde SQLite (NATIVO)`, this.pacientes);
+      
+      // Si aún no tiene num_sesiones, asignar 0
+      this.pacientes = this.pacientes.map(paciente => ({
+        ...paciente,
+        num_sesiones: paciente.num_sesiones || 0
+      }));
+      
     } catch (error) {
       console.error('Error cargando desde SQLite:', error);
       this.pacientes = [];
@@ -74,10 +83,32 @@ export class PacientesListaPage {
     try {
       this.pacientes = await firstValueFrom(this.jsonServerService.getPacientes());
       console.log(`📊 ${this.pacientes.length} pacientes cargados desde JSON Server (WEB)`);
+      
+      // Para JSON Server, también necesitamos obtener el número de sesiones
+      await this.cargarNumeroSesionesParaJsonServer();
+      
     } catch (error) {
       console.error('Error cargando desde JSON Server:', error);
       this.pacientes = [];
       throw error;
+    }
+  }
+
+  // Método para cargar número de sesiones en modo JSON Server
+  private async cargarNumeroSesionesParaJsonServer() {
+    for (const paciente of this.pacientes) {
+      try {
+        // Obtener sesiones para cada paciente
+        const sesiones = await firstValueFrom(
+          this.jsonServerService.getSesionesPorPaciente(paciente.id)
+        );
+        
+        // Asignar número de sesiones
+        paciente.num_sesiones = sesiones ? sesiones.length : 0;
+      } catch (error) {
+        console.log(`No se pudieron obtener sesiones para paciente ${paciente.id}:`, error);
+        paciente.num_sesiones = 0;
+      }
     }
   }
 
@@ -104,9 +135,13 @@ export class PacientesListaPage {
   verDetallePaciente(paciente: any) {
     console.log('👤 Ver detalle del paciente:', paciente);
     console.log('🆔 ID del paciente:', paciente.id);
+    console.log('📊 Número de sesiones:', paciente.num_sesiones || 0);
     
     this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: { id: paciente.id }
+      queryParams: { 
+        id: paciente.id,
+        numSesiones: paciente.num_sesiones || 0
+      }
     });
   }
 
@@ -114,7 +149,7 @@ export class PacientesListaPage {
     this.navCtrl.navigateRoot('/dashboard');
   }
 
-  // ✅ CARGAR PACIENTES DE EJEMPLO - FUNCIONA EN AMBOS ENTORNOS
+  // CARGAR PACIENTES DE EJEMPLO - FUNCIONA EN AMBOS ENTORNOS
   async cargarPacientesEjemplo() {
     const pacientesEjemplo = [
       {
@@ -126,6 +161,7 @@ export class PacientesListaPage {
         diagnostico: "Lumbalgia aguda",
         sesionesPlanificadas: 8,
         sesionesCompletadas: 3,
+        num_sesiones: 6,
         activo: true,
         fechaCreacion: new Date().toISOString()
       },
@@ -138,6 +174,7 @@ export class PacientesListaPage {
         diagnostico: "Artrosis de rodilla derecha",
         sesionesPlanificadas: 10,
         sesionesCompletadas: 6,
+        num_sesiones: 6,
         activo: true,
         fechaCreacion: new Date().toISOString()
       },
@@ -150,6 +187,7 @@ export class PacientesListaPage {
         diagnostico: "Esguince de tobillo izquierdo",
         sesionesPlanificadas: 6,
         sesionesCompletadas: 2,
+        num_sesiones: 6,
         activo: true,
         fechaCreacion: new Date().toISOString()
       }
@@ -194,7 +232,7 @@ export class PacientesListaPage {
       if (cargadosExitosos > 0) {
         const plataforma = this.platformService.shouldUseSQLite() ? 'SQLite' : 'JSON Server';
         this.mostrarToast(`${cargadosExitosos} pacientes cargados en ${plataforma}`, 'success');
-        await this.cargarPacientes();
+        await this.cargarPacientes(); // Recargar la lista
       } else {
         let mensajeError = 'No se pudieron cargar los pacientes. ';
         if (errores.length > 0) {
@@ -223,6 +261,7 @@ export class PacientesListaPage {
       diagnostico: paciente.diagnostico,
       sesionesPlanificadas: paciente.sesionesPlanificadas || 0,
       sesionesCompletadas: paciente.sesionesCompletadas || 0,
+      num_sesiones: paciente.sesionesCompletadas || 0,
       activo: paciente.activo !== undefined ? paciente.activo : true,
       fechaCreacion: paciente.fechaCreacion || new Date().toISOString(),
       observaciones: paciente.observaciones || null
@@ -252,6 +291,7 @@ export class PacientesListaPage {
       diagnostico: paciente.diagnostico,
       sesionesPlanificadas: paciente.sesionesPlanificadas || 0,
       sesionesCompletadas: paciente.sesionesCompletadas || 0,
+      num_sesiones: paciente.sesionesCompletadas || 0,
       activo: paciente.activo !== undefined ? paciente.activo : true,
       fechaCreacion: paciente.fechaCreacion || new Date().toISOString(),
       observaciones: paciente.observaciones || null
@@ -366,6 +406,11 @@ export class PacientesListaPage {
     try {
       const pacientesSqlite = await this.databaseService.getPacientes();
       console.log('✅ SQLite funciona:', pacientesSqlite.length, 'pacientes');
+      
+      // Probar también el método con conteo de sesiones
+      const pacientesConSesiones = await this.databaseService.getPacientesConConteoSesiones();
+      console.log('✅ Método con sesiones:', pacientesConSesiones.length, 'pacientes con sesiones');
+      
     } catch (error) {
       console.log('❌ SQLite no funciona:', error);
     }

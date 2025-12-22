@@ -32,3 +32,25 @@
     color: var(--ion-color-medium);
   }
 }
+
+
+:host {
+  --ion-safe-area-top: 20px; /* Puedes ajustar este valor */
+}
+
+ion-header {
+  padding-top: var(--ion-safe-area-top, 0);
+}
+
+ion-toolbar {
+  --min-height: calc(56px + var(--ion-safe-area-top, 0));
+  min-height: var(--min-height);
+}
+
+/* Bajar solo el botón de volver */
+ion-buttons[slot="start"] {
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 12px;
+}

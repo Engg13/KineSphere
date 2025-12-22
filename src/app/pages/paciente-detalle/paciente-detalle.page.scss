@@ -1,18 +1,13 @@
 /* ===== HEADER FIJADO ===== */
 .custom-header-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  padding-top: var(--ion-safe-area-top, 20px);
-  background: #ffffff;
+  height: 120px; 
+  padding-top: 40px; 
+  position: relative; /* AÑADIDO: Cambia de fixed a relative */
+  z-index: 10; /* AÑADIDO: Mantiene sobre contenido */
 }
 
 .custom-header {
-  border-radius: 0 0 12px 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 12px 16px; 
 }
 
 .custom-header .main-title {
@@ -49,10 +44,13 @@
 .scrollable-content {
   --padding-top: 140px;
   --padding-bottom: 20px;
+  --overflow: auto; /* AÑADIDO: Permite scroll */
+  position: relative; /* AÑADIDO: Contexto de posición */
 }
 
 .content-wrapper {
   padding: 0 16px;
+  min-height: calc(100vh - 140px); /* AÑADIDO: Altura mínima */
 }
 
 /* ===== SESIONES SIMPLIFICADAS ===== */
@@ -85,6 +83,9 @@
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
+  margin-top: -105px;
+  position: relative;
+  z-index: 1;
 }
 
 .avatar-large {
@@ -166,10 +167,26 @@
   }
 }
 
+/* ===== NUEVO: CONTENEDOR DE SESIONES CON SCROLL INTERNO ===== */
+/* Agrega esto al final */
+.sesiones-container {
+  max-height: 300px; /* Altura máxima antes de scroll interno */
+  overflow-y: auto; /* Scroll vertical */
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+/* ===== NUEVO: ESPACIO PARA SCROLL SUAVE ===== */
+.scroll-spacer {
+  height: 100px; /* Espacio extra al final */
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-height: 700px) {
   .scrollable-content {
-    --padding-top: 120px;
+    --padding-top: 130px;
   }
   
   .custom-header .main-title h1 {
@@ -178,6 +195,10 @@
   
   .custom-header .main-title {
     padding: 10px 16px;
+  }
+  
+  .sesiones-container {
+    max-height: 200px; /* Menos altura en pantallas pequeñas */
   }
 }
 
@@ -189,4 +210,26 @@
 .md .custom-header {
   border-radius: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+
+:host {
+  display: block;
+  height: 100vh;
+  position: relative;
+}
+
+ion-content.scrollable-content {
+  height: calc(100vh - 120px) !important;
+  overflow-y: scroll !important;
+  --overflow: scroll !important;
+  position: relative;
+  top: 120px;
+}
+
+.content-wrapper {
+  min-height: calc(100vh - 140px);
+  padding-top: 0; 
+  margin-top: -100px; 
+  padding-bottom: 200px;
 }

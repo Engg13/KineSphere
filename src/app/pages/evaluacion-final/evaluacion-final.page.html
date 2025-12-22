@@ -1,13 +1,274 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>EvaluacionFinal</ion-title>
+<ion-header>
+  <ion-toolbar >
+    <!-- BOTÓN DE RETROCESO -->
+    <ion-buttons slot="start">
+      <ion-button (click)="volverAtras()">
+        <ion-icon slot="icon-only" name="arrow-back"></ion-icon>
+      </ion-button> <!-- FALTABA CERRAR ESTA ETIQUETA -->
+    </ion-buttons>
+    
+    <!-- TÍTULO -->
+    <ion-title>Evaluación Final</ion-title>
+    
+    <!-- INDICADOR DE ESTADO -->
+    <ion-buttons slot="end">
+      <!-- Chip mejor posicionado -->
+      <ion-chip [color]="formularioCompleto() ? 'success' : 'warning'" 
+                [outline]="!formularioCompleto()"
+                *ngIf="!evaluacionForm.valid"
+                class="estado-chip">
+        <ion-icon [name]="formularioCompleto() ? 'checkmark-circle' : 'alert-circle'"></ion-icon>
+        <ion-label>{{ camposFaltantes() }} pendiente(s)</ion-label>
+      </ion-chip>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">EvaluacionFinal</ion-title>
-    </ion-toolbar>
-  </ion-header>
-</ion-content>
+<ion-content class="ion-padding">
+  <!-- PACIENTE INFO -->
+  <ion-card *ngIf="paciente">
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="document-text" slot="start"></ion-icon>
+        Evaluación Final - {{ paciente.nombre }}
+      </ion-card-title>
+      <ion-card-subtitle>
+        {{ paciente.diagnostico }} • {{ paciente.fechaIngreso | date }}
+      </ion-card-subtitle>
+    </ion-card-header>
+  </ion-card>
+
+  <!-- FORMULARIO DE EVALUACIÓN -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="list" slot="start"></ion-icon>
+        Cuestionario de Evaluación
+        <ion-badge color="primary" slot="end">
+          {{ calcularProgreso() }}% completado
+        </ion-badge>
+      </ion-card-title>
+    </ion-card-header>
+    
+    <ion-card-content>
+      <form [formGroup]="evaluacionForm" (ngSubmit)="verificarYGenerarPDF()">
+        
+        <!-- 1. ESCALA DE DOLOR -->
+        <ion-item [class.field-completed]="evaluacionForm.get('eva')?.valid" lines="full">
+          <ion-label position="stacked">
+            1. Escala de dolor actual (EVA 0-10)
+            <span class="required">*</span>
+            <span class="checkmark" *ngIf="evaluacionForm.get('eva')?.valid"> ✅</span>
+          </ion-label>
+          <ion-range 
+            formControlName="eva"
+            min="0" 
+            max="10" 
+            step="1"
+            snaps="true"
+            ticks="true"
+            color="primary"
+            (ionChange)="actualizarEstado()">
+            <ion-label slot="start">0</ion-label>
+            <ion-label slot="end">10</ion-label>
+          </ion-range>
+          <ion-badge slot="end" color="primary" *ngIf="evaluacionForm.get('eva')?.value !== null">
+            {{ evaluacionForm.get('eva')?.value || 0 }}/10
+          </ion-badge>
+          <ion-icon slot="end" 
+                   name="checkmark-circle" 
+                   color="success" 
+                   *ngIf="evaluacionForm.get('eva')?.valid">
+          </ion-icon>
+        </ion-item>
+
+        <!-- 2. MOVILIDAD -->
+        <ion-item [class.field-completed]="evaluacionForm.get('movilidad')?.valid" lines="full">
+          <ion-label position="stacked">
+            2. Movilidad y amplitud articular
+            <span class="required">*</span>
+            <span class="checkmark" *ngIf="evaluacionForm.get('movilidad')?.valid"> ✅</span>
+          </ion-label>
+          <ion-select 
+            formControlName="movilidad" 
+            placeholder="Seleccione nivel de movilidad"
+            (ionChange)="actualizarEstado()"
+            interface="action-sheet">
+            <ion-select-option value="excelente">Excelente (100% de movilidad)</ion-select-option>
+            <ion-select-option value="buena">Buena (75-99% de movilidad)</ion-select-option>
+            <ion-select-option value="regular">Regular (50-74% de movilidad)</ion-select-option>
+            <ion-select-option value="limitada">Limitada (25-49% de movilidad)</ion-select-option>
+            <ion-select-option value="muy-limitada">Muy Limitada (0-24% de movilidad)</ion-select-option>
+          </ion-select>
+          <ion-icon slot="end" 
+                   name="checkmark-circle" 
+                   color="success" 
+                   *ngIf="evaluacionForm.get('movilidad')?.valid">
+          </ion-icon>
+        </ion-item>
+
+        <!-- 3. FUNCIÓN DIARIA -->
+        <ion-item [class.field-completed]="evaluacionForm.get('actividadesDiarias')?.valid" lines="full">
+          <ion-label position="stacked">
+            3. Capacidad para actividades diarias
+            <span class="required">*</span>
+            <span class="checkmark" *ngIf="evaluacionForm.get('actividadesDiarias')?.valid"> ✅</span>
+          </ion-label>
+          <ion-select 
+            formControlName="actividadesDiarias" 
+            placeholder="Seleccione nivel de independencia"
+            (ionChange)="actualizarEstado()"
+            interface="action-sheet">
+            <ion-select-option value="independiente">Independiente total</ion-select-option>
+            <ion-select-option value="asistencia-minima">Asistencia mínima (1-2 actividades)</ion-select-option>
+            <ion-select-option value="asistencia-moderada">Asistencia moderada (3-4 actividades)</ion-select-option>
+            <ion-select-option value="dependiente">Dependiente (5+ actividades)</ion-select-option>
+          </ion-select>
+          <ion-icon slot="end" 
+                   name="checkmark-circle" 
+                   color="success" 
+                   *ngIf="evaluacionForm.get('actividadesDiarias')?.valid">
+          </ion-icon>
+        </ion-item>
+
+        <!-- 4. FORTALEZA MUSCULAR -->
+        <ion-item [class.field-completed]="evaluacionForm.get('fortaleza')?.valid" lines="full">
+          <ion-label position="stacked">
+            4. Fortaleza muscular (escala 0-5)
+            <span class="required">*</span>
+            <span class="checkmark" *ngIf="evaluacionForm.get('fortaleza')?.valid"> ✅</span>
+          </ion-label>
+          <ion-range 
+            formControlName="fortaleza"
+            min="0" 
+            max="5" 
+            step="1"
+            snaps="true"
+            ticks="true"
+            color="secondary"
+            (ionChange)="actualizarEstado()">
+            <ion-label slot="start">0</ion-label>
+            <ion-label slot="end">5</ion-label>
+          </ion-range>
+          <ion-badge slot="end" color="secondary" *ngIf="evaluacionForm.get('fortaleza')?.value !== null">
+            {{ evaluacionForm.get('fortaleza')?.value || 0 }}/5
+          </ion-badge>
+          <ion-icon slot="end" 
+                   name="checkmark-circle" 
+                   color="success" 
+                   *ngIf="evaluacionForm.get('fortaleza')?.valid">
+          </ion-icon>
+        </ion-item>
+
+        <!-- 5. CALIDAD DE SUEÑO -->
+        <ion-item [class.field-completed]="evaluacionForm.get('sueño')?.valid" lines="full">
+          <ion-label position="stacked">
+            5. Calidad de sueño (1-10)
+            <span class="checkmark" *ngIf="evaluacionForm.get('sueño')?.valid"> ✅</span>
+          </ion-label>
+          <ion-range 
+            formControlName="sueño"
+            min="1" 
+            max="10" 
+            step="1"
+            snaps="true"
+            ticks="true"
+            color="tertiary"
+            (ionChange)="actualizarEstado()">
+            <ion-label slot="start">1</ion-label>
+            <ion-label slot="end">10</ion-label>
+          </ion-range>
+          <ion-badge slot="end" color="tertiary" *ngIf="evaluacionForm.get('sueño')?.value !== null">
+            {{ evaluacionForm.get('sueño')?.value || 5 }}/10
+          </ion-badge>
+          <ion-icon slot="end" 
+                   name="checkmark-circle" 
+                   color="success" 
+                   *ngIf="evaluacionForm.get('sueño')?.valid">
+          </ion-icon>
+        </ion-item>
+
+        <!-- 6. OBSERVACIONES -->
+        <ion-item [class.field-completed]="evaluacionForm.get('observaciones')?.value?.trim().length > 0" lines="full">
+          <ion-label position="stacked">
+            6. Observaciones y comentarios
+            <span class="checkmark" *ngIf="evaluacionForm.get('observaciones')?.value?.trim().length > 0"> ✅</span>
+          </ion-label>
+          <ion-textarea 
+            formControlName="observaciones"
+            rows="4" 
+            placeholder="Describa el progreso, recomendaciones, etc..."
+            (ionChange)="actualizarEstado()">
+          </ion-textarea>
+          <ion-icon slot="end" 
+                   name="checkmark-circle" 
+                   color="success" 
+                   *ngIf="evaluacionForm.get('observaciones')?.value?.trim().length > 0">
+          </ion-icon>
+        </ion-item>
+
+        <!-- 7. RECOMENDACIÓN FINAL -->
+        <ion-item [class.field-completed]="evaluacionForm.get('recomendacion')?.valid" lines="full">
+          <ion-label position="stacked">
+            7. Recomendación final
+            <span class="required">*</span>
+            <span class="checkmark" *ngIf="evaluacionForm.get('recomendacion')?.valid"> ✅</span>
+          </ion-label>
+          <ion-select 
+            formControlName="recomendacion" 
+            placeholder="Seleccione recomendación"
+            (ionChange)="actualizarEstado()"
+            interface="action-sheet">
+            <ion-select-option value="alta">Alta - Tratamiento completado</ion-select-option>
+            <ion-select-option value="continuar">Continuar tratamiento (4-6 sesiones más)</ion-select-option>
+            <ion-select-option value="derivar">Derivar a especialista</ion-select-option>
+            <ion-select-option value="revision">Revisión en 1 mes</ion-select-option>
+          </ion-select>
+          <ion-icon slot="end" 
+                   name="checkmark-circle" 
+                   color="success" 
+                   *ngIf="evaluacionForm.get('recomendacion')?.valid">
+          </ion-icon>
+        </ion-item>
+
+        <!-- RESUMEN DE VALIDACIÓN -->
+        <div class="validation-summary" *ngIf="!evaluacionForm.valid">
+          <ion-card color="light">
+            <ion-card-content>
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="2" class="ion-text-center">
+                    <ion-icon name="information-circle" size="large"></ion-icon>
+                  </ion-col>
+                  <ion-col size="10">
+                    <h3>Formulario incompleto</h3>
+                    <p>Faltan {{ camposFaltantes() }} campos requeridos (*) para generar el PDF.</p>
+                    <p><strong>Progreso:</strong> {{ calcularProgreso() }}% completado</p>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        </div>
+
+        
+      
+      <!-- Botón directo sin confirmación -->
+<div class="sticky-footer">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="6">
+          <ion-button expand="block"  (click)="generarPDFDirecto()">
+            <ion-icon name="download" slot="start"></ion-icon>
+            Generar PDF
+          </ion-button>
+        </ion-col>
+        <ion-col size="6">
+          <ion-button expand="block" fill="outline"  (click)="compartirPDF()">
+            <ion-icon name="share" slot="start"></ion-icon>
+            Compartir
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>

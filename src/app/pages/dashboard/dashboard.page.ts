@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { NavController } from '@ionic/angular';
+import { Component, OnInit, ViewChildren, QueryList, ElementRef  } from '@angular/core';
+import { NavController, AnimationController, IonCard } from '@ionic/angular';
 import { DatabaseService } from '../../services/database.service';
 import { JsonServerService } from '../../services/json-server.service';
 import { firstValueFrom } from 'rxjs';
@@ -12,6 +12,9 @@ import { PlatformService } from '../../services/platform.service';
   standalone: false
 })
 export class DashboardPage implements OnInit {
+
+  @ViewChildren('dashboardCard', { read: ElementRef }) dashboardCards!: QueryList<ElementRef>;
+
   usuarioNombre: string = 'Klgo. Esteban Gomez';
   totalPacientes: number = 0;
   sesionesHoy: number = 0;
@@ -25,7 +28,8 @@ export class DashboardPage implements OnInit {
     private navCtrl: NavController,
     private databaseService: DatabaseService,
     private jsonServerService: JsonServerService,
-    private platformService: PlatformService
+    private platformService: PlatformService,
+    private animationCtrl: AnimationController
   ) {}
 
   ngOnInit() {
@@ -39,7 +43,8 @@ export class DashboardPage implements OnInit {
   }
 
   async cargarDatosDashboard() {
-    // ✅ USAR INFORMACIÓN DE PLATAFORMA
+    this.estaCargando = true;
+    
     const platformInfo = this.platformService.getDebugInfo();
     this.plataformaUsada = platformInfo.descripcion;
     
@@ -52,9 +57,40 @@ export class DashboardPage implements OnInit {
       console.log('🌐 Cargando dashboard desde JSON Server');
       await this.cargarDesdeJsonServer();
     }
+
+    this.estaCargando = false; // <-- Añade esto
+    
+    // Animar después de cargar
+    setTimeout(() => {
+      this.animarEntradaDashboard();
+    }, 300);
   }
 
-  // ✅ MÉTODOS DE CARGA ESPECÍFICOS (FALTABAN)
+  animarEntradaDashboard() {
+    const cards = this.dashboardCards?.toArray();
+    
+    if (!cards || cards.length === 0) {
+      console.log('No hay cards para animar');
+      return;
+    }
+
+    // Animar cada card con delay escalonado
+    cards.forEach((card, index) => {
+      const animation = this.animationCtrl.create()
+        .addElement(card.nativeElement)
+        .duration(600)
+        .delay(100 * index) // Efecto stagger
+        .fromTo('opacity', 0, 1)
+        .fromTo('transform', 'translateY(50px)', 'translateY(0px)')
+        .easing('cubic-bezier(0.34, 1.56, 0.64, 1)'); // Bounce suave
+
+      animation.play();
+    });
+
+    console.log('🎬 Animación de entrada ejecutada para', cards.length, 'cards');
+  }
+
+  //  MÉTODOS DE CARGA ESPECÍFICOS
   private async cargarDesdeJsonServer() {
     try {
       const pacientes = await firstValueFrom(this.jsonServerService.getPacientes());
@@ -126,12 +162,26 @@ export class DashboardPage implements OnInit {
 
   async recargarDashboard(event?: any) {
     console.log('🔄 KineSphere: Recargando dashboard manualmente');
+    
+    // Primero animación de salida (opcional)
+    const cards = this.dashboardCards?.toArray();
+    if (cards && cards.length > 0) {
+      cards.forEach(card => {
+        const fadeOut = this.animationCtrl.create()
+          .addElement(card.nativeElement)
+          .duration(200)
+          .fromTo('opacity', 1, 0.3);
+        fadeOut.play();
+      });
+    }
+    
     await this.cargarDatosDashboard();
     
     if (event) {
       event.target.complete();
     }
   }
+
 
   // MÉTODOS DE NAVEGACIÓN
   irAPacientes() {
@@ -174,4 +224,4 @@ export class DashboardPage implements OnInit {
   agregarPaciente() {
     this.navCtrl.navigateRoot('/agregar-paciente');
   }
-} // ✅ CIERRE DE CLASE AÑADIDO
+} 

@@ -1,0 +1,197 @@
+.required {
+  color: var(--ion-color-danger);
+  margin-left: 4px;
+}
+
+.pdf-preview {
+  iframe {
+    border: 1px solid var(--ion-color-light-shade);
+    border-radius: 8px;
+  }
+}
+
+.pdf-actions {
+  margin-top: 16px;
+  
+  ion-button {
+    margin: 8px 0;
+  }
+}
+
+// Estilos para los rangos
+ion-range {
+  padding: 0 8px;
+}
+
+// Estilos para selects
+ion-select {
+  max-width: 100%;
+}
+
+// Responsive
+@media (max-width: 576px) {
+  .pdf-preview iframe {
+    height: 300px;
+  }
+}
+
+/* evaluacion-final.page.scss */
+
+/* CHECKMARKS VISUALES */
+.field-completed {
+  --background: rgba(45, 211, 111, 0.05);
+  border-left: 4px solid var(--ion-color-success);
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.checkmark {
+  color: var(--ion-color-success);
+  font-weight: bold;
+}
+
+.required {
+  color: var(--ion-color-danger);
+  font-weight: bold;
+}
+
+/* INDICADORES DE PROGRESO */
+.validation-summary {
+  margin: 20px 0;
+  padding: 10px;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  
+  ion-card {
+    margin: 0;
+  }
+}
+
+/* BOTONES DE ACCIÓN */
+.action-buttons {
+  margin-top: 20px;
+  
+  ion-button {
+    margin: 5px 0;
+  }
+}
+
+/* MODAL DE CONFIRMACIÓN */
+.confirmation-content {
+  text-align: center;
+  padding: 20px;
+  
+  ion-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+  }
+  
+  h2 {
+    color: var(--ion-color-primary);
+    margin-bottom: 15px;
+  }
+  
+  ion-list {
+    background: transparent;
+    margin: 20px 0;
+    
+    ion-item {
+      --background: transparent;
+      --padding-start: 0;
+      --inner-padding-end: 0;
+    }
+  }
+}
+
+/* ESTADO DE LOS CAMPOS */
+ion-item {
+  transition: all 0.3s ease;
+  
+  &:focus-within {
+    --background: rgba(var(--ion-color-primary-rgb), 0.05);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 576px) {
+  .confirmation-content {
+    padding: 10px;
+  }
+}
+
+.content-grid {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 100px; 
+}
+
+.footer-spacer {
+  height: 0px;
+  flex-shrink: 0;
+}
+
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--ion-background-color);
+  padding: 16px;
+  border-top: 1px solid var(--ion-color-medium-shade);
+  z-index: 100;
+  flex-shrink: 0;
+  
+  ion-button {
+    margin: 0;
+    height: 48px;
+  }
+}
+
+/* Fuerza el header a estar siempre arriba */
+ion-header {
+  position: relative;
+  z-index: 1000;
+  
+  ion-toolbar {
+    // Altura mínima 
+    min-height: 44px;
+    
+    // Padding para safe area 
+    padding-top: env(safe-area-inset-top);
+    padding-top: constant(safe-area-inset-top); 
+  }
+}
+
+/* Ajusta el contenido para empezar después del header */
+.main-content {
+  margin-top: 56px;
+  height: calc(100vh - 56px - 80px);
+  overflow-y: auto;
+}
+
+/* Footer fijo abajo */
+.action-footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+/* Asegurar que el contenido empiece DESPUÉS del header */
+ion-content.ion-padding {
+  --padding-top: 56px !important; /* Altura del header */
+  --padding-bottom: 80px !important; /* Altura del footer si tienes */
+}
+
+/* O si prefieres un enfoque más específico: */
+ion-content {
+  --offset-top: 56px;
+  margin-top: 56px;
+  height: calc(100vh - 56px);
+}

@@ -85,3 +85,29 @@
 ion-col {
   display: flex;
 }
+
+
+.pacientes-content {
+  --padding-bottom: 100px; 
+  position: relative;
+}
+
+.paciente-fab {
+  margin-bottom: 30px; 
+  z-index: 10;
+  
+  /* Ajustar para notch en iOS */
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Para lista larga */
+.pacientes-container {
+  min-height: calc(100vh - 150px); 
+  padding-bottom: 80px; 
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ion-color-medium);
+}

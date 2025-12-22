@@ -23,7 +23,8 @@
     <!-- Formulario de Login -->
     <ion-card data-test="login-card">
       <ion-card-content>
-        <form (ngSubmit)="login()" data-test="login-form">
+        <form #loginForm="ngForm" (ngSubmit)="login(loginForm)" data-test="login-form">
+          
           <!-- Campo Usuario -->
           <ion-item data-test="username-item">
             <ion-icon name="person-circle-outline" slot="start" color="medium" data-test="username-icon"></ion-icon>
@@ -31,20 +32,29 @@
             <ion-input
               data-test="username-input"
               type="text"
-              placeholder="Ingresa tu usuario"
+              [placeholder]="animatedPlaceholder"
               [(ngModel)]="username"
               name="username"
               #usernameRef="ngModel"
               required
               minlength="3"
               maxlength="8"
-              pattern="[a-zA-Z0-9]*">
+              pattern="[a-zA-Z0-9]*"
+              (ionInput)="validateUsernameInRealTime()">
             </ion-input>
           </ion-item>
 
+          <!-- Mostrar error de validación -->
           @if (usernameRef.invalid && usernameRef.touched) {
             <ion-note color="danger" data-test="username-error">
               El usuario debe tener entre 3 y 8 caracteres y ser alfanumérico
+            </ion-note>
+          }
+
+          <!-- Mostrar validación en tiempo real -->
+          @if (username && usernameRef.valid) {
+            <ion-note color="success" data-test="username-valid">
+              {{ validateUsernameInRealTime() }}
             </ion-note>
           }
 
@@ -55,7 +65,7 @@
             <ion-input
               data-test="password-input"
               [type]="showPwd ? 'text' : 'password'"
-              placeholder="Ingresa tu contraseña de 4 digitos"
+              placeholder="Ingresa tu contraseña de 4 dígitos"
               [(ngModel)]="password"
               name="password"
               #passwordRef="ngModel"
@@ -63,7 +73,8 @@
               minlength="4"
               maxlength="4"
               pattern="[0-9]*"
-              autocomplete="current-password">
+              autocomplete="current-password"
+              (ionInput)="validatePasswordInRealTime()">
             </ion-input>
 
             <!-- Botón para mostrar/ocultar contraseña -->
@@ -80,9 +91,17 @@
             </ion-button>
           </ion-item>
 
+          <!-- Mostrar error de validación -->
           @if (passwordRef.invalid && passwordRef.touched) {
             <ion-note color="danger" data-test="password-error">
               Debe ser un número de 4 dígitos
+            </ion-note>
+          }
+
+          <!-- Mostrar validación en tiempo real -->
+          @if (password && passwordRef.valid) {
+            <ion-note color="success" data-test="password-valid">
+              {{ validatePasswordInRealTime() }}
             </ion-note>
           }
 
@@ -103,9 +122,20 @@
             type="submit"
             expand="block"
             class="ion-margin-top login-button"
-            [disabled]="!username || !password">
-            Ingresar
+            [disabled]="loginForm.invalid || isLoading">
+            
+            @if (isLoading) {
+              <ion-spinner name="crescent"></ion-spinner>
+            } @else {
+              Ingresar
+            }
           </ion-button>
+
+          <!-- Demo info -->
+          <div class="demo-info" data-test="demo-info">
+            <small>Usuario: 3-8 caracteres</small>
+            <small>Contraseña: 4 dígitos </small>
+          </div>
         </form>
       </ion-card-content>
     </ion-card>
@@ -118,7 +148,7 @@
         size="small" 
         routerLink="/register" 
         color="success">
-        Crea tu cuenta gratis
+        Desarrollado por Esteban Gomez
       </ion-button>
     </div>
 

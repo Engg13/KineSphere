@@ -5,7 +5,7 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <!-- ✅ PULL-TO-REFRESH -->
+  <!-- PULL-TO-REFRESH -->
   <ion-refresher slot="fixed" (ionRefresh)="recargarDashboard($event)">
     <ion-refresher-content
       pullingIcon="chevron-down-circle-outline"
@@ -23,7 +23,7 @@
       </div>
       <div class="subtitle">
         <p>Resumen de tu actividad clínica</p>
-        <!-- ✅ NUEVO: Mostrar fuente de datos -->
+        <!-- Mostrar fuente de datos -->
         @if (plataformaUsada) {
           <small class="data-source">
             Datos cargados desde: {{ plataformaUsada }}
@@ -32,7 +32,7 @@
       </div>
     </div>
 
-    <!-- ✅ LOADING STATE -->
+    <!-- LOADING STATE -->
     @if (estaCargando) {
       <div class="loading-container ion-text-center ion-padding">
         <ion-spinner name="crescent"></ion-spinner>
@@ -184,7 +184,7 @@
               </ion-col>
             </ion-row>
           </ion-grid>
-          <!-- ✅ INFORMACIÓN DEL ESTADO DE CARGA (MOVIDO AQUÍ) -->
+          <!--  INFORMACIÓN DEL ESTADO DE CARGA  -->
           @if (plataformaUsada) {
             <div class="ion-margin-top ion-text-center">
               <ion-chip color="medium">
@@ -197,7 +197,7 @@
     }
 
     <!-- BOTÓN AGREGAR PACIENTE FLOATING -->
-    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="paciente-fab">
       <ion-fab-button color="primary" (click)="agregarPaciente()">
         <ion-icon name="add"></ion-icon>
       </ion-fab-button>

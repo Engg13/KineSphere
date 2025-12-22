@@ -1,7 +1,9 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/paciente-detalle"></ion-back-button>
+      <ion-button (click)="volverAlPaciente()">
+        <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+      </ion-button>
     </ion-buttons>
     <ion-title>Documentos Médicos</ion-title>
   </ion-toolbar>

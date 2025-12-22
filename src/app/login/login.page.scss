@@ -1,6 +1,6 @@
 /* ===== HEADER  ===== */
 .custom-header-container {
-  padding-top: var(--ion-safe-area-top, 20px); 
+  padding-top: calc(var(--ion-safe-area-top, 20px) + 60px); 
   background: #ffffff; 
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
 }
@@ -42,7 +42,7 @@
 
 /* ===== CONTENIDO ===== */
 .login-content {
-  --padding-top: 20px; 
+  --padding-top: 80px; 
   --padding-bottom: 20px;
 }
 
@@ -314,3 +314,89 @@ ion-note[color="danger"] {
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
 }
+
+.demo-info {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  
+  small {
+    display: block;
+    color: var(--ion-color-medium);
+    margin-bottom: 4px;
+    
+    &:first-child {
+      font-weight: 600;
+      color: var(--ion-color-primary);
+    }
+  }
+}
+
+// Estilos para el spinner en el botón
+.login-button {
+  ion-spinner {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+// Mejorar la visibilidad de las notas de validación
+ion-note {
+  display: block;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  
+  &[color="success"] {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+
+.animated-placeholder {
+  &::placeholder {
+    color: var(--ion-color-medium);
+    transition: all 0.3s ease;
+    background: linear-gradient(90deg, 
+      var(--ion-color-primary), 
+      var(--ion-color-secondary)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 100%;
+    animation: placeholderShine 3s infinite;
+  }
+  
+  &:focus::placeholder {
+    opacity: 0.7;
+  }
+}
+
+@keyframes placeholderShine {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+// Efecto de máquina de escribir
+.typewriter {
+  position: relative;
+  
+  &::after {
+    content: '|';
+    position: absolute;
+    right: 8px;
+    color: var(--ion-color-primary);
+    animation: blink 1s infinite;
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
