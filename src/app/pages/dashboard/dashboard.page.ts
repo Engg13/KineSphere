@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChildren, QueryList, ElementRef  } from '@angular/core';
-import { NavController, AnimationController, IonCard } from '@ionic/angular';
+import { NavController, AnimationController } from '@ionic/angular';
 import { DatabaseService } from '../../services/database.service';
 import { JsonServerService } from '../../services/json-server.service';
 import { firstValueFrom } from 'rxjs';
@@ -32,35 +32,35 @@ export class DashboardPage implements OnInit {
     private animationCtrl: AnimationController
   ) {}
 
+  private datosCargados = false;
+
   ngOnInit() {
-    console.log('🎯 KineSphere DEBUG: ngOnInit ejecutado');
-    this.cargarDatosDashboard();
+    // Solo cargar en ngOnInit la primera vez
   }
 
   ionViewDidEnter() {
-    console.log('🎯 KineSphere DEBUG: ionViewDidEnter - Dashboard visible');
     this.cargarDatosDashboard();
   }
 
   async cargarDatosDashboard() {
     this.estaCargando = true;
-    
+
     const platformInfo = this.platformService.getDebugInfo();
     this.plataformaUsada = platformInfo.descripcion;
-    
-    console.log('🎯 Dashboard usando plataforma:', platformInfo);
 
-    if (this.platformService.shouldUseSQLite()) {
-      console.log('📱 Cargando dashboard desde SQLite');
-      await this.cargarDesdeSQLite();
-    } else {
-      console.log('🌐 Cargando dashboard desde JSON Server');
-      await this.cargarDesdeJsonServer();
+    try {
+      if (this.platformService.shouldUseSQLite()) {
+        await this.cargarDesdeSQLite();
+      } else {
+        await this.cargarDesdeJsonServer();
+      }
+    } catch (error) {
+      console.error('Error cargando dashboard:', error);
+      this.reiniciarContadores();
+    } finally {
+      this.estaCargando = false;
     }
 
-    this.estaCargando = false; // <-- Añade esto
-    
-    // Animar después de cargar
     setTimeout(() => {
       this.animarEntradaDashboard();
     }, 300);
@@ -105,15 +105,15 @@ export class DashboardPage implements OnInit {
         this.reiniciarContadores();
       }
     } catch (error) {
-      console.error('❌ Error cargando desde JSON Server:', error);
-      throw new Error('JSON Server no disponible');
+      console.error('Error cargando desde JSON Server:', error);
+      this.reiniciarContadores();
     }
   }
 
   private async cargarDesdeSQLite() {
     try {
       const pacientes = await this.databaseService.getPacientes();
-      
+
       if (pacientes && pacientes.length > 0) {
         this.actualizarContadores(pacientes);
         this.pacientesRecientes = pacientes.slice(0, 5);
@@ -121,8 +121,8 @@ export class DashboardPage implements OnInit {
         this.reiniciarContadores();
       }
     } catch (error) {
-      console.error('❌ Error cargando desde SQLite:', error);
-      throw new Error('SQLite no disponible');
+      console.error('Error cargando desde SQLite:', error);
+      this.reiniciarContadores();
     }
   }
 

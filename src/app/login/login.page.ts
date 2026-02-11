@@ -33,7 +33,7 @@ export class LoginPage {
   }
 
   async login(form?: NgForm) {
-    console.log('Login attempt:', this.username, this.password);
+    console.log('Login attempt for user:', this.username);
     
     // Validación manual antes de proceder
     const validationErrors = this.validateCredentials();
@@ -157,10 +157,11 @@ export class LoginPage {
   private placeholderInterval: any;
 
   ngOnInit() {
-    this.startPlaceholderAnimation();
+    // Animación se inicia en ionViewDidEnter
   }
 
   ionViewDidEnter() {
+    this.stopPlaceholderAnimation();
     this.startPlaceholderAnimation();
   }
 

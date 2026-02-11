@@ -121,22 +121,14 @@ export class AuthService {
    *  ALMACENAR DATOS DE AUTENTICACIÓN
    */
   private storeAuthData(username: string, nombre: string): void {
-    // Usar método apropiado según plataforma
-    if (this.platform.is('capacitor') || this.platform.is('cordova')) {
-      // Para dispositivos nativos
+    try {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('username', username);
       localStorage.setItem('nombreCompleto', nombre);
       localStorage.setItem('lastLogin', new Date().toISOString());
-    } else {
-      // Para navegador/web
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('username', username);
-      localStorage.setItem('nombreCompleto', nombre);
-      localStorage.setItem('lastLogin', new Date().toISOString());
+    } catch (error) {
+      console.error('Error almacenando datos de autenticación:', error);
     }
-    
-    console.log('💾 Datos de autenticación almacenados en localStorage');
   }
 
   /**
@@ -222,23 +214,17 @@ export class AuthService {
       timestamp: new Date().toISOString(),
       event: 'LOGIN_SUCCESS',
       username: user.username,
-      nombre: user.nombre,
-      validation: 'PASSED',
-      requirements: {
-        usernameLength: user.username.length,
-        passwordLength: user.password.length,
-        usernamePattern: 'alphanumeric',
-        passwordPattern: 'numeric'
-      }
+      nombre: user.nombre
     };
-    
-    console.log('📊 LOGIN SUCCESS:', logEntry);
-    
-    // Guardar en historial 
-    const loginHistory = JSON.parse(localStorage.getItem('loginHistory') || '[]');
-    loginHistory.unshift(logEntry);
-    if (loginHistory.length > 5) loginHistory.pop();
-    localStorage.setItem('loginHistory', JSON.stringify(loginHistory));
+
+    try {
+      const loginHistory = JSON.parse(localStorage.getItem('loginHistory') || '[]');
+      loginHistory.unshift(logEntry);
+      if (loginHistory.length > 5) loginHistory.pop();
+      localStorage.setItem('loginHistory', JSON.stringify(loginHistory));
+    } catch (error) {
+      console.error('Error guardando historial de login:', error);
+    }
   }
 
   /**
@@ -287,18 +273,11 @@ export class AuthService {
    * 👥 OBTENER USUARIOS VÁLIDOS 
    */
   getDemoUsers(): any[] {
-    console.log('👥 Lista de usuarios para demostración:');
     return this.validUsers.map(user => ({
       username: user.username,
-      passwordHint: `Contraseña: ${user.password}`,
+      passwordHint: '4 dígitos numéricos',
       nombre: user.nombre,
-      isValidExample: true,
-      validation: {
-        usernameLength: user.username.length,
-        passwordLength: user.password.length,
-        usernamePattern: /^[a-zA-Z0-9]+$/.test(user.username),
-        passwordPattern: /^\d+$/.test(user.password)
-      }
+      isValidExample: true
     }));
   }
 
@@ -317,12 +296,15 @@ export class AuthService {
       { username: 'admin', password: '4321', expected: true, reason: 'Válido' }
     ];
     
-    const results = testCases.map(test => ({
-      ...test,
-      actual: this.login(test.username, test.password),
-      passed: this.login(test.username, test.password) === test.expected
-    }));
-    
+    const results = testCases.map(test => {
+      const actual = this.validateCredentialsForDemo(test.username, test.password).isValid;
+      return {
+        ...test,
+        actual,
+        passed: actual === test.expected
+      };
+    });
+
     return results;
   }
 }

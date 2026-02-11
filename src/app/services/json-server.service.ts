@@ -64,7 +64,6 @@ export class JsonServerService {
   createPaciente(paciente: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/pacientes`, paciente, this.httpOptions)
       .pipe(
-        retry(2),
         catchError(this.handleError)
       );
   }
@@ -72,7 +71,6 @@ export class JsonServerService {
   updatePaciente(id: string, paciente: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/pacientes/${id}`, paciente, this.httpOptions)
       .pipe(
-        retry(2),
         catchError(this.handleError)
       );
   }
@@ -80,7 +78,6 @@ export class JsonServerService {
   deletePaciente(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/pacientes/${id}`)
       .pipe(
-        retry(2),
         catchError(this.handleError)
       );
   }
@@ -113,7 +110,6 @@ export class JsonServerService {
   createSesion(sesion: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/sesiones`, sesion, this.httpOptions)
       .pipe(
-        retry(2),
         catchError(this.handleError)
       );
   }
@@ -121,7 +117,6 @@ export class JsonServerService {
   updateSesion(id: string, sesion: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/sesiones/${id}`, sesion, this.httpOptions)
       .pipe(
-        retry(2),
         catchError(this.handleError)
       );
   }
@@ -129,7 +124,6 @@ export class JsonServerService {
   deleteSesion(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/sesiones/${id}`)
       .pipe(
-        retry(2),
         catchError(this.handleError)
       );
   }
@@ -151,11 +145,10 @@ export class JsonServerService {
       );
   }
 
-  // MÉTODO PARA LOGIN 
+  // MÉTODO PARA LOGIN
   loginProfesional(email: string, password: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/profesionales?email=${email}&password=${password}`)
+    return this.http.post(`${this.apiUrl}/profesionales/login`, { email, password }, this.httpOptions)
       .pipe(
-        retry(2),
         catchError(this.handleError)
       );
   }

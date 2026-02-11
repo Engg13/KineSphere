@@ -11,7 +11,7 @@ import { NavController, AlertController, Platform } from '@ionic/angular';
 })
 export class EvaluacionFinalPage implements OnInit {
   paciente: any = null;
-  pdfUrl: string = '';
+  private pdfUrl: string = '';
   mostrarConfirmacion: boolean = false;
   fechaActual = new Date();
   
@@ -57,19 +57,28 @@ export class EvaluacionFinalPage implements OnInit {
     // Generar contenido HTML para el PDF
     const contenidoHTML = this.generarContenidoHTML(evaluacionData);
     
+    // Liberar blob URL anterior si existe
+    if (this.pdfUrl) {
+      URL.revokeObjectURL(this.pdfUrl);
+    }
+
     // Crear el Blob y descargar
     const blob = new Blob([contenidoHTML], { type: 'text/html' });
     this.pdfUrl = URL.createObjectURL(blob);
-    
+
     // Crear enlace de descarga
     const link = document.createElement('a');
     link.href = this.pdfUrl;
     link.download = `Evaluacion_${this.paciente.nombre.replace(/\s+/g, '_')}_${this.fechaActual.toISOString().split('T')[0]}.html`;
-    
+
     // Simular clic para descargar
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    // Liberar blob URL después de descarga
+    URL.revokeObjectURL(this.pdfUrl);
+    this.pdfUrl = '';
     
     this.mostrarExito('✅ PDF descargado correctamente');
   }
@@ -93,6 +102,16 @@ export class EvaluacionFinalPage implements OnInit {
     }
   }
 
+  private escapeHtml(text: string | undefined | null): string {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   private prepararDatosPDF() {
     return {
       paciente: this.paciente,
@@ -111,7 +130,7 @@ export class EvaluacionFinalPage implements OnInit {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Evaluación Final - ${data.paciente.nombre}</title>
+        <title>Evaluación Final - ${this.escapeHtml(data.paciente.nombre)}</title>
         <style>
           body {
             font-family: Arial, sans-serif;
@@ -195,7 +214,7 @@ export class EvaluacionFinalPage implements OnInit {
       </head>
       <body>
         <div class="header">
-          <div class="logo">KINESPHEERE</div>
+          <div class="logo">KINESPHERE</div>
           <h1 class="titulo">Evaluación Final de Kinesiología</h1>
           <p>Documento generado automáticamente - ${data.fecha} ${data.hora}</p>
         </div>
@@ -204,19 +223,19 @@ export class EvaluacionFinalPage implements OnInit {
           <h3>📋 Datos del Paciente</h3>
           <div class="campo">
             <span class="etiqueta">Nombre:</span>
-            <span class="valor">${data.paciente.nombre}</span>
+            <span class="valor">${this.escapeHtml(data.paciente.nombre)}</span>
           </div>
           <div class="campo">
             <span class="etiqueta">RUT:</span>
-            <span class="valor">${data.paciente.rut}</span>
+            <span class="valor">${this.escapeHtml(data.paciente.rut)}</span>
           </div>
           <div class="campo">
             <span class="etiqueta">Diagnóstico:</span>
-            <span class="valor">${data.paciente.diagnostico}</span>
+            <span class="valor">${this.escapeHtml(data.paciente.diagnostico)}</span>
           </div>
           <div class="campo">
             <span class="etiqueta">Fecha de ingreso:</span>
-            <span class="valor">${data.paciente.fechaIngreso}</span>
+            <span class="valor">${this.escapeHtml(data.paciente.fechaIngreso)}</span>
           </div>
           <div class="campo">
             <span class="etiqueta">Contacto:</span>
@@ -348,19 +367,20 @@ export class EvaluacionFinalPage implements OnInit {
   }
 
   private async compartirEnNavegador(contenidoHTML: string) {
-    // Para navegadores web - guardar como archivo
     const blob = new Blob([contenidoHTML], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `Evaluacion_${this.paciente.nombre.replace(/\s+/g, '_')}_${this.fechaActual.toISOString().split('T')[0]}.html`;
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    await this.mostrarExito('✅ Archivo guardado para compartir');
+
+    URL.revokeObjectURL(url);
+
+    await this.mostrarExito('Archivo guardado para compartir');
   }
 
   private async compartirEnMovil(contenidoHTML: string) {
@@ -484,7 +504,7 @@ cerrarConfirmacion() {
     console.error('Error generando PDF:', error);
     await this.mostrarError('❌ Error generando el PDF');
   }
-}ewngg
+}
 
   // MÉTODOS AUXILIARES
   rellenarDemo() {

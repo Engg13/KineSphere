@@ -227,18 +227,7 @@ export class AgregarPacientePage {
     }
   }
 
-  // === MÉTODOS AUXILIARES SIMPLIFICADOS ===
-
-  private async sqliteDisponible(): Promise<boolean> {
-    try {
-      // Intentar una operación simple para verificar
-      await this.databaseService.getPacientes();
-      return true;
-    } catch (error) {
-      console.log('📱 SQLite no disponible en este momento');
-      return false;
-    }
-  }
+  // === MÉTODOS AUXILIARES ===
 
   async mostrarToast(mensaje: string, color: string = 'primary') {
     const toast = await this.toastController.create({

@@ -2,7 +2,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { WgerApiService, Ejercicio } from '../../services/wger-api.service';
 import { AlertController, LoadingController, NavController  } from '@ionic/angular';
-import { Subscription, Observable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize, catchError } from 'rxjs/operators';
 
 @Component({
