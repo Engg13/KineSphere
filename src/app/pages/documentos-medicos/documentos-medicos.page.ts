@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { NavController, AlertController } from '@ionic/angular';
-import { ActivatedRoute } from '@angular/router'; 
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-documentos-medicos',
@@ -17,49 +17,38 @@ export class DocumentosMedicosPage implements OnInit {
   constructor(
     private navCtrl: NavController,
     private alertController: AlertController,
-    private route: ActivatedRoute 
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    
-    this.route.paramMap.subscribe(params => {
-      // Intentar obtener de queryParams primero
-      const pacienteIdParam = history.state?.pacienteId || params.get('pacienteId');
-      const pacienteNombreParam = history.state?.pacienteNombre || params.get('pacienteNombre');
-      
-      if (pacienteIdParam) {
-        this.pacienteId = Number(pacienteIdParam);
-        this.pacienteNombre = pacienteNombreParam || 'Paciente';
-        console.log('📄 Documentos médicos para paciente:', this.pacienteId, this.pacienteNombre);
-      }
-    });
-
-    // También verificar en queryParams
     this.route.queryParams.subscribe(params => {
-      if (params['pacienteId'] && !this.pacienteId) {
+      if (params['pacienteId']) {
         this.pacienteId = Number(params['pacienteId']);
         this.pacienteNombre = params['pacienteNombre'] || 'Paciente';
-        console.log('📄 Documentos desde queryParams:', this.pacienteId);
+        this.cargarDocumentos();
       }
     });
   }
 
-  // Obtener datos de la navegación
-  private obtenerDatosNavegacion() {
-    // Intentar obtener de state (navegación con state)
-    if (history.state) {
-      if (history.state.pacienteId) {
-        this.pacienteId = history.state.pacienteId;
-        this.pacienteNombre = history.state.pacienteNombre || 'Paciente';
-        return true;
-      }
+  private cargarDocumentos() {
+    try {
+      const stored = localStorage.getItem(`documentos_${this.pacienteId}`);
+      this.documentos = stored ? JSON.parse(stored) : [];
+    } catch {
+      this.documentos = [];
     }
-    return false;
+  }
+
+  private persistirDocumentos() {
+    try {
+      localStorage.setItem(`documentos_${this.pacienteId}`, JSON.stringify(this.documentos));
+    } catch (error) {
+      console.error('Error persistiendo documentos:', error);
+    }
   }
 
   async tomarFoto() {
     try {
-      console.log('📸 Abriendo cámara...');
       const imagen = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -71,18 +60,16 @@ export class DocumentosMedicosPage implements OnInit {
       });
 
       if (imagen.dataUrl) {
-        console.log('✅ Foto tomada exitosamente');
         await this.guardarDocumento(imagen.dataUrl, 'foto_camara');
       }
     } catch (error) {
-      console.error('❌ Error tomando foto:', error);
+      console.error('Error tomando foto:', error);
       this.mostrarError('No se pudo tomar la foto. Verifica los permisos de la cámara.');
     }
   }
 
   async abrirGaleria() {
     try {
-      console.log('🖼️ Abriendo galería...');
       const imagen = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -94,11 +81,10 @@ export class DocumentosMedicosPage implements OnInit {
       });
 
       if (imagen.dataUrl) {
-        console.log('✅ Imagen seleccionada de galería');
         await this.guardarDocumento(imagen.dataUrl, 'desde_galeria');
       }
     } catch (error) {
-      console.error('❌ Error abriendo galería:', error);
+      console.error('Error abriendo galería:', error);
       this.mostrarError('No se pudo acceder a la galería. Verifica los permisos.');
     }
   }
@@ -115,10 +101,10 @@ export class DocumentosMedicosPage implements OnInit {
       };
 
       this.documentos.unshift(nuevoDocumento);
-      console.log('💾 Documento guardado:', nuevoDocumento);
+      this.persistirDocumentos();
       this.mostrarMensaje('Documento guardado exitosamente');
     } catch (error) {
-      console.error('❌ Error guardando documento:', error);
+      console.error('Error guardando documento:', error);
       this.mostrarError('Error al guardar el documento');
     }
   }
@@ -134,6 +120,7 @@ export class DocumentosMedicosPage implements OnInit {
           role: 'destructive',
           handler: () => {
             this.documentos = this.documentos.filter(doc => doc.id !== documento.id);
+            this.persistirDocumentos();
             this.mostrarMensaje('Documento eliminado');
           }
         }
@@ -176,9 +163,8 @@ export class DocumentosMedicosPage implements OnInit {
   }
 
   volverAlPaciente() {
-  
-  this.navCtrl.navigateBack('/paciente-detalle', {
-    queryParams: { id: this.pacienteId }
+    this.navCtrl.navigateBack('/paciente-detalle', {
+      queryParams: { id: this.pacienteId }
     });
   }
 }
