@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { NavController } from '@ionic/angular';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { JsonServerService } from 'src/app/services/json-server.service';
 import { DatabaseService } from 'src/app/services/database.service';
 import { firstValueFrom } from 'rxjs';
@@ -31,9 +31,8 @@ export class SesionPage implements OnInit {
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
-    private router: Router,
     private jsonServerService: JsonServerService,
-    private databaseService: DatabaseService 
+    private databaseService: DatabaseService
   ) {}
 
   async ngOnInit() {

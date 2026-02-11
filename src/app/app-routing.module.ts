@@ -45,26 +45,28 @@ const routes: Routes = [
   },
   {
     path: 'visita-domiciliaria',
-    loadChildren: () => import('./pages/visita-domiciliaria/visita-domiciliaria.module').then( m => m.VisitaDomiciliariaPageModule)
+    loadChildren: () => import('./pages/visita-domiciliaria/visita-domiciliaria.module').then( m => m.VisitaDomiciliariaPageModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'test-pacientes',
-    loadChildren: () => import('./pages/test-pacientes/test-pacientes.module').then( m => m.TestPacientesPageModule)
+    loadChildren: () => import('./pages/test-pacientes/test-pacientes.module').then( m => m.TestPacientesPageModule),
+    canActivate: [AuthGuard]
   },
-
   {
     path: 'agregar-paciente',
-    loadChildren: () => import('./pages/agregar-paciente/agregar-paciente.module').then( m => m.AgregarPacientePageModule)
+    loadChildren: () => import('./pages/agregar-paciente/agregar-paciente.module').then( m => m.AgregarPacientePageModule),
+    canActivate: [AuthGuard]
   },
-
   {
     path: 'documentos-medicos',
-    loadChildren: () => import('./pages/documentos-medicos/documentos-medicos.module').then( m => m.DocumentosMedicosPageModule)
+    loadChildren: () => import('./pages/documentos-medicos/documentos-medicos.module').then( m => m.DocumentosMedicosPageModule),
+    canActivate: [AuthGuard]
   },
-
   {
-  path: 'config-test',
-  loadChildren: () => import('./pages/config-test/config-test.module').then(m => m.ConfigTestPageModule)
+    path: 'config-test',
+    loadChildren: () => import('./pages/config-test/config-test.module').then(m => m.ConfigTestPageModule),
+    canActivate: [AuthGuard]
   },
   
   {

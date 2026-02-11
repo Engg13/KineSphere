@@ -24,8 +24,8 @@ export class PacienteDetallePage implements OnInit {
     private databaseService: DatabaseService
   ) { }
 
-  ngOnInit() {
-    this.cargarPacienteDesdeParams();
+  async ngOnInit() {
+    await this.cargarPacienteDesdeParams();
     if (this.paciente && !this.paciente.fechaIngreso && !this.paciente.fechaCreacion) {
       this.paciente.fechaIngreso = this.fechaActual;
     }

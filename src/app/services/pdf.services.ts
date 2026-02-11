@@ -8,6 +8,16 @@ export class PdfService {
 
   constructor(private platform: Platform) {}
 
+  private escapeHtml(text: string | undefined | null): string {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   // GENERAR PDF BÁSICO (simulación para demo)
   async generarEvaluacionPDF(data: any): Promise<string> {
     // Para DEMO, generamos un HTML que simula un PDF
@@ -28,7 +38,7 @@ export class PdfService {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Evaluación Final - ${data.paciente.nombre}</title>
+        <title>Evaluación Final - ${this.escapeHtml(data.paciente.nombre)}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; }
           .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
@@ -45,7 +55,7 @@ export class PdfService {
       </head>
       <body>
         <div class="header">
-          <h1 class="title">KINESPHEERE</h1>
+          <h1 class="title">KINESPHERE</h1>
           <p class="subtitle">Centro de Kinesiología y Rehabilitación</p>
           <h2>EVALUACIÓN FINAL DE PACIENTE</h2>
         </div>
@@ -53,12 +63,12 @@ export class PdfService {
         <div class="section">
           <div class="section-title">DATOS DEL PACIENTE</div>
           <div class="info-grid">
-            <div class="info-item"><strong>Nombre:</strong> ${data.paciente.nombre}</div>
-            <div class="info-item"><strong>RUT:</strong> ${data.paciente.rut || 'No registrado'}</div>
-            <div class="info-item"><strong>Diagnóstico:</strong> ${data.paciente.diagnostico}</div>
-            <div class="info-item"><strong>Fecha Ingreso:</strong> ${data.paciente.fechaIngreso || 'No registrada'}</div>
-            <div class="info-item"><strong>Fecha Evaluación:</strong> ${data.fecha}</div>
-            <div class="info-item"><strong>Kinesiólogo:</strong> ${data.kinesiologo}</div>
+            <div class="info-item"><strong>Nombre:</strong> ${this.escapeHtml(data.paciente.nombre)}</div>
+            <div class="info-item"><strong>RUT:</strong> ${this.escapeHtml(data.paciente.rut) || 'No registrado'}</div>
+            <div class="info-item"><strong>Diagnóstico:</strong> ${this.escapeHtml(data.paciente.diagnostico)}</div>
+            <div class="info-item"><strong>Fecha Ingreso:</strong> ${this.escapeHtml(data.paciente.fechaIngreso) || 'No registrada'}</div>
+            <div class="info-item"><strong>Fecha Evaluación:</strong> ${this.escapeHtml(data.fecha)}</div>
+            <div class="info-item"><strong>Kinesiólogo:</strong> ${this.escapeHtml(data.kinesiologo)}</div>
           </div>
         </div>
 
@@ -77,21 +87,21 @@ export class PdfService {
         ${data.evaluacion.observaciones ? `
         <div class="section">
           <div class="section-title">OBSERVACIONES</div>
-          <p>${data.evaluacion.observaciones}</p>
+          <p>${this.escapeHtml(data.evaluacion.observaciones)}</p>
         </div>
         ` : ''}
 
         <div class="section">
           <div class="section-title">CONCLUSIÓN</div>
-          <p>El paciente ${data.paciente.nombre} ha ${this.generarConclusion(data.evaluacion)} durante el tratamiento.</p>
+          <p>El paciente ${this.escapeHtml(data.paciente.nombre)} ha ${this.generarConclusion(data.evaluacion)} durante el tratamiento.</p>
           <p>Se recomienda ${data.evaluacion.recomendacion === 'alta' ? 'dar de alta' : data.evaluacion.recomendacion}.</p>
         </div>
 
         <div class="signature">
           <p>_________________________</p>
           <p><strong>Firma del Kinesiólogo</strong></p>
-          <p>${data.kinesiologo}</p>
-          <p>Fecha: ${data.fecha}</p>
+          <p>${this.escapeHtml(data.kinesiologo)}</p>
+          <p>Fecha: ${this.escapeHtml(data.fecha)}</p>
         </div>
 
         <div class="footer">
@@ -160,6 +170,10 @@ export class PdfService {
     link.href = pdfUrl;
     link.download = nombreArchivo;
     link.click();
+    // Liberar blob URL si es una
+    if (pdfUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(pdfUrl);
+    }
   }
 
   private async descargarEnDispositivo(pdfUrl: string, nombreArchivo: string): Promise<void> {
