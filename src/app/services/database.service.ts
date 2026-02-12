@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Platform } from '@ionic/angular';
 import { SQLite, SQLiteObject } from '@awesome-cordova-plugins/sqlite/ngx';
 import { PlatformService } from './platform.service';
+import { FirestoreService } from './firestore.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -10,11 +12,13 @@ export class DatabaseService {
   private db: SQLiteObject | null = null;
   private isInitialized = false;
   private hasDemoData = false;
+  private useFirestore = true; // Flag para activar/desactivar Firestore
 
   constructor(
     private platform: Platform,
     private sqlite: SQLite,
-    private platformService: PlatformService
+    private platformService: PlatformService,
+    private firestoreService: FirestoreService
   ) {
     // SOLO INICIAR SQLite EN PLATAFORMAS NATIVAS
     if (this.platformService.shouldUseSQLite()) {
@@ -243,10 +247,19 @@ export class DatabaseService {
   // ==================== MÉTODOS CRUD MEJORADOS ====================
 
   async getPacientes(): Promise<any[]> {
-    // Usar localStorage para datos del usuario
+    // EN WEB - intentar Firestore, fallback a localStorage
     if (!this.platformService.shouldUseSQLite()) {
+      if (this.useFirestore) {
+        try {
+          const pacientes = await firstValueFrom(this.firestoreService.getPacientes());
+          if (pacientes && pacientes.length > 0) {
+            return pacientes;
+          }
+        } catch (err) {
+          console.log('Firestore no disponible, usando localStorage');
+        }
+      }
       const userPacientes = this.getUserPacientesFromStorage();
-      // Solo mostrar demo si no hay datos del usuario
       return userPacientes.length > 0 ? userPacientes : this.getDemoPacientes();
     }
 
@@ -313,20 +326,32 @@ export class DatabaseService {
   }
 
   async addPaciente(paciente: any): Promise<any> {
-    // Guardar en localStorage
+    // EN WEB - guardar en Firestore + localStorage backup
     if (!this.platformService.shouldUseSQLite()) {
+      let firestoreId = null;
+
+      if (this.useFirestore) {
+        try {
+          const result = await this.firestoreService.addPaciente(paciente);
+          firestoreId = result.id;
+          console.log('✅ Paciente guardado en Firestore:', paciente.nombre);
+        } catch (err) {
+          console.log('Firestore no disponible, guardando solo en localStorage');
+        }
+      }
+
+      // Siempre guardar en localStorage como backup
       const userPacientes = this.getUserPacientesFromStorage();
       const newPaciente = {
         ...paciente,
-        id: Date.now(), // ID temporal
+        id: firestoreId || Date.now(),
         es_demo: false,
         activo: true,
         fecha_creacion: new Date().toISOString(),
-        num_sesiones: 0 // Inicialmente 0 sesiones
+        num_sesiones: 0
       };
       userPacientes.push(newPaciente);
       localStorage.setItem('user_pacientes', JSON.stringify(userPacientes));
-      console.log('✅ Paciente guardado en localStorage:', paciente.nombre);
       return { insertId: newPaciente.id };
     }
 
@@ -351,15 +376,21 @@ export class DatabaseService {
     }
   }
 
-  async deletePaciente(id: number): Promise<any> {
-    // Eliminar de localStorage
+  async deletePaciente(id: number | string): Promise<any> {
+    // EN WEB - eliminar de Firestore + localStorage
     if (!this.platformService.shouldUseSQLite()) {
+      if (this.useFirestore) {
+        try {
+          await this.firestoreService.deletePaciente(String(id));
+        } catch (err) {
+          console.log('No se pudo eliminar de Firestore:', err);
+        }
+      }
+
       const userPacientes = this.getUserPacientesFromStorage();
-      const updatedPacientes = userPacientes.filter(p => p.id !== id);
+      const updatedPacientes = userPacientes.filter(p => p.id !== id && String(p.id) !== String(id));
       localStorage.setItem('user_pacientes', JSON.stringify(updatedPacientes));
-      // También eliminar sesiones asociadas
       localStorage.removeItem(`sesiones_${id}`);
-      console.log('✅ Paciente y sesiones eliminados de localStorage ID:', id);
       return { rowsAffected: 1 };
     }
 
@@ -464,39 +495,38 @@ export class DatabaseService {
   }
 
   async addSesion(sesion: any): Promise<any> {
-    // EN WEB - guardar en localStorage
+    // EN WEB - guardar en Firestore + localStorage
     if (!this.platformService.shouldUseSQLite()) {
-      console.log('🌐 Modo web - guardando sesión REAL en localStorage');
-      
-      try {
-        const sesionId = Date.now();
-        const sesionConId = {
-          ...sesion,
-          id: sesionId,
-          paciente_id: Number(sesion.paciente_id), // Asegurar que es número
-          paciente_nombre: sesion.paciente_nombre || '',
-          fecha_creacion: new Date().toISOString(),
-          creado_en: new Date().toISOString()
-        };
-        
-        // Guardar en localStorage
-        const key = `sesiones_${sesion.paciente_id}`;
-        const sesionesExistentes = localStorage.getItem(key);
-        let todasSesiones = [];
-        
-        if (sesionesExistentes) {
-          todasSesiones = JSON.parse(sesionesExistentes);
+      const sesionId = Date.now();
+      const sesionConId = {
+        ...sesion,
+        id: sesionId,
+        paciente_id: sesion.paciente_id,
+        paciente_nombre: sesion.paciente_nombre || '',
+        fecha_creacion: new Date().toISOString(),
+        creado_en: new Date().toISOString()
+      };
+
+      if (this.useFirestore) {
+        try {
+          await this.firestoreService.addSesion(sesionConId);
+          console.log('✅ Sesion guardada en Firestore');
+        } catch (err) {
+          console.log('Firestore no disponible para sesion');
         }
-        
-        todasSesiones.push(sesionConId);
-        localStorage.setItem(key, JSON.stringify(todasSesiones));
-        
-        console.log(`✅ Sesión guardada en localStorage para paciente ${sesion.paciente_id}`, sesionConId);
-        return { insertId: sesionId };
-      } catch (error) {
-        console.error('Error guardando sesión en localStorage:', error);
-        return { insertId: Date.now() };
       }
+
+      // Siempre guardar en localStorage como backup
+      const key = `sesiones_${sesion.paciente_id}`;
+      let todasSesiones = [];
+      try {
+        const existentes = localStorage.getItem(key);
+        if (existentes) todasSesiones = JSON.parse(existentes);
+      } catch (e) {}
+      todasSesiones.push(sesionConId);
+      localStorage.setItem(key, JSON.stringify(todasSesiones));
+
+      return { insertId: sesionId };
     }
 
     // EN MÓVIL

@@ -14,6 +14,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { SQLite } from '@awesome-cordova-plugins/sqlite/ngx';
 
+// Firebase
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { environment } from '../environments/environment';
+
 
 @NgModule({
   declarations: [
@@ -28,7 +33,7 @@ import { SQLite } from '@awesome-cordova-plugins/sqlite/ngx';
   swipeBackEnabled: true
 }),
     AppRoutingModule,
-    FormsModule ,
+    FormsModule,
     HttpClientModule,
     MatDatepickerModule,
     MatNativeDateModule,
@@ -38,7 +43,9 @@ import { SQLite } from '@awesome-cordova-plugins/sqlite/ngx';
   providers: [
     SQLite,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideHttpClient(withInterceptorsFromDi())
+    provideHttpClient(withInterceptorsFromDi()),
+    provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
+    provideFirestore(() => getFirestore()),
   ],
   bootstrap: [AppComponent]
 })
