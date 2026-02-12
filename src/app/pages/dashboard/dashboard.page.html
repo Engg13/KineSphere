@@ -1,206 +1,170 @@
-<ion-header [translucent]="true">
-  <ion-toolbar color="primary">
-    <ion-title>KineSphere - Dashboard</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
   <!-- PULL-TO-REFRESH -->
   <ion-refresher slot="fixed" (ionRefresh)="recargarDashboard($event)">
     <ion-refresher-content
       pullingIcon="chevron-down-circle-outline"
       pullingText="Tira para recargar"
-      refreshingSpinner="circles"
+      refreshingSpinner="crescent"
       refreshingText="Actualizando...">
     </ion-refresher-content>
   </ion-refresher>
 
-  <div class="ion-padding">
-    <!-- HEADER PERSONALIZADO -->
-    <div class="custom-header">
-      <div class="main-title">
-        <h1>Bienvenido, {{ usuarioNombre }}</h1>
-      </div>
-      <div class="subtitle">
-        <p>Resumen de tu actividad clínica</p>
-        <!-- Mostrar fuente de datos -->
+  <div class="dashboard-wrapper">
+    <!-- HERO HEADER -->
+    <div class="hero-header">
+      <div class="hero-content">
+        <div class="greeting">
+          <small class="greeting-label">Bienvenido de vuelta</small>
+          <h1 class="user-name">{{ usuarioNombre }}</h1>
+        </div>
         @if (plataformaUsada) {
-          <small class="data-source">
-            Datos cargados desde: {{ plataformaUsada }}
-          </small>
+          <ion-chip class="platform-chip" color="light">
+            <ion-icon name="cloud-outline"></ion-icon>
+            <ion-label>{{ plataformaUsada }}</ion-label>
+          </ion-chip>
         }
       </div>
     </div>
 
     <!-- LOADING STATE -->
     @if (estaCargando) {
-      <div class="loading-container ion-text-center ion-padding">
-        <ion-spinner name="crescent"></ion-spinner>
-        <p>Actualizando datos...</p>
+      <div class="loading-container">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <p>Cargando datos...</p>
       </div>
     }
 
-    <!-- TARJETAS DE ESTADÍSTICAS -->
     @if (!estaCargando) {
-      <ion-grid class="animated-item">
-        <ion-row>
-          <ion-col size="4">
-            <ion-card (click)="irAPacientes()" class="stat-card card-primary">
-              <ion-card-content class="ion-text-center">
-                <ion-icon name="people" size="large"></ion-icon>
-                <h2>{{ totalPacientes }}</h2>
-                <p>Pacientes</p>
-              </ion-card-content>
-            </ion-card>
-          </ion-col>
-          <ion-col size="4">
-            <ion-card (click)="irASesion()" class="stat-card card-secondary">
-              <ion-card-content class="ion-text-center">
-                <ion-icon name="calendar" size="large"></ion-icon>
-                <h2>{{ sesionesHoy }}</h2>
-                <p>Sesiones Hoy</p>
-              </ion-card-content>
-            </ion-card>
-          </ion-col>
-          <ion-col size="4">
-            <ion-card class="stat-card card-tertiary">
-              <ion-card-content class="ion-text-center">
-                <ion-icon name="document-text" size="large"></ion-icon>
-                <h2>{{ evaluacionesPendientes }}</h2>
-                <p class="texto-mas-pequeno">Evaluaciones</p>
-              </ion-card-content>
-            </ion-card>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    }
+      <!-- STAT CARDS -->
+      <div class="stats-row animated-item">
+        <div class="stat-card stat-primary" (click)="irAPacientes()">
+          <div class="stat-icon-wrapper bg-primary">
+            <ion-icon name="people"></ion-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ totalPacientes }}</span>
+            <span class="stat-label">Pacientes</span>
+          </div>
+        </div>
 
-    <!-- PACIENTES RECIENTES -->
-    @if (!estaCargando) {
-      <ion-card class="animated-item">
-        <ion-card-header>
-          <ion-card-title>
-            <ion-icon name="time" slot="start"></ion-icon>
-            Pacientes Recientes
-          </ion-card-title>
-          @if (pacientesRecientes.length > 0) {
-            <ion-card-subtitle>
-              Últimos {{ pacientesRecientes.length }} pacientes agregados
-            </ion-card-subtitle>
-          }
-        </ion-card-header>
-        <ion-card-content>
-          @if (pacientesRecientes.length > 0) {
-            <div>
-              <!-- LISTA DE PACIENTES RECIENTES -->
-              <ion-list>
-                @for (paciente of pacientesRecientes; track paciente; let i = $index) {
-                  <ion-item
-                    (click)="verDetallePaciente(paciente)"
-                    button
-                    detail
-                    class="paciente-item animated-item"
-                    [style.animation-delay]="(i * 0.1) + 's'">
-                    <ion-avatar slot="start">
-                      <ion-icon name="person-circle" size="large"></ion-icon>
-                    </ion-avatar>
-                    <ion-label>
-                      <h2>{{ paciente.nombre }}</h2>
-                      <p>{{ paciente.diagnostico }}</p>
-                      <p>
-                        <ion-badge [color]="paciente.activo ? 'success' : 'medium'">
-                          {{ paciente.activo ? 'Activo' : 'Finalizado' }}
-                        </ion-badge>
-                        • Sesiones: {{ paciente.sesionesCompletadas || 0 }}/{{ paciente.sesionesPlanificadas || 0 }}
-                        • RUT: {{ paciente.rut }}
-                      </p>
-                      <small>
-                        Creado: {{ paciente.fechaCreacion | date:'dd/MM/yyyy' }}
-                      </small>
-                    </ion-label>
-                    @if (paciente.ultimaSesion) {
-                      <ion-note slot="end">
-                        Última sesión:<br>
-                        {{ paciente.ultimaSesion | date:'dd/MM' }}
-                      </ion-note>
-                    }
-                  </ion-item>
-                }
-              </ion-list>
+        <div class="stat-card stat-teal" (click)="irASesion()">
+          <div class="stat-icon-wrapper bg-teal">
+            <ion-icon name="calendar"></ion-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ sesionesHoy }}</span>
+            <span class="stat-label">Sesiones Hoy</span>
+          </div>
+        </div>
+
+        <div class="stat-card stat-amber">
+          <div class="stat-icon-wrapper bg-amber">
+            <ion-icon name="document-text"></ion-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-number">{{ evaluacionesPendientes }}</span>
+            <span class="stat-label">Evaluaciones</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCIONES RAPIDAS -->
+      <div class="section-header animated-item">
+        <h3>Acciones Rapidas</h3>
+      </div>
+
+      <div class="quick-actions animated-item">
+        <button class="action-btn action-patients" (click)="irAPacientes()" [disabled]="totalPacientes === 0">
+          <ion-icon name="people-outline"></ion-icon>
+          <span>Ver Pacientes</span>
+        </button>
+        <button class="action-btn action-session" (click)="irASesion()" [disabled]="totalPacientes === 0">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Nueva Sesion</span>
+        </button>
+        <button class="action-btn action-eval" (click)="irAEvaluaciones()" [disabled]="totalPacientes === 0">
+          <ion-icon name="document-text-outline"></ion-icon>
+          <span>Evaluacion</span>
+        </button>
+        <button class="action-btn action-exercise" (click)="irAEjercicios()">
+          <ion-icon name="barbell-outline"></ion-icon>
+          <span>Ejercicios</span>
+        </button>
+      </div>
+
+      <!-- BACKUP SECTION -->
+      <div class="section-header animated-item">
+        <h3>Respaldo de Datos</h3>
+      </div>
+
+      <div class="backup-section animated-item">
+        <div class="backup-stats">
+          <ion-icon name="server-outline" color="primary"></ion-icon>
+          <span class="backup-stats-text">{{ backupStats.pacientes }} pacientes, {{ backupStats.sesiones }} sesiones, {{ backupStats.documentos }} documentos</span>
+        </div>
+        <div class="backup-buttons">
+          <button class="backup-btn backup-export" (click)="exportarBackup()">
+            <ion-icon name="download-outline"></ion-icon>
+            <span>Exportar</span>
+          </button>
+          <button class="backup-btn backup-import" (click)="triggerImport()">
+            <ion-icon name="cloud-upload-outline"></ion-icon>
+            <span>Importar</span>
+          </button>
+        </div>
+        <input type="file" #fileInput accept=".json" (change)="onFileSelected($event)" style="display:none">
+      </div>
+
+      <!-- PACIENTES RECIENTES -->
+      @if (pacientesRecientes.length > 0) {
+        <div class="section-header animated-item">
+          <h3>Pacientes Recientes</h3>
+          <small class="section-count">{{ pacientesRecientes.length }} ultimos</small>
+        </div>
+
+        <div class="patients-list animated-item">
+          @for (paciente of pacientesRecientes; track paciente; let i = $index) {
+            <div class="patient-card" (click)="verDetallePaciente(paciente)">
+              <div class="patient-avatar" [class.active]="paciente.activo">
+                <ion-icon name="person"></ion-icon>
+              </div>
+              <div class="patient-info">
+                <h4 class="patient-name">{{ paciente.nombre }}</h4>
+                <p class="patient-diagnosis">{{ paciente.diagnostico }}</p>
+                <div class="patient-meta">
+                  <ion-badge [color]="paciente.activo ? 'success' : 'medium'" class="status-badge">
+                    {{ paciente.activo ? 'Activo' : 'Finalizado' }}
+                  </ion-badge>
+                  <span class="meta-text">{{ paciente.sesionesCompletadas || 0 }} sesiones</span>
+                </div>
+              </div>
+              <ion-icon name="chevron-forward" class="patient-arrow"></ion-icon>
             </div>
           }
-          @if (pacientesRecientes.length === 0 && !estaCargando) {
-            <div class="ion-text-center empty-state">
-              <ion-icon name="people-outline" size="large" color="medium"></ion-icon>
-              <h3>No hay pacientes registrados</h3>
-              <p>Comienza agregando tu primer paciente</p>
-              <ion-button (click)="agregarPaciente()" color="primary" fill="outline" class="ion-margin-top">
-                <ion-icon slot="start" name="add"></ion-icon>
-                Agregar Primer Paciente
-              </ion-button>
-            </div>
-          }
-        </ion-card-content>
-      </ion-card>
-    }
+        </div>
+      }
 
-    <!-- ACCIONES RÁPIDAS -->
-    @if (!estaCargando) {
-      <ion-card class="animated-item">
-        <ion-card-header>
-          <ion-card-title>
-            <ion-icon name="flash" slot="start"></ion-icon>
-            Acciones Rápidas
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col size="6">
-                <ion-button expand="block" (click)="irAPacientes()" [disabled]="totalPacientes === 0">
-                  <ion-icon name="people-outline" slot="start"></ion-icon>
-                  Ver Pacientes
-                </ion-button>
-              </ion-col>
-              <ion-col size="6">
-                <ion-button expand="block" (click)="irASesion()" [disabled]="totalPacientes === 0">
-                  <ion-icon name="calendar-outline" slot="start"></ion-icon>
-                  Nueva Sesión
-                </ion-button>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="6">
-                <ion-button expand="block" (click)="irAEvaluaciones()" color="tertiary" fill="outline" [disabled]="totalPacientes === 0">
-                  <ion-icon name="document-text-outline" slot="start"></ion-icon>
-                  Evaluación Final
-                </ion-button>
-              </ion-col>
-              <ion-col size="6">
-                <ion-button expand="block" (click)="irAEjercicios()" color="success" fill="outline">
-                  <ion-icon name="barbell-outline" slot="start"></ion-icon>
-                  Ejercicios
-                </ion-button>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-          <!--  INFORMACIÓN DEL ESTADO DE CARGA  -->
-          @if (plataformaUsada) {
-            <div class="ion-margin-top ion-text-center">
-              <ion-chip color="medium">
-                <ion-label>Modo: {{ plataformaUsada }}</ion-label>
-              </ion-chip>
-            </div>
-          }
-        </ion-card-content>
-      </ion-card>
+      <!-- EMPTY STATE -->
+      @if (pacientesRecientes.length === 0) {
+        <div class="empty-state animated-item">
+          <div class="empty-icon-wrapper">
+            <ion-icon name="people-outline"></ion-icon>
+          </div>
+          <h3>Sin pacientes registrados</h3>
+          <p>Comienza agregando tu primer paciente</p>
+          <ion-button (click)="agregarPaciente()" fill="outline" color="primary" class="empty-btn">
+            <ion-icon slot="start" name="add"></ion-icon>
+            Agregar Paciente
+          </ion-button>
+        </div>
+      }
     }
-
-    <!-- BOTÓN AGREGAR PACIENTE FLOATING -->
-    <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="paciente-fab">
-      <ion-fab-button color="primary" (click)="agregarPaciente()">
-        <ion-icon name="add"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
   </div>
+
+  <!-- FAB BUTTON -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="main-fab">
+    <ion-fab-button color="primary" (click)="agregarPaciente()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>

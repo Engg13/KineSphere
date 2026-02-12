@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChildren, QueryList, ElementRef  } from '@angular/core';
-import { NavController, AnimationController } from '@ionic/angular';
+import { Component, OnInit, ViewChild, ElementRef, ViewChildren, QueryList } from '@angular/core';
+import { NavController, AnimationController, ToastController } from '@ionic/angular';
 import { DatabaseService } from '../../services/database.service';
 import { JsonServerService } from '../../services/json-server.service';
 import { firstValueFrom } from 'rxjs';
 import { PlatformService } from '../../services/platform.service';
+import { BackupService } from '../../services/backup.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,6 +15,7 @@ import { PlatformService } from '../../services/platform.service';
 export class DashboardPage implements OnInit {
 
   @ViewChildren('dashboardCard', { read: ElementRef }) dashboardCards!: QueryList<ElementRef>;
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   usuarioNombre: string = 'Klgo. Esteban Gomez';
   totalPacientes: number = 0;
@@ -22,24 +24,30 @@ export class DashboardPage implements OnInit {
   pacientesRecientes: any[] = [];
   estaCargando: boolean = false;
   plataformaUsada: string = '';
-  pacientesActivos: number = 0; 
+  pacientesActivos: number = 0;
+  backupStats: { pacientes: number; sesiones: number; documentos: number } = {
+    pacientes: 0, sesiones: 0, documentos: 0
+  };
 
   constructor(
     private navCtrl: NavController,
     private databaseService: DatabaseService,
     private jsonServerService: JsonServerService,
     private platformService: PlatformService,
-    private animationCtrl: AnimationController
+    private animationCtrl: AnimationController,
+    private backupService: BackupService,
+    private toastCtrl: ToastController
   ) {}
 
-  private datosCargados = false;
-
-  ngOnInit() {
-    // Solo cargar en ngOnInit la primera vez
-  }
+  ngOnInit() {}
 
   ionViewDidEnter() {
     this.cargarDatosDashboard();
+    this.actualizarBackupStats();
+  }
+
+  actualizarBackupStats() {
+    this.backupStats = this.backupService.obtenerEstadisticasLocales();
   }
 
   async cargarDatosDashboard() {
@@ -60,44 +68,14 @@ export class DashboardPage implements OnInit {
     } finally {
       this.estaCargando = false;
     }
-
-    setTimeout(() => {
-      this.animarEntradaDashboard();
-    }, 300);
   }
 
-  animarEntradaDashboard() {
-    const cards = this.dashboardCards?.toArray();
-    
-    if (!cards || cards.length === 0) {
-      console.log('No hay cards para animar');
-      return;
-    }
-
-    // Animar cada card con delay escalonado
-    cards.forEach((card, index) => {
-      const animation = this.animationCtrl.create()
-        .addElement(card.nativeElement)
-        .duration(600)
-        .delay(100 * index) // Efecto stagger
-        .fromTo('opacity', 0, 1)
-        .fromTo('transform', 'translateY(50px)', 'translateY(0px)')
-        .easing('cubic-bezier(0.34, 1.56, 0.64, 1)'); // Bounce suave
-
-      animation.play();
-    });
-
-    console.log('🎬 Animación de entrada ejecutada para', cards.length, 'cards');
-  }
-
-  //  MÉTODOS DE CARGA ESPECÍFICOS
   private async cargarDesdeJsonServer() {
     try {
       const pacientes = await firstValueFrom(this.jsonServerService.getPacientes());
-      
+
       if (pacientes && pacientes.length > 0) {
         this.actualizarContadores(pacientes);
-        
         this.pacientesRecientes = pacientes
           .sort((a: any, b: any) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
           .slice(0, 5);
@@ -131,8 +109,6 @@ export class DashboardPage implements OnInit {
     this.pacientesActivos = pacientes.filter(p => p.activo).length;
     this.sesionesHoy = this.calcularSesionesHoy(pacientes);
     this.evaluacionesPendientes = this.calcularEvaluacionesPendientes(pacientes);
-    
-    console.log(`📈 KineSphere: Resumen - Pacientes: ${this.totalPacientes}, Activos: ${this.pacientesActivos}, Sesiones Hoy: ${this.sesionesHoy}, Evaluaciones: ${this.evaluacionesPendientes}`);
   }
 
   private reiniciarContadores() {
@@ -155,67 +131,93 @@ export class DashboardPage implements OnInit {
   }
 
   private calcularEvaluacionesPendientes(pacientes: any[]): number {
-    return pacientes.filter(paciente => 
+    return pacientes.filter(paciente =>
       paciente.necesitaEvaluacion && !paciente.evaluacionCompletada
     ).length;
   }
 
   async recargarDashboard(event?: any) {
-    console.log('🔄 KineSphere: Recargando dashboard manualmente');
-    
-    // Primero animación de salida (opcional)
-    const cards = this.dashboardCards?.toArray();
-    if (cards && cards.length > 0) {
-      cards.forEach(card => {
-        const fadeOut = this.animationCtrl.create()
-          .addElement(card.nativeElement)
-          .duration(200)
-          .fromTo('opacity', 1, 0.3);
-        fadeOut.play();
-      });
-    }
-    
     await this.cargarDatosDashboard();
-    
+    this.actualizarBackupStats();
     if (event) {
       event.target.complete();
     }
   }
 
+  // BACKUP METHODS
+  async exportarBackup() {
+    const result = await this.backupService.exportarDatos();
+    const toast = await this.toastCtrl.create({
+      message: result.message,
+      duration: 3000,
+      position: 'bottom',
+      color: result.success ? 'success' : 'danger'
+    });
+    await toast.present();
+  }
 
-  // MÉTODOS DE NAVEGACIÓN
+  triggerImport() {
+    this.fileInput.nativeElement.click();
+  }
+
+  async onFileSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const jsonString = await this.backupService.leerArchivoWeb(file);
+      const result = await this.backupService.importarDatos(jsonString);
+
+      const toast = await this.toastCtrl.create({
+        message: result.message,
+        duration: 3000,
+        position: 'bottom',
+        color: result.success ? 'success' : 'danger'
+      });
+      await toast.present();
+
+      if (result.success) {
+        await this.cargarDatosDashboard();
+        this.actualizarBackupStats();
+      }
+    } catch (error) {
+      const toast = await this.toastCtrl.create({
+        message: 'Error al leer el archivo',
+        duration: 3000,
+        position: 'bottom',
+        color: 'danger'
+      });
+      await toast.present();
+    }
+
+    // Reset file input
+    this.fileInput.nativeElement.value = '';
+  }
+
+  // NAVIGATION
   irAPacientes() {
-    console.log('🧭 KineSphere: Navegando a lista de pacientes');
     this.navCtrl.navigateRoot('/pacientes-lista');
   }
 
   irASesion() {
-    console.log('🧭 KineSphere: Navegando a nueva sesión');
     this.navCtrl.navigateRoot('/sesion');
   }
 
   irAEvaluaciones() {
-    console.log('🧭 KineSphere: Navegando a evaluaciones');
     this.navCtrl.navigateRoot('/evaluacion-final');
   }
 
   irAEjercicios() {
-    console.log('🧭 KineSphere: Navegando a ejercicios');
     this.navCtrl.navigateRoot('/ejercicios');
   }
 
   verDetallePaciente(paciente: any) {
-    console.log('👤 KineSphere: Viendo detalle del paciente:', paciente);
-    console.log('🆔 ID del paciente:', paciente.id);
-    console.log('📝 Datos completos del paciente:', JSON.stringify(paciente, null, 2));
-    
     this.navCtrl.navigateRoot('/paciente-detalle', {
       queryParams: { id: paciente.id }
     });
   }
 
   crearSesionParaPaciente(paciente: any) {
-    console.log('🧭 KineSphere: Creando sesión para paciente:', paciente.nombre);
     this.navCtrl.navigateForward('/sesion', {
       queryParams: { pacienteId: paciente.id, pacienteNombre: paciente.nombre }
     });
@@ -224,4 +226,4 @@ export class DashboardPage implements OnInit {
   agregarPaciente() {
     this.navCtrl.navigateRoot('/agregar-paciente');
   }
-} 
+}
