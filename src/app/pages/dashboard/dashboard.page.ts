@@ -57,50 +57,26 @@ export class DashboardPage implements OnInit {
     this.plataformaUsada = platformInfo.descripcion;
 
     try {
-      if (this.platformService.shouldUseSQLite()) {
-        await this.cargarDesdeSQLite();
+      // Siempre usar DatabaseService: maneja localStorage (web) y SQLite (nativo)
+      const pacientes = await this.databaseService.getPacientes();
+
+      if (pacientes && pacientes.length > 0) {
+        this.actualizarContadores(pacientes);
+        this.pacientesRecientes = [...pacientes]
+          .sort((a: any, b: any) => {
+            const fechaA = a.fechaCreacion || a.fecha_creacion || '';
+            const fechaB = b.fechaCreacion || b.fecha_creacion || '';
+            return new Date(fechaB).getTime() - new Date(fechaA).getTime();
+          })
+          .slice(0, 5);
       } else {
-        await this.cargarDesdeJsonServer();
+        this.reiniciarContadores();
       }
     } catch (error) {
       console.error('Error cargando dashboard:', error);
       this.reiniciarContadores();
     } finally {
       this.estaCargando = false;
-    }
-  }
-
-  private async cargarDesdeJsonServer() {
-    try {
-      const pacientes = await firstValueFrom(this.jsonServerService.getPacientes());
-
-      if (pacientes && pacientes.length > 0) {
-        this.actualizarContadores(pacientes);
-        this.pacientesRecientes = pacientes
-          .sort((a: any, b: any) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
-          .slice(0, 5);
-      } else {
-        this.reiniciarContadores();
-      }
-    } catch (error) {
-      console.error('Error cargando desde JSON Server:', error);
-      this.reiniciarContadores();
-    }
-  }
-
-  private async cargarDesdeSQLite() {
-    try {
-      const pacientes = await this.databaseService.getPacientes();
-
-      if (pacientes && pacientes.length > 0) {
-        this.actualizarContadores(pacientes);
-        this.pacientesRecientes = pacientes.slice(0, 5);
-      } else {
-        this.reiniciarContadores();
-      }
-    } catch (error) {
-      console.error('Error cargando desde SQLite:', error);
-      this.reiniciarContadores();
     }
   }
 
