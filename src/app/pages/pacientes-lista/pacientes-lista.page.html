@@ -1,12 +1,15 @@
 <ion-content [fullscreen]="true">
-  <div class="ion-padding">
-    <!-- HEADER PERSONALIZADO -->
-    <div class="custom-header">
-      <div class="main-title">
-        <h1>Pacientes</h1>
-      </div>
-      <div class="subtitle">
-        <p>Total: {{ totalPacientes }} | Activos: {{ pacientesActivos }}</p>
+  <div class="page-wrapper">
+    <!-- HEADER -->
+    <div class="page-header">
+      <div class="header-top">
+        <button class="back-btn" (click)="volverAlDashboard()">
+          <ion-icon name="arrow-back"></ion-icon>
+        </button>
+        <div class="header-title-block">
+          <h1 class="page-title">Pacientes</h1>
+          <p class="page-subtitle">Total: {{ totalPacientes }} | Activos: {{ pacientesActivos }}</p>
+        </div>
       </div>
     </div>
 
@@ -15,112 +18,92 @@
       <ion-refresher-content
         pullingIcon="chevron-down-circle-outline"
         pullingText="Tira para recargar"
-        refreshingSpinner="circles"
+        refreshingSpinner="crescent"
         refreshingText="Cargando...">
       </ion-refresher-content>
     </ion-refresher>
 
-    <!-- BOTÓN VOLVER ARRIBA DE TODO -->
-    <ion-button
-      expand="block"
-      fill="outline"
-      (click)="volverAlDashboard()"
-      class="ion-margin-bottom"
-      color="medium">
-      <ion-icon slot="start" name="arrow-back"></ion-icon>
-      Volver al Dashboard
-    </ion-button>
+    <!-- SEARCH -->
+    <div class="search-wrapper animated-item">
+      <ion-icon name="search-outline" class="search-icon"></ion-icon>
+      <ion-searchbar
+        placeholder="Buscar paciente..."
+        animated
+        class="custom-searchbar">
+      </ion-searchbar>
+    </div>
 
-    <ion-searchbar
-      placeholder="Buscar paciente..."
-      animated
-      class="animated-item">
-    </ion-searchbar>
-
-    <!-- ✅ LOADING STATE -->
+    <!-- LOADING STATE -->
     @if (estaCargando) {
-      <div class="loading-container ion-text-center ion-padding">
-        <ion-spinner name="crescent"></ion-spinner>
+      <div class="loading-container">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
         <p>Cargando pacientes...</p>
       </div>
     }
 
-    <!-- ✅ EMPTY STATE -->
+    <!-- EMPTY STATE -->
     @if (!estaCargando && pacientes.length === 0) {
-      <div class="empty-state ion-text-center ion-padding">
-        <ion-icon name="people-outline" size="large" color="medium"></ion-icon>
-        <h3>No hay pacientes registrados</h3>
-        <p>Usa el botón + para agregar tu primer paciente</p>
+      <div class="empty-state">
+        <div class="empty-icon-wrapper">
+          <ion-icon name="people-outline"></ion-icon>
+        </div>
+        <h3>Sin pacientes registrados</h3>
+        <p>Usa el boton + para agregar tu primer paciente</p>
       </div>
     }
 
-    <!-- ✅ LISTA DE PACIENTES -->
+    <!-- PATIENT LIST -->
     @if (!estaCargando && pacientes.length > 0) {
-      <ion-list class="animated-item">
+      <div class="patients-list animated-item">
         @for (paciente of pacientes; track paciente; let i = $index) {
-          <ion-item
-            (click)="verDetallePaciente(paciente)"
-            button
-            detail
-            class="paciente-item animated-item"
-            [style.animation-delay]="(i * 0.1) + 's'">
-            <ion-avatar slot="start">
-              <ion-icon name="person-circle" size="large"></ion-icon>
-            </ion-avatar>
-            <ion-label>
-              <h2>{{ paciente.nombre }}</h2>
-              <p>{{ paciente.diagnostico }}</p>
-              <p>
-                <ion-badge [color]="paciente.activo ? 'success' : 'medium'">
+          <div class="patient-card" (click)="verDetallePaciente(paciente)">
+            <div class="patient-avatar" [class.active]="paciente.activo">
+              <ion-icon name="person"></ion-icon>
+            </div>
+            <div class="patient-info">
+              <h4 class="patient-name">{{ paciente.nombre }}</h4>
+              <p class="patient-diagnosis">{{ paciente.diagnostico }}</p>
+              <div class="patient-meta">
+                <ion-badge [color]="paciente.activo ? 'success' : 'medium'" class="status-badge">
                   {{ paciente.activo ? 'Activo' : 'Finalizado' }}
                 </ion-badge>
-               
-                • Sesiones: {{ paciente.num_sesiones || paciente.sesionesCompletadas || 0 }}
-                @if (paciente.sesionesPlanificadas && paciente.sesionesPlanificadas > 0) {
-                  / {{ paciente.sesionesPlanificadas }}
-                }
-                • RUT: {{ paciente.rut }}
-              </p>
-            </ion-label>
+                <span class="meta-text">
+                  {{ paciente.num_sesiones || paciente.sesionesCompletadas || 0 }}
+                  @if (paciente.sesionesPlanificadas && paciente.sesionesPlanificadas > 0) {
+                    /{{ paciente.sesionesPlanificadas }}
+                  }
+                  sesiones
+                </span>
+                <span class="meta-text">{{ paciente.rut }}</span>
+              </div>
+            </div>
             @if (paciente.fechaCreacion) {
-              <ion-note slot="end">
-                {{ paciente.fechaCreacion | date:'dd/MM' }}
-              </ion-note>
+              <div class="patient-date">
+                <small>{{ paciente.fechaCreacion | date:'dd/MM' }}</small>
+              </div>
             }
-          </ion-item>
+            <ion-icon name="chevron-forward" class="patient-arrow"></ion-icon>
+          </div>
         }
-      </ion-list>
+      </div>
     }
 
-    <!-- BOTONES DE ACCIÓN AL FINAL -->
-    <div class="action-buttons">
-      <ion-button
-        expand="block"
-        fill="outline"
-        color="tertiary"
-        (click)="cargarPacientesEjemplo()"
-        class="ion-margin-top"
-        [disabled]="estaCargando">
-        <ion-icon slot="start" name="cloud-download"></ion-icon>
-        Cargar Pacientes de Ejemplo (3)
-      </ion-button>
-
-      <ion-button
-        expand="block"
-        fill="outline"
-        color="danger"
-        (click)="borrarTodosLosPacientes()"
-        class="ion-margin-top"
-        [disabled]="estaCargando || pacientes.length === 0">
-        <ion-icon slot="start" name="trash-outline"></ion-icon>
-        Borrar Todos los Pacientes
-      </ion-button>
+    <!-- ACTION BUTTONS -->
+    <div class="bottom-actions animated-item">
+      <button class="util-btn util-load" (click)="cargarPacientesEjemplo()" [disabled]="estaCargando">
+        <ion-icon name="cloud-download-outline"></ion-icon>
+        <span>Cargar Ejemplo (3)</span>
+      </button>
+      <button class="util-btn util-delete" (click)="borrarTodosLosPacientes()" [disabled]="estaCargando || pacientes.length === 0">
+        <ion-icon name="trash-outline"></ion-icon>
+        <span>Borrar Todos</span>
+      </button>
     </div>
   </div>
 
   <!-- FAB BUTTON -->
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="agregarPaciente()">
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="main-fab">
+    <ion-fab-button color="primary" (click)="agregarPaciente()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>

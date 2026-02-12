@@ -1,402 +1,271 @@
-/* ===== HEADER  ===== */
-.custom-header-container {
-  padding-top: calc(var(--ion-safe-area-top, 20px) + 60px); 
-  background: #ffffff; 
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+/* ===== Login Professional Styles ===== */
+
+.login-content {
+  --background: #f8fafc;
 }
 
-.custom-header {
-  border-radius: 0 0 12px 12px; 
-  margin-bottom: 0;
-  overflow: hidden;
-  background: white; 
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 24px;
+  animation: loginFadeIn 0.6s ease-out;
 }
 
-.custom-header .main-title {
-  background: #2dd36f;
-  padding: 14px 16px;
+/* ===== BRAND ===== */
+.brand-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.brand-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.25);
+
+  ion-icon {
+    font-size: 36px;
+    color: #ffffff;
+  }
+}
+
+.brand-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--ion-color-dark);
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.brand-tagline {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+  margin: 4px 0 0;
+  font-weight: 400;
+}
+
+/* ===== FORM SECTION ===== */
+.form-section {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.form-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin: 0 0 24px;
   text-align: center;
 }
 
-.custom-header .main-title h1 {
-  margin: 0;
-  color: black;
-  font-size: 2.2rem; 
-  font-weight: bold;
-  line-height: 1.1;
+/* ===== INPUT GROUPS ===== */
+.input-group {
+  margin-bottom: 18px;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ion-color-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.custom-header .subtitle {
-  background: rgba(45, 211, 111, 0.6);
-  padding: 6px 16px;
-  text-align: center;
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  padding: 0 14px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--ion-color-primary);
+    background: #ffffff;
+  }
 }
 
-.custom-header .subtitle p {
-  margin: 0;
-  color: black;
-  font-size: 0.85rem;
+.input-icon {
+  font-size: 18px;
+  color: var(--ion-color-medium);
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.custom-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 14px 0;
+  font-size: 0.95rem;
+  color: var(--ion-color-dark);
+  outline: none;
+  font-family: inherit;
+
+  &::placeholder {
+    color: var(--ion-color-medium);
+    opacity: 0.6;
+  }
+}
+
+.toggle-pwd-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  ion-icon {
+    font-size: 20px;
+    color: var(--ion-color-medium);
+  }
+}
+
+.input-error {
+  display: block;
+  color: var(--ion-color-danger);
+  font-size: 0.75rem;
+  margin-top: 4px;
+  padding-left: 2px;
   font-weight: 500;
 }
 
-/* ===== CONTENIDO ===== */
-.login-content {
-  --padding-top: 80px; 
-  --padding-bottom: 20px;
+.input-success {
+  display: block;
+  color: var(--ion-color-success);
+  font-size: 0.75rem;
+  margin-top: 4px;
+  padding-left: 2px;
+  font-weight: 500;
 }
 
-.login-container {
-  padding-top: 10px;
-  animation: contenidoEntrante 0.8s ease-out;
-  min-height: calc(100vh - 20px); 
+/* ===== REMEMBER ===== */
+.remember-row {
+  margin-bottom: 20px;
 }
 
-/* ===== LOGO SECTION ===== */
-.logo-section {
-  text-align: center;
-  margin-bottom: 25px;
-  animation: slideInUp 0.8s ease-out;
-}
-
-.logo-section ion-icon {
-  font-size: 64px;
-  margin-bottom: 10px;
-  animation: iconBounce 1.2s ease-in-out;
-}
-
-.logo-section h2 {
-  animation: tituloEntrante 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  text-align: center;
-  font-size: 1.8rem;
-  margin: 10px 0 5px 0;
-  color: var(--ion-color-dark);
-}
-
-.logo-section p {
-  animation: subtituloEntrante 1s ease-out 0.3s;
-  text-align: center;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  color: var(--ion-color-medium);
-  font-size: 0.95rem;
-  margin: 0;
-}
-
-/* ===== CARD Y FORMULARIO ===== */
-ion-card {
-  animation: cardEntrante 0.9s ease-out 0.2s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-ion-card-content {
-  padding: 20px;
-}
-
-/* ===== ANIMACIONES ===== */
-@keyframes tituloEntrante {
-  0% {
-    opacity: 0;
-    transform: scale(0.8) translateY(30px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes subtituloEntrante {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes contenidoEntrante {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes cardEntrante {
-  0% {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes iconBounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* ===== MANTENER TUS ESTILOS DE FUENTE ===== */
-ion-card, ion-card-header, ion-card-title, ion-card-content,
-ion-item, ion-label, ion-input, ion-button, ion-list,
-ion-toolbar, ion-title, h2, p, strong, span, div {
-  font-family: 'Courier New', Courier, monospace !important;
-}
-
-ion-card ion-card-title,
-ion-card ion-card-content, 
-ion-item ion-label,
-ion-button .button-native,
-ion-input .native-input,
-.login-container h2,
-.login-container p {
-  font-family: 'Courier New', Courier, monospace !important;
-}
-
-/* ===== BOTÓN LOGIN ===== */
-.login-button {
-  --background: #2dd36f !important;
-  --background-activated: #28ba62 !important;
-  --background-hover: #28ba62 !important;
-  --color: #000000 !important;
-  --border-radius: 8px;
-  --border-color: #000000;
-  --border-style: solid;
-  --border-width: 1px;
-  --box-shadow: 0 4px 6px rgba(45, 211, 111, 0.3);
-  transition: transform 0.2s, box-shadow 0.2s;
-  
-  &:active {
-    transform: scale(0.98);
-    --box-shadow: 0 2px 4px rgba(45, 211, 111, 0.3);
-  }
-  
-  .button-native {
-    color: #000000 !important;
-  }
-  
-  span, .button-inner {
-    color: #000000 !important;
-    font-weight: bold;
-    font-size: 1rem;
-  }
-}
-
-.login-button[disabled] {
-  --background: #cccccc !important;
-  --color: #666666 !important;
-  --box-shadow: none;
-}
-
-/* ===== BOTÓN OJO ===== */
-.eye-button {
-  --padding-start: 8px;
-  --padding-end: 8px;
-  margin: 0;
-  height: auto;
-  --color: var(--ion-color-medium);
-  
-  &:hover {
-    --color: var(--ion-color-primary);
-  }
-}
-
-/* ===== LINKS SECTION ===== */
-.links-section {
-  text-align: center;
-  margin: 20px 0;
-  animation: fadeIn 1s ease-out 0.5s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-}
-
-.separator {
+.remember-label {
   display: flex;
   align-items: center;
-  text-align: center;
-  margin: 25px 0;
-  
-  span {
-    flex: 1;
-    height: 1px;
-    background: var(--ion-color-light-shade);
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+}
+
+.remember-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ion-color-primary);
+  cursor: pointer;
+}
+
+/* ===== LOGIN BUTTON ===== */
+.login-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    background: #cbd5e1;
+    color: #94a3b8;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .btn-spinner {
+    width: 22px;
+    height: 22px;
+    color: #ffffff;
   }
 }
 
-@keyframes fadeIn {
+/* ===== DEMO HINT ===== */
+.demo-hint {
+  text-align: center;
+  margin-top: 18px;
+  padding: 10px;
+  background: var(--ion-color-light);
+  border-radius: 10px;
+
+  small {
+    color: var(--ion-color-medium);
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+}
+
+/* ===== FOOTER ===== */
+.login-footer {
+  text-align: center;
+  margin-top: 28px;
+
+  small {
+    color: var(--ion-color-medium);
+    font-size: 0.8rem;
+    font-weight: 400;
+  }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes loginFadeIn {
   from {
     opacity: 0;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
 /* ===== RESPONSIVE ===== */
-@media (max-height: 700px) {
-  .custom-header .main-title h1 {
-    font-size: 1.8rem;
+@media (max-height: 650px) {
+  .login-wrapper {
+    padding: 20px 24px;
   }
-  
-  .custom-header .main-title {
-    padding: 10px 16px;
-  }
-  
-  .custom-header .subtitle {
-    padding: 4px 16px;
-  }
-  
-  .logo-section h2 {
-    font-size: 1.5rem;
-  }
-  
-  .login-content {
-    --padding-top: 10px;
-  }
-}
 
-@media (max-width: 350px) {
-  .custom-header .main-title h1 {
-    font-size: 1.6rem;
+  .brand-section {
+    margin-bottom: 24px;
   }
-  
-  .logo-section ion-icon {
-    font-size: 48px;
-  }
-}
 
-/* ===== PLATAFORMA ESPECÍFICA ===== */
-.ios .custom-header-container {
-  padding-top: calc(var(--ion-safe-area-top, 25px) + 5px);
-}
+  .brand-icon-wrapper {
+    width: 56px;
+    height: 56px;
 
-.md .custom-header {
-  border-radius: 0; 
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-/* ===== VALIDACIONES ===== */
-ion-note[color="danger"] {
-  display: block;
-  margin-top: 5px;
-  margin-left: 16px;
-  font-size: 0.8rem;
-  animation: shake 0.3s;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-.demo-info {
-  margin-top: 16px;
-  padding: 12px;
-  background: var(--ion-color-light);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  
-  small {
-    display: block;
-    color: var(--ion-color-medium);
-    margin-bottom: 4px;
-    
-    &:first-child {
-      font-weight: 600;
-      color: var(--ion-color-primary);
+    ion-icon {
+      font-size: 28px;
     }
   }
-}
 
-// Estilos para el spinner en el botón
-.login-button {
-  ion-spinner {
-    width: 24px;
-    height: 24px;
+  .brand-name {
+    font-size: 1.5rem;
   }
 }
-
-// Mejorar la visibilidad de las notas de validación
-ion-note {
-  display: block;
-  margin-top: 4px;
-  margin-bottom: 12px;
-  font-size: 0.85rem;
-  
-  &[color="success"] {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-}
-
-
-.animated-placeholder {
-  &::placeholder {
-    color: var(--ion-color-medium);
-    transition: all 0.3s ease;
-    background: linear-gradient(90deg, 
-      var(--ion-color-primary), 
-      var(--ion-color-secondary)
-    );
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-size: 200% 100%;
-    animation: placeholderShine 3s infinite;
-  }
-  
-  &:focus::placeholder {
-    opacity: 0.7;
-  }
-}
-
-@keyframes placeholderShine {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-// Efecto de máquina de escribir
-.typewriter {
-  position: relative;
-  
-  &::after {
-    content: '|';
-    position: absolute;
-    right: 8px;
-    color: var(--ion-color-primary);
-    animation: blink 1s infinite;
-  }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
