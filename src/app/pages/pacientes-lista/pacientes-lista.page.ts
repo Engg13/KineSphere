@@ -27,88 +27,27 @@ export class PacientesListaPage {
     private alertController: AlertController
   ) {}
 
-  async ngOnInit() {
+  ngOnInit() {
     this.plataformaInfo = this.platformService.getDebugInfo();
-    
-    console.log('🚀 Iniciando app - Plataforma:', this.plataformaInfo.descripcion);
-    console.log('🔍 Información completa:', this.plataformaInfo);
-    
-    await this.cargarPacientes();
+  }
+
+  ionViewDidEnter() {
+    this.cargarPacientes();
   }
 
   async cargarPacientes() {
     this.estaCargando = true;
-    
+
     try {
-      console.log('🔄 Cargando pacientes - Estrategia mejorada');
-      
-      if (this.platformService.shouldUseSQLite()) {
-        console.log('📱 Entorno nativo detectado - usando SQLite');
-        await this.cargarDesdeSQLite();
-      } else {
-        console.log('🌐 Entorno web detectado - usando JSON Server');
-        await this.cargarDesdeJsonServer();
-      }
-      
+      // Siempre usar DatabaseService: maneja localStorage (web) y SQLite (nativo)
+      this.pacientes = await this.databaseService.getPacientesConConteoSesiones();
+      console.log(`📊 ${this.pacientes.length} pacientes cargados`);
     } catch (error) {
       console.error('❌ Error cargando pacientes:', error);
       this.pacientes = [];
       this.mostrarToast('Error cargando pacientes', 'danger');
     } finally {
       this.estaCargando = false;
-    }
-  }
-
-  private async cargarDesdeSQLite() {
-    try {
-      // USAR ESTE MÉTODO QUE INCLUYE EL NÚMERO DE SESIONES
-      this.pacientes = await this.databaseService.getPacientesConConteoSesiones();
-      
-      console.log(`📊 ${this.pacientes.length} pacientes cargados desde SQLite (NATIVO)`, this.pacientes);
-      
-      // Si aún no tiene num_sesiones, asignar 0
-      this.pacientes = this.pacientes.map(paciente => ({
-        ...paciente,
-        num_sesiones: paciente.num_sesiones || 0
-      }));
-      
-    } catch (error) {
-      console.error('Error cargando desde SQLite:', error);
-      this.pacientes = [];
-      throw error;
-    }
-  }
-
-  private async cargarDesdeJsonServer() {
-    try {
-      this.pacientes = await firstValueFrom(this.jsonServerService.getPacientes());
-      console.log(`📊 ${this.pacientes.length} pacientes cargados desde JSON Server (WEB)`);
-      
-      // Para JSON Server, también necesitamos obtener el número de sesiones
-      await this.cargarNumeroSesionesParaJsonServer();
-      
-    } catch (error) {
-      console.error('Error cargando desde JSON Server:', error);
-      this.pacientes = [];
-      throw error;
-    }
-  }
-
-  // Método para cargar número de sesiones en modo JSON Server
-  private async cargarNumeroSesionesParaJsonServer() {
-    for (const paciente of this.pacientes) {
-      try {
-        // Obtener sesiones para cada paciente
-        const sesiones = await firstValueFrom(
-          this.jsonServerService.getSesionesPorPaciente(paciente.id)
-        );
-        
-        // Asignar número de sesiones
-        paciente.num_sesiones = sesiones ? sesiones.length : 0;
-      } catch (error) {
-        console.log(`No se pudieron obtener sesiones para paciente ${paciente.id}:`, error);
-        paciente.num_sesiones = 0;
-      }
     }
   }
 
@@ -209,15 +148,8 @@ export class PacientesListaPage {
       for (const paciente of pacientesEjemplo) {
         try {
           console.log(`🔄 Procesando: ${paciente.nombre}`);
-          
-          if (this.platformService.shouldUseSQLite()) {
-            await this.guardarPacienteEnSQLite(paciente);
-            console.log(`✅ Guardado en SQLite: ${paciente.nombre}`);
-          } else {
-            await this.guardarPacienteEnJsonServer(paciente);
-            console.log(`✅ Guardado en JSON Server: ${paciente.nombre}`);
-          }
-          
+          await this.databaseService.addPaciente(paciente);
+          console.log(`✅ Guardado: ${paciente.nombre}`);
           cargadosExitosos++;
           
         } catch (error) {
@@ -230,8 +162,7 @@ export class PacientesListaPage {
       await loading.dismiss();
       
       if (cargadosExitosos > 0) {
-        const plataforma = this.platformService.shouldUseSQLite() ? 'SQLite' : 'JSON Server';
-        this.mostrarToast(`${cargadosExitosos} pacientes cargados en ${plataforma}`, 'success');
+        this.mostrarToast(`${cargadosExitosos} pacientes cargados`, 'success');
         await this.cargarPacientes(); // Recargar la lista
       } else {
         let mensajeError = 'No se pudieron cargar los pacientes. ';
@@ -342,32 +273,14 @@ export class PacientesListaPage {
 
     try {
       let eliminadosExitosos = 0;
-      
-      if (this.platformService.shouldUseSQLite()) {
-        console.log('📱 Borrando de SQLite (NATIVO)...');
-        const pacientesSqlite = await this.databaseService.getPacientes();
-        for (const paciente of pacientesSqlite) {
-          try {
-            await this.databaseService.deletePaciente(paciente.id);
-            eliminadosExitosos++;
-          } catch (error) {
-            console.error(`❌ Error eliminando de SQLite ${paciente.id}:`, error);
-          }
-        }
-      } else {
-        console.log('🌐 Borrando de JSON Server (WEB)...');
+
+      const todosLosPacientes = await this.databaseService.getPacientes();
+      for (const paciente of todosLosPacientes) {
         try {
-          const pacientesJson = await firstValueFrom(this.jsonServerService.getPacientes());
-          for (const paciente of pacientesJson) {
-            try {
-              await firstValueFrom(this.jsonServerService.deletePaciente(paciente.id));
-              eliminadosExitosos++;
-            } catch (error) {
-              console.error(`❌ Error eliminando de JSON Server ${paciente.id}:`, error);
-            }
-          }
+          await this.databaseService.deletePaciente(paciente.id);
+          eliminadosExitosos++;
         } catch (error) {
-          console.log('ℹ️ JSON Server no disponible para borrado');
+          console.error(`❌ Error eliminando paciente ${paciente.id}:`, error);
         }
       }
 

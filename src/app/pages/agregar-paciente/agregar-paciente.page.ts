@@ -181,31 +181,18 @@ export class AgregarPacientePage {
       console.log('💾 Paciente completo para guardar:', pacienteCompleto);
       console.log('🔍 Verificando campo "edad":', pacienteCompleto.edad, 'tipo:', typeof pacienteCompleto.edad);
 
-      // 4. ESTRATEGIA DE GUARDADO INTELIGENTE
+      // 4. GUARDAR PACIENTE (DatabaseService maneja localStorage en web y SQLite en nativo)
       let guardadoExitoso = false;
       let mensajeFinal = '';
-      
-      // Primero intentar SQLite (para emulador móvil)
+
       try {
-        console.log('📱 Intentando guardar en SQLite...');
         await this.databaseService.addPaciente(pacienteCompleto);
         guardadoExitoso = true;
-        mensajeFinal = '✅ Paciente guardado en dispositivo (SQLite)';
-        console.log('✅ Éxito en SQLite');
-      } catch (errorSQLite) {
-        console.log('📱 SQLite no disponible:', errorSQLite);
-        
-        // Fallback a JSON Server
-        try {
-          console.log('🌐 Intentando guardar en JSON Server...');
-          await firstValueFrom(this.jsonServerService.createPaciente(pacienteCompleto));
-          guardadoExitoso = true;
-          mensajeFinal = '✅ Paciente guardado en servidor (JSON Server)';
-          console.log('✅ Éxito en JSON Server');
-        } catch (errorJson) {
-          console.error('❌ Error en JSON Server:', errorJson);
-          mensajeFinal = '❌ Error: No se pudo guardar en ninguna base de datos';
-        }
+        mensajeFinal = 'Paciente guardado exitosamente';
+        console.log('✅ Paciente guardado');
+      } catch (error) {
+        console.error('❌ Error guardando paciente:', error);
+        mensajeFinal = 'Error: No se pudo guardar el paciente';
       }
 
       // 5. MOSTRAR RESULTADO
