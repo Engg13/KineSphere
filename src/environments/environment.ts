@@ -1,13 +1,11 @@
 export const environment = {
   production: false,
-  // Firebase config - REEMPLAZAR con tus credenciales de Firebase Console
-  // https://console.firebase.google.com/ -> Configuracion del proyecto -> Tu app web
   firebaseConfig: {
-    apiKey: 'TU_API_KEY',
-    authDomain: 'TU_PROYECTO.firebaseapp.com',
-    projectId: 'TU_PROYECTO',
-    storageBucket: 'TU_PROYECTO.appspot.com',
-    messagingSenderId: 'TU_SENDER_ID',
-    appId: 'TU_APP_ID'
+    apiKey: 'AIzaSyAeOatiuyBUcOH_pzEYkWBjVQXSV5bOQ-8',
+    authDomain: 'kinesphere-6834d.firebaseapp.com',
+    projectId: 'kinesphere-6834d',
+    storageBucket: 'kinesphere-6834d.firebasestorage.app',
+    messagingSenderId: '217610743468',
+    appId: '1:217610743468:web:d7887da738af6a98a53909'
   }
 };
