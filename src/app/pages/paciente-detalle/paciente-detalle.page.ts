@@ -340,15 +340,4 @@ export class PacienteDetallePage implements OnInit {
     window.open(`mailto:${this.paciente.email}`, '_system');
   }
 
-  irAVisitaDomiciliaria() {
-    if (!this.paciente) return;
-    
-    console.log('🏠 Navegando a visita domiciliaria:', this.paciente.nombre);
-    this.navCtrl.navigateRoot('/visita-domiciliaria', {
-      queryParams: { 
-        pacienteId: this.paciente.id,
-        pacienteNombre: this.paciente.nombre 
-      }
-    });
-  }
 }

@@ -44,11 +44,6 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: 'visita-domiciliaria',
-    loadChildren: () => import('./pages/visita-domiciliaria/visita-domiciliaria.module').then( m => m.VisitaDomiciliariaPageModule),
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'test-pacientes',
     loadChildren: () => import('./pages/test-pacientes/test-pacientes.module').then( m => m.TestPacientesPageModule),
     canActivate: [AuthGuard]

@@ -11,7 +11,6 @@ import { firstValueFrom } from 'rxjs';
 export class DatabaseService {
   private db: SQLiteObject | null = null;
   private isInitialized = false;
-  private hasDemoData = false;
   private useFirestore = true; // Flag para activar/desactivar Firestore
 
   constructor(
@@ -94,62 +93,14 @@ export class DatabaseService {
       `, []);
       console.log('✅ Tabla sesiones lista');
       
-      // Verificar si hay datos REALES
-      const result = await this.db.executeSql(
-        'SELECT COUNT(*) as count FROM pacientes WHERE es_demo = 0', []
-      );
-      const count = result.rows.item(0).count;
-      
-      // Solo agregar demo si no hay datos del usuario
-      if (count === 0) {
-        await this.addDemoData();
-        this.hasDemoData = true;
-      }
+      // Limpiar datos demo que pudieran existir de versiones anteriores
+      await this.db.executeSql('DELETE FROM pacientes WHERE es_demo = 1', []);
       
     } catch (error) {
       console.error('Error creando tablas:', error);
     }
   }
 
-  // DATOS DEMO 
-  private async addDemoData() {
-    // Solo agregar datos demo en entorno nativo
-    if (!this.platformService.shouldUseSQLite()) return;
-
-    const demoPacientes = [
-      { 
-        nombre: 'Ana González', 
-        email: 'ana@email.com', 
-        telefono: '+56912345678', 
-        diagnostico: 'Lumbalgia',
-        es_demo: 1  
-      },
-      { 
-        nombre: 'Carlos Méndez', 
-        email: 'carlos@email.com', 
-        telefono: '+56923456789', 
-        diagnostico: 'Artrosis',
-        es_demo: 1  
-      },
-      { 
-        nombre: 'María Silva', 
-        email: 'maria@email.com', 
-        telefono: '+56934567890', 
-        diagnostico: 'Tendinitis',
-        es_demo: 1  
-      }
-    ];
-
-    for (const paciente of demoPacientes) {
-      if (this.db) {
-        await this.db.executeSql(
-          'INSERT INTO pacientes (nombre, email, telefono, diagnostico, es_demo) VALUES (?, ?, ?, ?, ?)',
-          [paciente.nombre, paciente.email, paciente.telefono, paciente.diagnostico, paciente.es_demo]
-        );
-      }
-    }
-    console.log('✅ Datos DEMO agregados (marcados como demo)');
-  }
 
   // ESPERAR INICIALIZACIÓN MEJORADA
   private async waitForInit(): Promise<boolean> {
@@ -196,13 +147,7 @@ export class DatabaseService {
         console.log('No hay sesiones en localStorage para paciente:', pacienteId);
       }
       
-      // Datos demo para desarrollo
-      const demoCounts: { [key: number]: number } = {
-        1: 5,
-        2: 3,
-        3: 7
-      };
-      return demoCounts[pacienteId] || 0;
+      return 0;
     }
 
     // EN MÓVIL
@@ -260,41 +205,29 @@ export class DatabaseService {
         }
       }
       const userPacientes = this.getUserPacientesFromStorage();
-      return userPacientes.length > 0 ? userPacientes : this.getDemoPacientes();
+      return userPacientes;
     }
 
     const ready = await this.waitForInit();
     if (!ready || !this.db) {
       console.log('📱 SQLite no disponible');
-      return this.getDemoPacientes();
+      return [];
     }
 
     try {
-      // Priorizar pacientes del usuario, demo solo si no hay datos reales
       const result = await this.db.executeSql(
-        'SELECT * FROM pacientes WHERE activo = 1 AND es_demo = 0 ORDER BY id DESC', []
+        'SELECT * FROM pacientes WHERE activo = 1 ORDER BY id DESC', []
       );
-      
+
       const userPacientes = [];
       for (let i = 0; i < result.rows.length; i++) {
         userPacientes.push(result.rows.item(i));
       }
-      
-      // Si no hay pacientes del usuario, incluir demo
-      if (userPacientes.length === 0 && this.hasDemoData) {
-        const demoResult = await this.db.executeSql(
-          'SELECT * FROM pacientes WHERE activo = 1 AND es_demo = 1', []
-        );
-        
-        for (let i = 0; i < demoResult.rows.length; i++) {
-          userPacientes.push(demoResult.rows.item(i));
-        }
-      }
-      
+
       return userPacientes;
     } catch (error) {
       console.error('Error obteniendo pacientes:', error);
-      return this.getDemoPacientes();
+      return [];
     }
   }
 
@@ -302,14 +235,14 @@ export class DatabaseService {
     // EN WEB 
     if (!this.platformService.shouldUseSQLite()) {
       const userPacientes = this.getUserPacientesFromStorage();
-      const userPaciente = userPacientes.find(p => p.id === id);
-      return userPaciente || this.getDemoPacientes().find(p => p.id === id) || null;
+      const userPaciente = userPacientes.find(p => p.id === id || String(p.id) === String(id));
+      return userPaciente || null;
     }
 
     const ready = await this.waitForInit();
     if (!ready || !this.db) {
-      console.log('📱 DB no disponible, paciente demo');
-      return this.getDemoPacientes().find(p => p.id === id) || null;
+      console.log('📱 DB no disponible');
+      return null;
     }
 
     try {
@@ -573,33 +506,22 @@ export class DatabaseService {
     }
   }
 
-  // DATOS DEMO DE FALLBACK 
-  private getDemoPacientes(): any[] {
-    return [
-      { id: 1, nombre: 'Ana González', email: 'ana@email.com', telefono: '+56912345678', diagnostico: 'Lumbalgia', activo: 1, es_demo: true },
-      { id: 2, nombre: 'Carlos Méndez', email: 'carlos@email.com', telefono: '+56923456789', diagnostico: 'Artrosis', activo: 1, es_demo: true },
-      { id: 3, nombre: 'María Silva', email: 'maria@email.com', telefono: '+56934567890', diagnostico: 'Tendinitis', activo: 1, es_demo: true }
-    ];
-  }
 
   // ESTADÍSTICAS SIMPLES
   async getEstadisticas(): Promise<any> {
     const pacientes = await this.getPacientes();
-    
+
     return {
       totalPacientes: pacientes.length,
       pacientesActivos: pacientes.filter(p => p.activo).length,
-      pacientesReales: pacientes.filter(p => !p.es_demo).length,
-      pacientesDemo: pacientes.filter(p => p.es_demo).length,
       ultimaActualizacion: new Date().toISOString()
     };
   }
 
-  // Método para limpiar datos demo 
-  async clearDemoData(): Promise<void> {
+  // Método para limpiar todos los datos
+  async clearAllData(): Promise<void> {
     if (!this.platformService.shouldUseSQLite()) {
       localStorage.removeItem('user_pacientes');
-      // Limpiar todas las sesiones demo
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('sesiones_')) {
           localStorage.removeItem(key);
@@ -612,74 +534,31 @@ export class DatabaseService {
     if (!ready || !this.db) return;
 
     try {
-      await this.db.executeSql('DELETE FROM pacientes WHERE es_demo = 1', []);
-      this.hasDemoData = false;
-      console.log('✅ Datos demo eliminados');
+      await this.db.executeSql('DELETE FROM sesiones', []);
+      await this.db.executeSql('DELETE FROM pacientes', []);
+      console.log('✅ Todos los datos eliminados');
     } catch (error) {
-      console.error('Error eliminando datos demo:', error);
+      console.error('Error eliminando datos:', error);
     }
   }
 
-  // ==================== MÉTODOS DEMO (MANTENER) ====================
+  // ==================== MÉTODOS AUXILIARES ====================
 
-  /**
-   * Guarda una evaluación final (demo)
-   */
   async guardarEvaluacion(evaluacion: any): Promise<any> {
-    console.log('📄 [DEMO] Evaluación guardada simulada:', {
-      id: evaluacion.id,
-      paciente: evaluacion.pacienteNombre,
-      fecha: new Date().toLocaleString()
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return { 
-      success: true, 
+    console.log('📄 Evaluación guardada:', evaluacion.id);
+    return {
+      success: true,
       message: 'Evaluación guardada exitosamente',
       id: evaluacion.id,
       timestamp: new Date().toISOString()
     };
   }
 
-  /**
-   * Actualiza estado del paciente (demo)
-   */
   async actualizarEstadoPaciente(pacienteId: number, estado: string): Promise<any> {
-    console.log('🔄 [DEMO] Estado actualizado simuladamente:', {
-      pacienteId,
-      nuevoEstado: estado,
-      fecha: new Date().toLocaleString()
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return { 
-      success: true, 
-      message: `Paciente marcado como: ${estado}`,
-      timestamp: new Date().toISOString()
-    };
+    return this.updatePaciente(pacienteId, { activo: estado === 'activo' });
   }
 
-  /**
-   * Obtener evaluaciones (demo)
-   */
   async getEvaluacionesPorPaciente(pacienteId: number): Promise<any[]> {
-    return [
-      {
-        id: 'eval_001',
-        fecha: '2024-01-15',
-        eva: 3,
-        recomendacion: 'Continuar tratamiento',
-        observaciones: 'Buen progreso en movilidad'
-      },
-      {
-        id: 'eval_002', 
-        fecha: '2024-02-01',
-        eva: 2,
-        recomendacion: 'Alta programada',
-        observaciones: 'Paciente listo para alta'
-      }
-    ];
+    return [];
   }
 }
