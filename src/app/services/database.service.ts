@@ -3,7 +3,7 @@ import { Platform } from '@ionic/angular';
 import { SQLite, SQLiteObject } from '@awesome-cordova-plugins/sqlite/ngx';
 import { PlatformService } from './platform.service';
 import { FirestoreService } from './firestore.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -196,12 +196,14 @@ export class DatabaseService {
     if (!this.platformService.shouldUseSQLite()) {
       if (this.useFirestore) {
         try {
-          const pacientes = await firstValueFrom(this.firestoreService.getPacientes());
+          const pacientes = await firstValueFrom(
+            this.firestoreService.getPacientes().pipe(timeout(5000))
+          );
           if (pacientes && pacientes.length > 0) {
             return pacientes;
           }
         } catch (err) {
-          console.log('Firestore no disponible, usando localStorage');
+          console.log('Firestore no disponible o timeout, usando localStorage');
         }
       }
       const userPacientes = this.getUserPacientesFromStorage();
@@ -265,11 +267,15 @@ export class DatabaseService {
 
       if (this.useFirestore) {
         try {
-          const result = await this.firestoreService.addPaciente(paciente);
+          const firestorePromise = this.firestoreService.addPaciente(paciente);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+          );
+          const result: any = await Promise.race([firestorePromise, timeoutPromise]);
           firestoreId = result.id;
           console.log('✅ Paciente guardado en Firestore:', paciente.nombre);
         } catch (err) {
-          console.log('Firestore no disponible, guardando solo en localStorage');
+          console.log('Firestore no disponible o timeout, guardando solo en localStorage');
         }
       }
 
@@ -314,7 +320,11 @@ export class DatabaseService {
     if (!this.platformService.shouldUseSQLite()) {
       if (this.useFirestore) {
         try {
-          await this.firestoreService.deletePaciente(String(id));
+          const deletePromise = this.firestoreService.deletePaciente(String(id));
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+          );
+          await Promise.race([deletePromise, timeoutPromise]);
         } catch (err) {
           console.log('No se pudo eliminar de Firestore:', err);
         }
@@ -442,10 +452,14 @@ export class DatabaseService {
 
       if (this.useFirestore) {
         try {
-          await this.firestoreService.addSesion(sesionConId);
+          const sesionPromise = this.firestoreService.addSesion(sesionConId);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+          );
+          await Promise.race([sesionPromise, timeoutPromise]);
           console.log('✅ Sesion guardada en Firestore');
         } catch (err) {
-          console.log('Firestore no disponible para sesion');
+          console.log('Firestore no disponible o timeout para sesion');
         }
       }
 
