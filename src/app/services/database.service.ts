@@ -132,11 +132,9 @@ export class DatabaseService {
   /**
    * Obtiene el número de sesiones de un paciente
    */
-  async getNumeroSesionesByPaciente(pacienteId: number): Promise<number> {
+  async getNumeroSesionesByPaciente(pacienteId: number | string): Promise<number> {
     // EN WEB - contamos desde localStorage
     if (!this.platformService.shouldUseSQLite()) {
-      console.log('🌐 Modo web - contando sesiones para paciente:', pacienteId);
-      
       try {
         const storedSesiones = localStorage.getItem(`sesiones_${pacienteId}`);
         if (storedSesiones) {
@@ -146,7 +144,7 @@ export class DatabaseService {
       } catch (error) {
         console.log('No hay sesiones en localStorage para paciente:', pacienteId);
       }
-      
+
       return 0;
     }
 
@@ -390,24 +388,21 @@ export class DatabaseService {
     }
   }
 
-  async getSesionesByPaciente(pacienteId: number): Promise<any[]> {
+  async getSesionesByPaciente(pacienteId: number | string): Promise<any[]> {
     // EN WEB - obtener de localStorage
     if (!this.platformService.shouldUseSQLite()) {
-      console.log('🌐 Modo web - obteniendo sesiones desde localStorage para:', pacienteId);
-      
       try {
         const storedSesiones = localStorage.getItem(`sesiones_${pacienteId}`);
         if (storedSesiones) {
           const sesiones = JSON.parse(storedSesiones);
-          console.log(`✅ ${sesiones.length} sesiones encontradas en localStorage`);
-          return sesiones.sort((a: any, b: any) => 
+          return sesiones.sort((a: any, b: any) =>
             new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime()
           );
         }
       } catch (error) {
         console.log('No hay sesiones en localStorage');
       }
-      
+
       return [];
     }
 

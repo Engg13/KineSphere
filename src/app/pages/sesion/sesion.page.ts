@@ -1,9 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
-import { JsonServerService } from 'src/app/services/json-server.service';
 import { DatabaseService } from 'src/app/services/database.service';
-import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-sesion',
@@ -12,11 +10,11 @@ import { firstValueFrom } from 'rxjs';
   standalone: false
 })
 export class SesionPage implements OnInit {
-  // Datos del paciente 
+  // Datos del paciente
   pacienteId: string = '';
   pacienteNombre: string = '';
   numeroSesion: number = 1;
-  
+
   // Objeto principal de datos de la sesión
   sesionData = {
     nivelDolor: null as number | null,
@@ -31,7 +29,6 @@ export class SesionPage implements OnInit {
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
-    private jsonServerService: JsonServerService,
     private databaseService: DatabaseService
   ) {}
 
@@ -58,7 +55,6 @@ export class SesionPage implements OnInit {
     });
   }
 
-  // Calcular el número de la próxima sesión (ACTUALIZADO)
   async calcularNumeroSesion() {
     if (!this.pacienteId) {
       this.numeroSesion = 1;
@@ -66,37 +62,11 @@ export class SesionPage implements OnInit {
     }
 
     try {
-      let totalSesiones = 0;
-      
-      // 1. Intentar obtener sesiones del DatabaseService (SQLite/localStorage)
-      try {
-        const sesionesLocal = await this.databaseService.getSesionesByPaciente(Number(this.pacienteId));
-        totalSesiones = sesionesLocal.length;
-        console.log(`📊 ${totalSesiones} sesiones encontradas en DatabaseService`);
-      } catch (errorLocal) {
-        console.log('No hay sesiones locales:', errorLocal);
-      }
-      
-      // 2. Intentar JSON-Server (si está disponible)
-      try {
-        const sesionesJsonServer = await firstValueFrom(
-          this.jsonServerService.getSesionesPorPaciente(this.pacienteId)
-        );
-        
-        if (sesionesJsonServer && Array.isArray(sesionesJsonServer)) {
-          totalSesiones = Math.max(totalSesiones, sesionesJsonServer.length);
-          console.log(`📊 ${sesionesJsonServer.length} sesiones en JSON-Server`);
-        }
-      } catch (errorServer) {
-        console.log('JSON-Server no disponible:', errorServer);
-      }
-      
-      // Calcular próximo número de sesión
-      this.numeroSesion = totalSesiones + 1;
-      
-      console.log(`📊 Total sesiones: ${totalSesiones}, Próxima sesión: ${this.numeroSesion}`);
+      const sesiones = await this.databaseService.getSesionesByPaciente(this.pacienteId);
+      this.numeroSesion = sesiones.length + 1;
+      console.log(`📊 ${sesiones.length} sesiones existentes, próxima: ${this.numeroSesion}`);
     } catch (error) {
-      console.log('❌ Error obteniendo sesiones, usando sesión 1:', error);
+      console.log('Error obteniendo sesiones, usando sesión 1:', error);
       this.numeroSesion = 1;
     }
   }
@@ -166,7 +136,6 @@ export class SesionPage implements OnInit {
            this.sesionData.nivelDolor >= 0;
   }
 
-  // MÉTODO guardarSesion ACTUALIZADO
   async guardarSesion() {
     if (!this.esFormularioValido()) {
       alert('Por favor, complete la evaluación de dolor (EVA)');
@@ -179,11 +148,11 @@ export class SesionPage implements OnInit {
     }
 
     try {
-      // Preparar datos para la sesión (formato compatible con DatabaseService)
       const datosSesion = {
-        paciente_id: Number(this.pacienteId), // Convertir a número
+        paciente_id: this.pacienteId, // Mantener como string, igual que el ID del paciente
         paciente_nombre: this.pacienteNombre,
-        fecha: new Date().toISOString().split('T')[0], // Solo fecha YYYY-MM-DD
+        numero_sesion: this.numeroSesion,
+        fecha: new Date().toISOString().split('T')[0],
         ejercicios: this.sesionData.ejerciciosRealizados ? 'Realizados' : 'No realizados',
         observaciones: this.sesionData.observaciones,
         eva: this.sesionData.nivelDolor,
@@ -191,85 +160,24 @@ export class SesionPage implements OnInit {
         enviado_whatsapp: false
       };
 
-      console.log('💾 Preparando sesión para guardar:', datosSesion);
+      console.log('💾 Guardando sesión:', datosSesion);
 
-      // ESTRATEGIA DE GUARDADO MEJORADA
-      let exitoLocal = false;
-      let exitoServer = false;
-      let mensajes = [];
+      await this.databaseService.addSesion(datosSesion);
+      console.log('✅ Sesión guardada exitosamente');
 
-      // 1. GUARDAR EN DatabaseService (SQLite/localStorage) - SIEMPRE
-      try {
-        const respuestaLocal = await this.databaseService.addSesion(datosSesion);
-        console.log('✅ Sesión guardada localmente:', respuestaLocal);
-        exitoLocal = true;
-        mensajes.push('✅ Guardado localmente');
-      } catch (errorLocal) {
-        console.error('❌ Error guardando localmente:', errorLocal);
-        mensajes.push('❌ No se pudo guardar localmente');
-      }
+      alert(`Sesión ${this.numeroSesion} guardada para ${this.pacienteNombre}`);
 
-      // 2. GUARDAR EN JSON-Server (OPCIONAL - solo si hay conexión)
-      try {
-        // Preparar datos para JSON-Server (formato diferente)
-        const datosParaServer = {
-          paciente_id: this.pacienteId,
-          paciente_nombre: this.pacienteNombre,
-          numero_sesion: this.numeroSesion,
-          nivel_dolor: this.sesionData.nivelDolor,
-          calidad_sueno: this.sesionData.calidadSueno,
-          ejercicios_realizados: this.sesionData.ejerciciosRealizados,
-          observaciones: this.sesionData.observaciones,
-          fecha: new Date().toISOString(),
-          fecha_registro: new Date().toLocaleDateString('es-CL'),
-          hora_registro: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-        };
-
-        const respuestaServer = await firstValueFrom(
-          this.jsonServerService.createSesion(datosParaServer)
-        );
-        console.log('✅ Sesión guardada en servidor:', respuestaServer);
-        exitoServer = true;
-        mensajes.push('✅ Sincronizado con servidor');
-      } catch (errorServer) {
-        console.log('⚠️ No se pudo guardar en servidor (modo offline):', errorServer);
-        mensajes.push('⚠️ Modo offline - solo guardado local');
-      }
-
-      // Mostrar resumen
-      const resumen = `
-        📋 SESIÓN GUARDADA
-        
-        • Paciente: ${this.pacienteNombre}
-        • Sesión N°: ${this.numeroSesion}
-        • Fecha: ${new Date().toLocaleDateString('es-CL')}
-        
-        📊 EVALUACIÓN:
-        • Dolor EVA: ${this.sesionData.nivelDolor}/10
-        • Calidad sueño: ${this.sesionData.calidadSueno}/5
-        • Ejercicios: ${this.sesionData.ejerciciosRealizados ? '✅ Realizados' : '❌ No realizados'}
-        
-        💾 ESTADO:
-        ${mensajes.join('\n')}
-        
-        ${this.sesionData.observaciones ? `\n📝 OBSERVACIONES:\n${this.sesionData.observaciones}` : ''}
-      `;
-
-      alert(resumen.trim());
-
-      // Redirigir a detalle del paciente con parámetros actualizados
+      // Volver al detalle del paciente
       this.navCtrl.navigateBack(['/paciente-detalle'], {
-        queryParams: { 
+        queryParams: {
           id: this.pacienteId,
-          sesionGuardada: true,
-          numeroSesion: this.numeroSesion,
-          timestamp: Date.now() // Para forzar recarga
+          timestamp: Date.now()
         }
       });
 
     } catch (error) {
-      console.error('❌ Error crítico al guardar sesión:', error);
-      alert('❌ Error al guardar la sesión. Los datos se perdieron. Intente nuevamente.');
+      console.error('Error al guardar sesión:', error);
+      alert('Error al guardar la sesión. Intente nuevamente.');
     }
   }
 
