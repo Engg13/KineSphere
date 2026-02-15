@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { NavController, ToastController, Platform } from '@ionic/angular';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
 
 @Component({
@@ -36,6 +36,7 @@ export class AgregarPacientePage {
     private toastController: ToastController,
     private platform: Platform,
     private route: ActivatedRoute,
+    private router: Router,
     private databaseService: DatabaseService
   ) {}
 
@@ -44,10 +45,14 @@ export class AgregarPacientePage {
   async ionViewDidEnter() {
     this.configurarEventosTeclado();
 
-    // Leer params con snapshot (confiable con navigateRoot)
-    const params = this.route.snapshot.queryParams;
+    // Leer params desde la URL actual (no snapshot, que puede estar cacheado por Ionic)
+    const urlTree = this.router.parseUrl(this.router.url);
+    const params = urlTree.queryParams;
     const id = params['id'];
     const modoEdicion = params['modoEdicion'];
+
+    console.log('ionViewDidEnter - URL actual:', this.router.url);
+    console.log('ionViewDidEnter - params:', { id, modoEdicion });
 
     if (id && modoEdicion === 'true') {
       this.modoEdicion = true;
@@ -233,7 +238,7 @@ export class AgregarPacientePage {
 
       setTimeout(() => {
         if (this.modoEdicion) {
-          this.navCtrl.navigateBack(['/paciente-detalle'], {
+          this.navCtrl.navigateRoot('/paciente-detalle', {
             queryParams: { id: this.pacienteIdOriginal, timestamp: Date.now() }
           });
         } else {

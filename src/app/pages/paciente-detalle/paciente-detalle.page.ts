@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NavController } from '@ionic/angular';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
 
 @Component({
@@ -19,21 +19,26 @@ export class PacienteDetallePage {
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
+    private router: Router,
     private databaseService: DatabaseService
   ) { }
 
-  ionViewDidEnter() {
-    this.route.queryParams.subscribe(async (params: any) => {
-      const pacienteId = params['id'];
+  async ionViewDidEnter() {
+    // Leer params desde la URL actual (no snapshot/subscribe, que pueden estar cacheados por Ionic)
+    const urlTree = this.router.parseUrl(this.router.url);
+    const params = urlTree.queryParams;
+    const pacienteId = params['id'];
 
-      if (pacienteId && pacienteId !== 'undefined' && pacienteId !== 'null') {
-        this.pacienteId = pacienteId;
-        await this.cargarPaciente(pacienteId);
-      } else {
-        console.log('No hay ID de paciente disponible');
-        this.estaCargando = false;
-      }
-    });
+    console.log('paciente-detalle ionViewDidEnter - URL:', this.router.url);
+    console.log('paciente-detalle ionViewDidEnter - id:', pacienteId);
+
+    if (pacienteId && pacienteId !== 'undefined' && pacienteId !== 'null') {
+      this.pacienteId = pacienteId;
+      await this.cargarPaciente(pacienteId);
+    } else {
+      console.log('No hay ID de paciente disponible');
+      this.estaCargando = false;
+    }
   }
 
   private async cargarPaciente(id: string) {
