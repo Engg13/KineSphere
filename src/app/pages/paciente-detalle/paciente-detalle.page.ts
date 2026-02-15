@@ -179,7 +179,7 @@ export class PacienteDetallePage {
 
   editarPaciente() {
     if (!this.paciente) return;
-    this.navCtrl.navigateForward('/agregar-paciente', {
+    this.navCtrl.navigateRoot('/agregar-paciente', {
       queryParams: {
         id: this.pacienteId,
         modoEdicion: 'true'

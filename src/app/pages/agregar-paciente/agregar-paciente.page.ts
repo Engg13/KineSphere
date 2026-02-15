@@ -41,23 +41,23 @@ export class AgregarPacientePage {
 
   // === MÉTODOS PARA MANEJAR EL TECLADO ===
 
-  ionViewDidEnter() {
+  async ionViewDidEnter() {
     this.configurarEventosTeclado();
 
-    this.route.queryParams.subscribe(async params => {
-      const id = params['id'];
-      const modoEdicion = params['modoEdicion'];
+    // Leer params con snapshot (confiable con navigateRoot)
+    const params = this.route.snapshot.queryParams;
+    const id = params['id'];
+    const modoEdicion = params['modoEdicion'];
 
-      if (id && modoEdicion === 'true') {
-        this.modoEdicion = true;
-        this.pacienteIdOriginal = id;
-        await this.cargarPacienteParaEditar(id);
-      } else {
-        this.modoEdicion = false;
-        this.pacienteIdOriginal = '';
-        this.resetFormulario();
-      }
-    });
+    if (id && modoEdicion === 'true') {
+      this.modoEdicion = true;
+      this.pacienteIdOriginal = id;
+      await this.cargarPacienteParaEditar(id);
+    } else {
+      this.modoEdicion = false;
+      this.pacienteIdOriginal = '';
+      this.resetFormulario();
+    }
   }
 
   private async cargarPacienteParaEditar(id: string) {
