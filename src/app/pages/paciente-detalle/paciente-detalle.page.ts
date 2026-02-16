@@ -24,17 +24,17 @@ export class PacienteDetallePage {
   ) { }
 
   async ionViewDidEnter() {
-    // Leer params desde la URL actual (no snapshot/subscribe, que pueden estar cacheados por Ionic)
-    const urlTree = this.router.parseUrl(this.router.url);
-    const params = urlTree.queryParams;
-    const pacienteId = params['id'];
+    // Leer ID desde localStorage (más confiable que query params con Ionic caching)
+    const storedId = localStorage.getItem('ver_paciente_id');
+    if (storedId) {
+      localStorage.removeItem('ver_paciente_id');
+      this.pacienteId = storedId;
+    }
 
-    console.log('paciente-detalle ionViewDidEnter - URL:', this.router.url);
-    console.log('paciente-detalle ionViewDidEnter - id:', pacienteId);
+    console.log('paciente-detalle ionViewDidEnter - pacienteId:', this.pacienteId);
 
-    if (pacienteId && pacienteId !== 'undefined' && pacienteId !== 'null') {
-      this.pacienteId = pacienteId;
-      await this.cargarPaciente(pacienteId);
+    if (this.pacienteId) {
+      await this.cargarPaciente(this.pacienteId);
     } else {
       console.log('No hay ID de paciente disponible');
       this.estaCargando = false;
@@ -184,12 +184,10 @@ export class PacienteDetallePage {
 
   editarPaciente() {
     if (!this.paciente) return;
-    this.navCtrl.navigateRoot('/agregar-paciente', {
-      queryParams: {
-        id: this.pacienteId,
-        modoEdicion: 'true'
-      }
-    });
+    // Pasar datos de edición por localStorage (Ionic cachea las páginas y los query params pueden ser stale)
+    localStorage.setItem('editar_paciente_id', String(this.pacienteId));
+    console.log('editarPaciente - guardando ID en localStorage:', this.pacienteId);
+    this.navCtrl.navigateRoot('/agregar-paciente');
   }
 
   llamarPaciente() {

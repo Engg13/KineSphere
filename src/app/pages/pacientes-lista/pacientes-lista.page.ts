@@ -72,13 +72,10 @@ export class PacientesListaPage {
     console.log('👤 Ver detalle del paciente:', paciente);
     console.log('🆔 ID del paciente:', paciente.id);
     console.log('📊 Número de sesiones:', paciente.num_sesiones || 0);
-    
-    this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: { 
-        id: paciente.id,
-        numSesiones: paciente.num_sesiones || 0
-      }
-    });
+
+    // Pasar ID por localStorage (Ionic cachea páginas y query params pueden ser stale)
+    localStorage.setItem('ver_paciente_id', String(paciente.id));
+    this.navCtrl.navigateRoot('/paciente-detalle');
   }
 
   volverAlDashboard() {

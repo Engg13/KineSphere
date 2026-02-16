@@ -168,12 +168,8 @@ export class SesionPage implements OnInit {
       alert(`Sesión ${this.numeroSesion} guardada para ${this.pacienteNombre}`);
 
       // Volver al detalle del paciente
-      this.navCtrl.navigateBack(['/paciente-detalle'], {
-        queryParams: {
-          id: this.pacienteId,
-          timestamp: Date.now()
-        }
-      });
+      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
+      this.navCtrl.navigateRoot('/paciente-detalle');
 
     } catch (error) {
       console.error('Error al guardar sesión:', error);
@@ -183,14 +179,10 @@ export class SesionPage implements OnInit {
 
   volverAPaciente() {
     if (this.pacienteId) {
-      this.navCtrl.navigateBack(['/paciente-detalle'], {
-        queryParams: { 
-          id: this.pacienteId,
-          refresh: Date.now() // Forzar recarga
-        }
-      });
+      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
+      this.navCtrl.navigateRoot('/paciente-detalle');
     } else {
-      this.navCtrl.navigateBack('/pacientes-lista');
+      this.navCtrl.navigateRoot('/pacientes-lista');
     }
   }
 

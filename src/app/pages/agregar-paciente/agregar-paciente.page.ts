@@ -45,19 +45,16 @@ export class AgregarPacientePage {
   async ionViewDidEnter() {
     this.configurarEventosTeclado();
 
-    // Leer params desde la URL actual (no snapshot, que puede estar cacheado por Ionic)
-    const urlTree = this.router.parseUrl(this.router.url);
-    const params = urlTree.queryParams;
-    const id = params['id'];
-    const modoEdicion = params['modoEdicion'];
+    // Leer ID de edición desde localStorage (más confiable que query params con Ionic caching)
+    const editId = localStorage.getItem('editar_paciente_id');
+    localStorage.removeItem('editar_paciente_id'); // Limpiar inmediatamente
 
-    console.log('ionViewDidEnter - URL actual:', this.router.url);
-    console.log('ionViewDidEnter - params:', { id, modoEdicion });
+    console.log('agregar-paciente ionViewDidEnter - editId desde localStorage:', editId);
 
-    if (id && modoEdicion === 'true') {
+    if (editId) {
       this.modoEdicion = true;
-      this.pacienteIdOriginal = id;
-      await this.cargarPacienteParaEditar(id);
+      this.pacienteIdOriginal = editId;
+      await this.cargarPacienteParaEditar(editId);
     } else {
       this.modoEdicion = false;
       this.pacienteIdOriginal = '';
@@ -238,9 +235,8 @@ export class AgregarPacientePage {
 
       setTimeout(() => {
         if (this.modoEdicion) {
-          this.navCtrl.navigateRoot('/paciente-detalle', {
-            queryParams: { id: this.pacienteIdOriginal, timestamp: Date.now() }
-          });
+          localStorage.setItem('ver_paciente_id', String(this.pacienteIdOriginal));
+          this.navCtrl.navigateRoot('/paciente-detalle');
         } else {
           this.navCtrl.navigateRoot('/pacientes-lista');
         }
