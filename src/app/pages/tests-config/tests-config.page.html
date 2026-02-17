@@ -24,17 +24,62 @@
     <!-- ========== VISTA LISTA DE TESTS ========== -->
     <div *ngIf="!modoCrear">
 
+      <!-- CATALOGO DE TESTS PREDETERMINADOS -->
+      <div class="catalog-section">
+        <h3 class="catalog-title">
+          <ion-icon name="library"></ion-icon>
+          Catalogo de Tests Estandar
+        </h3>
+        <p class="catalog-desc">Tests validados listos para agregar</p>
+
+        <div class="catalog-grid">
+          <div *ngFor="let tp of testsPredeterminados" class="catalog-item" [class.agregado]="testYaAgregado(tp.id)">
+            <div class="catalog-item-header">
+              <span class="catalog-item-name">{{ tp.nombre }}</span>
+              <span class="catalog-item-count">{{ tp.preguntas.length }} preg.</span>
+            </div>
+            <p class="catalog-item-desc">{{ tp.descripcion }}</p>
+            <div class="catalog-item-rangos">
+              <span *ngFor="let r of tp.rangos" class="mini-rango" [style.background]="r.color"></span>
+            </div>
+            <ion-button
+              *ngIf="!testYaAgregado(tp.id)"
+              expand="block" size="small" fill="outline" class="btn-agregar-pred"
+              (click)="agregarTestPredeterminado(tp)">
+              <ion-icon slot="start" name="add-circle"></ion-icon>
+              Agregar
+            </ion-button>
+            <div *ngIf="testYaAgregado(tp.id)" class="agregado-badge">
+              <ion-icon name="checkmark-circle"></ion-icon>
+              Agregado
+            </div>
+          </div>
+        </div>
+
+        <ion-button
+          expand="block" fill="solid" class="btn-agregar-todos"
+          (click)="agregarTodosPredeterminados()">
+          <ion-icon slot="start" name="download"></ion-icon>
+          Agregar Todos
+        </ion-button>
+      </div>
+
+      <!-- SEPARADOR -->
+      <div class="separator">
+        <span>Mis Tests</span>
+      </div>
+
       <!-- BOTON CREAR -->
       <ion-button expand="block" class="btn-crear" (click)="iniciarCreacion()">
         <ion-icon slot="start" name="add-circle"></ion-icon>
-        Crear Nuevo Test
+        Crear Test Personalizado
       </ion-button>
 
       <!-- SIN TESTS -->
       <div *ngIf="tests.length === 0" class="empty-state">
         <ion-icon name="document-text-outline"></ion-icon>
-        <h3>Sin tests creados</h3>
-        <p>Crea tu primer test predeterminado para evaluar pacientes</p>
+        <h3>Sin tests agregados</h3>
+        <p>Agrega tests del catalogo o crea uno personalizado</p>
       </div>
 
       <!-- LISTA DE TESTS -->

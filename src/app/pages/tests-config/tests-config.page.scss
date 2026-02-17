@@ -28,6 +28,147 @@
   p { font-size: 14px; opacity: 0.85; margin: 0; }
 }
 
+// CATALOGO PREDETERMINADOS
+.catalog-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 16px;
+
+  .catalog-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-icon { color: #0d9488; font-size: 20px; }
+  }
+
+  .catalog-desc {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 14px;
+  }
+}
+
+.catalog-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.catalog-item {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 12px;
+  border-left: 3px solid #0d9488;
+  transition: opacity 0.3s;
+
+  &.agregado {
+    opacity: 0.6;
+    border-left-color: #9ca3af;
+  }
+
+  .catalog-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+
+    .catalog-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      flex: 1;
+      margin-right: 8px;
+    }
+
+    .catalog-item-count {
+      font-size: 11px;
+      color: #6b7280;
+      background: #e5e7eb;
+      padding: 2px 8px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+  }
+
+  .catalog-item-desc {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0 0 8px;
+    line-height: 1.4;
+  }
+
+  .catalog-item-rangos {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+
+    .mini-rango {
+      width: 20px;
+      height: 6px;
+      border-radius: 3px;
+    }
+  }
+
+  .btn-agregar-pred {
+    --color: #0d9488;
+    --border-color: #0d9488;
+    font-size: 13px;
+    height: 34px;
+  }
+
+  .agregado-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #9ca3af;
+    font-weight: 500;
+    padding: 6px 0;
+
+    ion-icon { font-size: 18px; }
+  }
+}
+
+.btn-agregar-todos {
+  --background: linear-gradient(135deg, #0d9488, #14b8a6);
+  --border-radius: 12px;
+  margin-top: 12px;
+  height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+// SEPARADOR
+.separator {
+  display: flex;
+  align-items: center;
+  margin: 20px 0 16px;
+  gap: 12px;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
 // BOTON CREAR
 .btn-crear {
   --background: linear-gradient(135deg, #0d9488, #14b8a6);

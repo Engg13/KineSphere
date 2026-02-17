@@ -25,6 +25,144 @@ export interface TestTemplate {
 
 const STORAGE_KEY = 'test_templates';
 
+const TESTS_PREDETERMINADOS: TestTemplate[] = [
+  {
+    id: 'predefinido_groc',
+    nombre: 'GROC - Escala Global de Cambio',
+    descripcion: 'Global Rating of Change. Mide la percepcion del paciente sobre su cambio global desde el inicio del tratamiento. Escala de -7 (mucho peor) a +7 (mucho mejor).',
+    preguntas: [
+      {
+        texto: 'En comparacion con el inicio del tratamiento, como describiria su condicion actual?',
+        puntajeMin: -7,
+        puntajeMax: 7
+      }
+    ],
+    rangos: [
+      { nombre: 'Mucho peor', min: -7, max: -5, color: '#ef4444' },
+      { nombre: 'Peor', min: -4, max: -2, color: '#f97316' },
+      { nombre: 'Sin cambio significativo', min: -1, max: 1, color: '#6b7280' },
+      { nombre: 'Mejor', min: 2, max: 4, color: '#22c55e' },
+      { nombre: 'Mucho mejor', min: 5, max: 7, color: '#10b981' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_barthel',
+    nombre: 'Indice de Barthel',
+    descripcion: 'Mide la capacidad funcional para actividades basicas de la vida diaria (ABVD). Puntaje de 0 (dependencia total) a 100 (independencia).',
+    preguntas: [
+      { texto: 'Comer (0=incapaz, 5=necesita ayuda, 10=independiente)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Trasladarse sillon-cama (0=incapaz, 5=gran ayuda, 10=minima ayuda, 15=independiente)', puntajeMin: 0, puntajeMax: 15 },
+      { texto: 'Aseo personal (0=necesita ayuda, 5=independiente)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Uso del retrete (0=dependiente, 5=necesita ayuda, 10=independiente)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Banarse/ducharse (0=dependiente, 5=independiente)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Desplazarse (0=inmovil, 5=silla de ruedas, 10=ayuda de una persona, 15=independiente)', puntajeMin: 0, puntajeMax: 15 },
+      { texto: 'Subir/bajar escaleras (0=incapaz, 5=necesita ayuda, 10=independiente)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Vestirse/desvestirse (0=dependiente, 5=necesita ayuda, 10=independiente)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Control de heces (0=incontinente, 5=accidente ocasional, 10=continente)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Control de orina (0=incontinente, 5=accidente ocasional, 10=continente)', puntajeMin: 0, puntajeMax: 10 }
+    ],
+    rangos: [
+      { nombre: 'Dependencia total', min: 0, max: 20, color: '#ef4444' },
+      { nombre: 'Dependencia grave', min: 21, max: 60, color: '#f97316' },
+      { nombre: 'Dependencia moderada', min: 61, max: 90, color: '#f59e0b' },
+      { nombre: 'Dependencia escasa', min: 91, max: 99, color: '#22c55e' },
+      { nombre: 'Independencia', min: 100, max: 100, color: '#10b981' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_eva_funcional',
+    nombre: 'EVA Funcional',
+    descripcion: 'Escala Visual Analogica aplicada a multiples dimensiones funcionales del paciente. Evalua dolor, funcion y satisfaccion.',
+    preguntas: [
+      { texto: 'Dolor en reposo (0=sin dolor, 10=maximo dolor)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Dolor en movimiento (0=sin dolor, 10=maximo dolor)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Dificultad para actividades cotidianas (0=ninguna, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Dificultad para actividad laboral (0=ninguna, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'Dificultad para actividad deportiva/recreativa (0=ninguna, 10=imposible)', puntajeMin: 0, puntajeMax: 10 }
+    ],
+    rangos: [
+      { nombre: 'Leve', min: 0, max: 15, color: '#10b981' },
+      { nombre: 'Moderado', min: 16, max: 30, color: '#f59e0b' },
+      { nombre: 'Severo', min: 31, max: 40, color: '#f97316' },
+      { nombre: 'Muy severo', min: 41, max: 50, color: '#ef4444' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_tinetti_marcha',
+    nombre: 'Tinetti - Marcha',
+    descripcion: 'Evaluacion de la marcha del test de Tinetti. Detecta riesgo de caidas en adultos mayores. Puntaje marcha: 0-12.',
+    preguntas: [
+      { texto: 'Inicio de la marcha (0=vacilacion/varios intentos, 1=sin vacilacion)', puntajeMin: 0, puntajeMax: 1 },
+      { texto: 'Longitud y altura del paso derecho (0=no sobrepasa pie izq, 1=sobrepasa, pie se levanta)', puntajeMin: 0, puntajeMax: 1 },
+      { texto: 'Longitud y altura del paso izquierdo (0=no sobrepasa pie der, 1=sobrepasa, pie se levanta)', puntajeMin: 0, puntajeMax: 1 },
+      { texto: 'Simetria del paso (0=desigual, 1=igual)', puntajeMin: 0, puntajeMax: 1 },
+      { texto: 'Continuidad de los pasos (0=discontinuos, 1=continuos)', puntajeMin: 0, puntajeMax: 1 },
+      { texto: 'Trayectoria (0=desviacion marcada, 1=desviacion leve, 2=recta sin ayuda)', puntajeMin: 0, puntajeMax: 2 },
+      { texto: 'Tronco (0=balanceo marcado, 1=no balancea pero flexiona, 2=sin balanceo ni flexion)', puntajeMin: 0, puntajeMax: 2 },
+      { texto: 'Postura al caminar (0=talones separados, 1=talones casi juntos)', puntajeMin: 0, puntajeMax: 1 }
+    ],
+    rangos: [
+      { nombre: 'Alto riesgo de caidas', min: 0, max: 5, color: '#ef4444' },
+      { nombre: 'Riesgo moderado', min: 6, max: 9, color: '#f59e0b' },
+      { nombre: 'Bajo riesgo', min: 10, max: 12, color: '#10b981' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_ndi',
+    nombre: 'NDI - Indice de Discapacidad Cervical',
+    descripcion: 'Neck Disability Index. Evalua como el dolor de cuello afecta las actividades diarias. 10 secciones, puntaje 0-50.',
+    preguntas: [
+      { texto: 'Intensidad del dolor de cuello (0=sin dolor, 5=el peor imaginable)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Cuidado personal (0=sin problemas, 5=necesita ayuda en todo)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Levantar objetos (0=puedo levantar pesados, 5=no puedo levantar nada)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Lectura (0=sin problemas, 5=no puedo leer)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Dolor de cabeza (0=sin cefalea, 5=cefalea constante)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Concentracion (0=puedo concentrarme, 5=no puedo concentrarme)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Trabajo (0=puedo trabajar normal, 5=no puedo trabajar)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Conducir (0=sin problemas, 5=no puedo conducir)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Dormir (0=sin problemas, 5=no puedo dormir)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Recreacion (0=sin limitacion, 5=no puedo hacer nada)', puntajeMin: 0, puntajeMax: 5 }
+    ],
+    rangos: [
+      { nombre: 'Sin discapacidad', min: 0, max: 4, color: '#10b981' },
+      { nombre: 'Discapacidad leve', min: 5, max: 14, color: '#22c55e' },
+      { nombre: 'Discapacidad moderada', min: 15, max: 24, color: '#f59e0b' },
+      { nombre: 'Discapacidad severa', min: 25, max: 34, color: '#f97316' },
+      { nombre: 'Discapacidad completa', min: 35, max: 50, color: '#ef4444' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_oswestry',
+    nombre: 'Oswestry - Discapacidad Lumbar',
+    descripcion: 'Oswestry Disability Index (ODI). Evalua como el dolor lumbar afecta las actividades diarias. 10 secciones, puntaje 0-50.',
+    preguntas: [
+      { texto: 'Intensidad del dolor (0=sin dolor, 5=el peor imaginable)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Cuidado personal (0=normal, 5=necesita ayuda en todo)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Levantar objetos (0=puedo levantar pesados, 5=no puedo levantar nada)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Caminar (0=sin limite, 5=cama/silla todo el dia)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Sentarse (0=sin limite, 5=no puedo sentarme)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Estar de pie (0=sin limite, 5=no puedo estar de pie)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Dormir (0=sin problemas, 5=no puedo dormir)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Vida social (0=normal, 5=sin vida social)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Viajar (0=sin problemas, 5=solo voy al medico)', puntajeMin: 0, puntajeMax: 5 },
+      { texto: 'Empleo/Tareas del hogar (0=normal, 5=no puedo hacer nada)', puntajeMin: 0, puntajeMax: 5 }
+    ],
+    rangos: [
+      { nombre: 'Discapacidad minima', min: 0, max: 4, color: '#10b981' },
+      { nombre: 'Discapacidad moderada', min: 5, max: 14, color: '#22c55e' },
+      { nombre: 'Discapacidad intensa', min: 15, max: 24, color: '#f59e0b' },
+      { nombre: 'Discapacidad severa', min: 25, max: 34, color: '#f97316' },
+      { nombre: 'Maxima discapacidad', min: 35, max: 50, color: '#ef4444' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  }
+];
+
 @Component({
   selector: 'app-tests-config',
   templateUrl: './tests-config.page.html',
@@ -191,6 +329,42 @@ export class TestsConfigPage implements ViewWillEnter {
       ]
     });
     await alert.present();
+  }
+
+  // === TESTS PREDETERMINADOS ===
+
+  testsPredeterminados = TESTS_PREDETERMINADOS;
+
+  testYaAgregado(testId: string): boolean {
+    return this.tests.some(t => t.id === testId);
+  }
+
+  agregarTestPredeterminado(test: TestTemplate) {
+    if (this.testYaAgregado(test.id)) return;
+    this.tests.push({
+      ...test,
+      preguntas: test.preguntas.map(p => ({ ...p })),
+      rangos: test.rangos.map(r => ({ ...r })),
+      fechaCreacion: new Date().toISOString()
+    });
+    this.guardarTests();
+  }
+
+  agregarTodosPredeterminados() {
+    let agregados = 0;
+    for (const test of TESTS_PREDETERMINADOS) {
+      if (!this.testYaAgregado(test.id)) {
+        this.tests.push({
+          ...test,
+          preguntas: test.preguntas.map(p => ({ ...p })),
+          rangos: test.rangos.map(r => ({ ...r })),
+          fechaCreacion: new Date().toISOString()
+        });
+        agregados++;
+      }
+    }
+    if (agregados > 0) this.guardarTests();
+    return agregados;
   }
 
   // === PUNTAJE MAXIMO CALCULADO ===
