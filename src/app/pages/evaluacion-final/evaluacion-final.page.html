@@ -167,6 +167,32 @@
         </div>
       </div>
 
+      <!-- RESULTADOS DE TESTS -->
+      <div *ngIf="testResults.length > 0" class="chart-card">
+        <h3 class="chart-title">
+          <ion-icon name="clipboard"></ion-icon>
+          Resultados de Tests
+        </h3>
+        <div class="test-results-list">
+          <div *ngFor="let tr of testResults" class="test-result-row">
+            <div class="test-result-header">
+              <span class="test-session-badge">S{{ tr.sesionNumero }}</span>
+              <span class="test-name">{{ tr.testNombre }}</span>
+              <span class="test-date">{{ formatearFecha(tr.fecha) }}</span>
+            </div>
+            <div class="test-result-body">
+              <div class="test-puntaje">
+                <span class="puntaje-label">Puntaje</span>
+                <span class="puntaje-valor">{{ tr.puntajeTotal }}</span>
+              </div>
+              <div class="test-resultado-badge" [style.background]="getTestResultColor(tr.resultado)">
+                {{ tr.resultado }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- HISTORIAL DE SESIONES -->
       <div *ngIf="sesiones.length > 0" class="history-card">
         <h3 class="chart-title">
@@ -187,6 +213,9 @@
                 </span>
                 <span class="metric" [class.ejercicio-si]="s.ejercicios === 'Realizados'" [class.ejercicio-no]="s.ejercicios !== 'Realizados'">
                   {{ s.ejercicios === 'Realizados' ? 'Ejercicios OK' : 'Sin ejercicios' }}
+                </span>
+                <span *ngIf="s.test" class="metric test-metric">
+                  {{ s.test.testNombre }}: {{ s.test.puntajeTotal }}pts
                 </span>
               </div>
             </div>

@@ -14,6 +14,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
   sesiones: any[] = [];
   cargando = false;
   resumen: any = null;
+  testResults: any[] = [];
 
   constructor(
     private navCtrl: NavController,
@@ -24,6 +25,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     this.pacienteSeleccionado = null;
     this.sesiones = [];
     this.resumen = null;
+    this.testResults = [];
     await this.cargarPacientes();
   }
 
@@ -57,10 +59,12 @@ export class EvaluacionFinalPage implements ViewWillEnter {
       );
 
       this.calcularResumen();
+      this.extraerTestResults();
     } catch (error) {
       console.error('Error cargando sesiones:', error);
       this.sesiones = [];
       this.resumen = null;
+      this.testResults = [];
     } finally {
       this.cargando = false;
     }
@@ -79,8 +83,8 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     const evaUltima = ultima.eva ?? ultima.nivelDolor ?? null;
     const cambioEva = (evaPrimera !== null && evaUltima !== null) ? evaPrimera - evaUltima : null;
 
-    const suenoPrimero = primera.sueño ?? primera.calidadSueno ?? null;
-    const suenoUltimo = ultima.sueño ?? ultima.calidadSueno ?? null;
+    const suenoPrimero = primera['sue\u00f1o'] ?? primera.calidadSueno ?? primera.sueno ?? null;
+    const suenoUltimo = ultima['sue\u00f1o'] ?? ultima.calidadSueno ?? ultima.sueno ?? null;
     const cambioSueno = (suenoPrimero !== null && suenoUltimo !== null) ? suenoUltimo - suenoPrimero : null;
 
     const totalEjercicios = this.sesiones.filter(s =>
@@ -101,6 +105,35 @@ export class EvaluacionFinalPage implements ViewWillEnter {
       porcentajeEjercicios: Math.round((totalEjercicios / this.sesiones.length) * 100),
       planificadas: this.pacienteSeleccionado?.sesionesPlanificadas || 10
     };
+  }
+
+  private extraerTestResults() {
+    this.testResults = this.sesiones
+      .filter(s => s.test && s.test.testNombre)
+      .map(s => ({
+        sesionNumero: s.numero_sesion,
+        fecha: s.fecha || s.fecha_creacion,
+        testNombre: s.test.testNombre,
+        puntajeTotal: s.test.puntajeTotal,
+        resultado: s.test.resultado,
+        respuestas: s.test.respuestas || []
+      }));
+  }
+
+  getTestResultColor(resultado: string): string {
+    // Try to find matching rango color from stored templates
+    try {
+      const templates = JSON.parse(localStorage.getItem('test_templates') || '[]');
+      for (const t of templates) {
+        const rango = (t.rangos || []).find((r: any) => r.nombre === resultado);
+        if (rango && rango.color) return rango.color;
+      }
+    } catch {}
+    // Default colors based on common result patterns
+    if (resultado.toLowerCase().includes('normal') || resultado.toLowerCase().includes('leve')) return '#10b981';
+    if (resultado.toLowerCase().includes('moderado') || resultado.toLowerCase().includes('medio')) return '#f59e0b';
+    if (resultado.toLowerCase().includes('severo') || resultado.toLowerCase().includes('grave')) return '#ef4444';
+    return '#0d9488';
   }
 
   // SVG chart helpers
@@ -124,7 +157,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     const w = 280, h = 140, pad = 20;
     return this.sesiones.map((s, i) => {
       const cx = this.sesiones.length === 1 ? w / 2 : pad + (i / (this.sesiones.length - 1)) * (w - 2 * pad);
-      const val = s.sueño ?? s.calidadSueno ?? 0;
+      const val = s['sue\u00f1o'] ?? s.calidadSueno ?? s.sueno ?? 0;
       const cy = pad + ((10 - val) / 10) * (h - 2 * pad);
       return { cx, cy, value: val };
     });
@@ -160,7 +193,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
 
   // Helper to access sueño without ñ in templates (Angular lexer doesn't support ñ)
   getSuenoValue(s: any): number | null {
-    return s['sue\u00f1o'] ?? s.calidadSueno ?? null;
+    return s['sue\u00f1o'] ?? s.calidadSueno ?? s.sueno ?? null;
   }
 
   volverAtras() {

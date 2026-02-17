@@ -1,0 +1,190 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="volverAtras()">
+        <ion-icon slot="icon-only" name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Tests Predeterminados</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="page-container">
+
+    <!-- HEADER -->
+    <div class="hero-header">
+      <div class="hero-icon">
+        <ion-icon name="clipboard"></ion-icon>
+      </div>
+      <h1>Tests Predeterminados</h1>
+      <p>Crea plantillas de evaluacion con preguntas y puntajes</p>
+    </div>
+
+    <!-- ========== VISTA LISTA DE TESTS ========== -->
+    <div *ngIf="!modoCrear">
+
+      <!-- BOTON CREAR -->
+      <ion-button expand="block" class="btn-crear" (click)="iniciarCreacion()">
+        <ion-icon slot="start" name="add-circle"></ion-icon>
+        Crear Nuevo Test
+      </ion-button>
+
+      <!-- SIN TESTS -->
+      <div *ngIf="tests.length === 0" class="empty-state">
+        <ion-icon name="document-text-outline"></ion-icon>
+        <h3>Sin tests creados</h3>
+        <p>Crea tu primer test predeterminado para evaluar pacientes</p>
+      </div>
+
+      <!-- LISTA DE TESTS -->
+      <div *ngFor="let test of tests" class="test-card">
+        <div class="test-header">
+          <div class="test-icon">
+            <ion-icon name="clipboard"></ion-icon>
+          </div>
+          <div class="test-info">
+            <h3>{{ test.nombre }}</h3>
+            <p *ngIf="test.descripcion">{{ test.descripcion }}</p>
+          </div>
+        </div>
+
+        <div class="test-meta">
+          <span class="meta-item">
+            <ion-icon name="help-circle-outline"></ion-icon>
+            {{ test.preguntas.length }} preguntas
+          </span>
+          <span class="meta-item">
+            <ion-icon name="stats-chart-outline"></ion-icon>
+            {{ test.rangos.length }} rangos
+          </span>
+        </div>
+
+        <!-- Rangos preview -->
+        <div class="rangos-preview">
+          <span *ngFor="let rango of test.rangos" class="rango-chip" [style.background]="rango.color + '20'" [style.color]="rango.color">
+            {{ rango.nombre }} ({{ rango.min }}-{{ rango.max }})
+          </span>
+        </div>
+
+        <div class="test-actions">
+          <ion-button fill="clear" size="small" (click)="editarTest(test)">
+            <ion-icon slot="start" name="create-outline"></ion-icon>
+            Editar
+          </ion-button>
+          <ion-button fill="clear" size="small" color="danger" (click)="confirmarEliminar(test)">
+            <ion-icon slot="start" name="trash-outline"></ion-icon>
+            Eliminar
+          </ion-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== FORMULARIO CREAR/EDITAR TEST ========== -->
+    <div *ngIf="modoCrear">
+
+      <!-- DATOS BASICOS -->
+      <div class="form-card">
+        <h3 class="section-title">
+          <ion-icon name="information-circle"></ion-icon>
+          {{ modoEditar ? 'Editar Test' : 'Nuevo Test' }}
+        </h3>
+
+        <ion-item lines="none" class="form-item">
+          <ion-label position="stacked">Nombre del Test *</ion-label>
+          <ion-input [(ngModel)]="nuevoTest.nombre" placeholder="Ej: Escala de Barthel, Test de Tinetti..."></ion-input>
+        </ion-item>
+
+        <ion-item lines="none" class="form-item">
+          <ion-label position="stacked">Descripcion</ion-label>
+          <ion-textarea [(ngModel)]="nuevoTest.descripcion" placeholder="Describe para que sirve este test..." rows="2"></ion-textarea>
+        </ion-item>
+      </div>
+
+      <!-- PREGUNTAS -->
+      <div class="form-card">
+        <h3 class="section-title">
+          <ion-icon name="help-circle"></ion-icon>
+          Preguntas ({{ preguntas.length }})
+        </h3>
+
+        <div *ngFor="let pregunta of preguntas; let i = index" class="pregunta-item">
+          <div class="pregunta-header">
+            <span class="pregunta-num">{{ i + 1 }}</span>
+            <ion-button *ngIf="preguntas.length > 1" fill="clear" size="small" color="danger" (click)="eliminarPregunta(i)">
+              <ion-icon slot="icon-only" name="close-circle"></ion-icon>
+            </ion-button>
+          </div>
+
+          <ion-item lines="none" class="form-item">
+            <ion-label position="stacked">Pregunta *</ion-label>
+            <ion-input [(ngModel)]="pregunta.texto" placeholder="Ej: Capacidad para alimentarse solo..."></ion-input>
+          </ion-item>
+
+          <div class="puntaje-row">
+            <div class="puntaje-field">
+              <label>Min</label>
+              <ion-input type="number" [(ngModel)]="pregunta.puntajeMin" min="0"></ion-input>
+            </div>
+            <div class="puntaje-field">
+              <label>Max</label>
+              <ion-input type="number" [(ngModel)]="pregunta.puntajeMax" min="1"></ion-input>
+            </div>
+          </div>
+        </div>
+
+        <ion-button expand="block" fill="outline" size="small" class="btn-agregar" (click)="agregarPregunta()">
+          <ion-icon slot="start" name="add"></ion-icon>
+          Agregar Pregunta
+        </ion-button>
+
+        <div class="puntaje-total">
+          Puntaje maximo total: <strong>{{ getPuntajeMaximo() }}</strong>
+        </div>
+      </div>
+
+      <!-- RANGOS DE RESULTADO -->
+      <div class="form-card">
+        <h3 class="section-title">
+          <ion-icon name="stats-chart"></ion-icon>
+          Rangos de Resultado
+        </h3>
+        <p class="section-desc">Define como interpretar el puntaje total</p>
+
+        <div *ngFor="let rango of rangos; let i = index" class="rango-item">
+          <div class="rango-color" [style.background]="rango.color"></div>
+          <div class="rango-fields">
+            <ion-input [(ngModel)]="rango.nombre" placeholder="Ej: Normal, Leve, Severo..." class="rango-nombre"></ion-input>
+            <div class="rango-numeros">
+              <ion-input type="number" [(ngModel)]="rango.min" class="rango-num"></ion-input>
+              <span>a</span>
+              <ion-input type="number" [(ngModel)]="rango.max" class="rango-num"></ion-input>
+            </div>
+          </div>
+          <ion-button *ngIf="rangos.length > 1" fill="clear" size="small" color="danger" (click)="eliminarRango(i)">
+            <ion-icon slot="icon-only" name="close-circle"></ion-icon>
+          </ion-button>
+        </div>
+
+        <ion-button expand="block" fill="outline" size="small" class="btn-agregar" (click)="agregarRango()">
+          <ion-icon slot="start" name="add"></ion-icon>
+          Agregar Rango
+        </ion-button>
+      </div>
+
+      <!-- BOTONES ACCION -->
+      <div class="action-buttons">
+        <ion-button expand="block" (click)="guardarTest()" [disabled]="!formularioValido()" class="btn-guardar">
+          <ion-icon slot="start" name="save"></ion-icon>
+          {{ modoEditar ? 'Actualizar Test' : 'Guardar Test' }}
+        </ion-button>
+
+        <ion-button expand="block" fill="outline" (click)="cancelarCreacion()">
+          <ion-icon slot="start" name="close"></ion-icon>
+          Cancelar
+        </ion-button>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

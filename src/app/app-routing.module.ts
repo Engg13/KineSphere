@@ -63,6 +63,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/config-test/config-test.module').then(m => m.ConfigTestPageModule),
     canActivate: [AuthGuard]
   },
+  {
+    path: 'tests-config',
+    loadChildren: () => import('./pages/tests-config/tests-config.module').then(m => m.TestsConfigPageModule),
+    canActivate: [AuthGuard]
+  },
   
   {
     path: '**',

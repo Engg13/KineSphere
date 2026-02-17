@@ -106,6 +106,57 @@
       </ion-card-content>
     </ion-card>
 
+    <!-- TEST PREDETERMINADO (OPCIONAL) -->
+    <ion-card class="animated-item" *ngIf="testsDisponibles.length > 0">
+      <ion-card-header>
+        <ion-card-title>Test Predeterminado</ion-card-title>
+        <ion-card-subtitle>Opcional: aplica un test de evaluacion</ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <!-- Selector de test -->
+        <ion-item>
+          <ion-label position="stacked">Seleccionar Test</ion-label>
+          <ion-select placeholder="Ninguno" interface="action-sheet" (ionChange)="seleccionarTest($event)">
+            <ion-select-option [value]="null">Ninguno</ion-select-option>
+            <ion-select-option *ngFor="let t of testsDisponibles" [value]="t.id">
+              {{ t.nombre }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Preguntas del test -->
+        <div *ngIf="testSeleccionado" class="test-preguntas">
+          <div *ngFor="let pregunta of testSeleccionado.preguntas; let i = index" class="test-pregunta-item">
+            <ion-label class="pregunta-texto">{{ i + 1 }}. {{ pregunta.texto }}</ion-label>
+            <ion-range
+              [(ngModel)]="respuestasTest[i]"
+              [min]="pregunta.puntajeMin"
+              [max]="pregunta.puntajeMax"
+              step="1"
+              snaps="true"
+              ticks="true"
+              (ionChange)="calcularPuntajeTest()">
+              <ion-label slot="start">{{ pregunta.puntajeMin }}</ion-label>
+              <ion-label slot="end">{{ pregunta.puntajeMax }}</ion-label>
+            </ion-range>
+            <ion-badge color="medium">{{ respuestasTest[i] || 0 }}</ion-badge>
+          </div>
+
+          <!-- Resultado -->
+          <div class="test-resultado">
+            <div class="resultado-puntaje">
+              <span class="resultado-label">Puntaje Total:</span>
+              <span class="resultado-valor" [style.color]="getResultadoColor()">{{ puntajeTotal }}</span>
+            </div>
+            <div class="resultado-clasificacion" [style.color]="getResultadoColor()">
+              {{ resultadoTest }}
+            </div>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
     <!-- ESPACIO PARA LOS BOTONES FIJOS -->
     <div class="botones-spacer"></div>
   </div>

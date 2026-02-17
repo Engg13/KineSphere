@@ -314,3 +314,63 @@ ion-textarea {
   border-radius: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
+
+/* ===== TEST PREDETERMINADO ===== */
+.test-preguntas {
+  margin-top: 16px;
+}
+
+.test-pregunta-item {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+
+  .pregunta-texto {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  ion-range {
+    --bar-background: #e5e7eb;
+    --bar-background-active: #0d9488;
+    --knob-background: #0d9488;
+  }
+
+  ion-badge {
+    margin-top: -8px;
+    float: right;
+  }
+}
+
+.test-resultado {
+  background: #f0fdfa;
+  border: 2px solid #0d9488;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  margin-top: 12px;
+
+  .resultado-puntaje {
+    margin-bottom: 6px;
+
+    .resultado-label {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .resultado-valor {
+      font-size: 28px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+  }
+
+  .resultado-clasificacion {
+    font-size: 18px;
+    font-weight: 600;
+  }
+}

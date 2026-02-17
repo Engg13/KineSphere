@@ -199,6 +199,10 @@ export class DashboardPage implements OnInit {
     });
   }
 
+  irATests() {
+    this.navCtrl.navigateRoot('/tests-config');
+  }
+
   agregarPaciente() {
     this.navCtrl.navigateRoot('/agregar-paciente');
   }

@@ -15,13 +15,20 @@ export class SesionPage implements OnInit {
   pacienteNombre: string = '';
   numeroSesion: number = 1;
 
-  // Objeto principal de datos de la sesión
+  // Objeto principal de datos de la sesion
   sesionData = {
     nivelDolor: null as number | null,
     calidadSueno: 3,
     ejerciciosRealizados: false,
     observaciones: ''
   };
+
+  // Tests predeterminados
+  testsDisponibles: any[] = [];
+  testSeleccionado: any = null;
+  respuestasTest: number[] = [];
+  puntajeTotal = 0;
+  resultadoTest = '';
 
   // Referencias para los textarea
   @ViewChild('observacionesTextarea') observacionesTextarea!: ElementRef;
@@ -33,9 +40,10 @@ export class SesionPage implements OnInit {
   ) {}
 
   async ngOnInit() {
-    console.log('🔄 Inicializando página de sesión...');
-    
-    // Obtener parámetros de la URL
+    console.log('Inicializando pagina de sesion...');
+    this.cargarTestsDisponibles();
+
+    // Obtener parametros de la URL
     this.route.queryParams.subscribe(async params => {
       console.log('📋 Parámetros recibidos:', params);
       
@@ -148,17 +156,28 @@ export class SesionPage implements OnInit {
     }
 
     try {
-      const datosSesion = {
-        paciente_id: this.pacienteId, // Mantener como string, igual que el ID del paciente
+      const datosSesion: any = {
+        paciente_id: this.pacienteId,
         paciente_nombre: this.pacienteNombre,
         numero_sesion: this.numeroSesion,
         fecha: new Date().toISOString().split('T')[0],
         ejercicios: this.sesionData.ejerciciosRealizados ? 'Realizados' : 'No realizados',
         observaciones: this.sesionData.observaciones,
         eva: this.sesionData.nivelDolor,
-        sueño: this.sesionData.calidadSueno,
+        sueno: this.sesionData.calidadSueno,
         enviado_whatsapp: false
       };
+
+      // Incluir resultados del test si se aplico uno
+      if (this.testSeleccionado) {
+        datosSesion.test = {
+          testId: this.testSeleccionado.id,
+          testNombre: this.testSeleccionado.nombre,
+          respuestas: [...this.respuestasTest],
+          puntajeTotal: this.puntajeTotal,
+          resultado: this.resultadoTest
+        };
+      }
 
       console.log('💾 Guardando sesión:', datosSesion);
 
@@ -175,6 +194,52 @@ export class SesionPage implements OnInit {
       console.error('Error al guardar sesión:', error);
       alert('Error al guardar la sesión. Intente nuevamente.');
     }
+  }
+
+  // === TESTS PREDETERMINADOS ===
+
+  cargarTestsDisponibles() {
+    try {
+      const data = localStorage.getItem('test_templates');
+      this.testsDisponibles = data ? JSON.parse(data) : [];
+    } catch {
+      this.testsDisponibles = [];
+    }
+  }
+
+  seleccionarTest(event: any) {
+    const testId = event?.detail?.value;
+    if (!testId) {
+      this.testSeleccionado = null;
+      this.respuestasTest = [];
+      this.puntajeTotal = 0;
+      this.resultadoTest = '';
+      return;
+    }
+    this.testSeleccionado = this.testsDisponibles.find((t: any) => t.id === testId);
+    if (this.testSeleccionado) {
+      this.respuestasTest = this.testSeleccionado.preguntas.map(() => 0);
+      this.calcularPuntajeTest();
+    }
+  }
+
+  calcularPuntajeTest() {
+    if (!this.testSeleccionado) return;
+    this.puntajeTotal = this.respuestasTest.reduce((sum, val) => sum + (val || 0), 0);
+
+    // Buscar rango
+    const rango = this.testSeleccionado.rangos.find((r: any) =>
+      this.puntajeTotal >= r.min && this.puntajeTotal <= r.max
+    );
+    this.resultadoTest = rango ? rango.nombre : 'Sin clasificacion';
+  }
+
+  getResultadoColor(): string {
+    if (!this.testSeleccionado) return '#6b7280';
+    const rango = this.testSeleccionado.rangos.find((r: any) =>
+      this.puntajeTotal >= r.min && this.puntajeTotal <= r.max
+    );
+    return rango ? rango.color : '#6b7280';
   }
 
   volverAPaciente() {
