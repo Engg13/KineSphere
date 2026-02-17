@@ -182,8 +182,8 @@
                 <span class="metric" [style.color]="getEvaColor(s.eva ?? s.nivelDolor ?? 0)">
                   EVA: {{ s.eva ?? s.nivelDolor ?? '-' }}
                 </span>
-                <span class="metric" [style.color]="getSuenoColor(s.sueño ?? s.calidadSueno ?? 0)">
-                  Sueno: {{ s.sueño ?? s.calidadSueno ?? '-' }}
+                <span class="metric" [style.color]="getSuenoColor(getSuenoValue(s) ?? 0)">
+                  Sueno: {{ getSuenoValue(s) ?? '-' }}
                 </span>
                 <span class="metric" [class.ejercicio-si]="s.ejercicios === 'Realizados'" [class.ejercicio-no]="s.ejercicios !== 'Realizados'">
                   {{ s.ejercicios === 'Realizados' ? 'Ejercicios OK' : 'Sin ejercicios' }}

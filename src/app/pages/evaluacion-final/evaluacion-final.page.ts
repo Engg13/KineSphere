@@ -158,6 +158,11 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     return '#ef4444';
   }
 
+  // Helper to access sueño without ñ in templates (Angular lexer doesn't support ñ)
+  getSuenoValue(s: any): number | null {
+    return s['sue\u00f1o'] ?? s.calidadSueno ?? null;
+  }
+
   volverAtras() {
     this.navCtrl.navigateRoot('/dashboard');
   }
