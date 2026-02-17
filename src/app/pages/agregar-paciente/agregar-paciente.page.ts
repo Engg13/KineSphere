@@ -43,8 +43,6 @@ export class AgregarPacientePage implements ViewWillEnter {
   // === LIFECYCLE ===
 
   async ionViewWillEnter() {
-    this.configurarEventosTeclado();
-
     // 1) Intentar leer ID de edición desde localStorage
     const editId = localStorage.getItem('editar_paciente_id');
     localStorage.removeItem('editar_paciente_id');
@@ -77,6 +75,8 @@ export class AgregarPacientePage implements ViewWillEnter {
       this.pacienteIdOriginal = '';
       this.resetFormulario();
     }
+
+    this.configurarEventosTeclado();
   }
 
   private async cargarPacienteParaEditar(id: string) {
@@ -116,18 +116,22 @@ export class AgregarPacientePage implements ViewWillEnter {
   }
 
   configurarEventosTeclado() {
-    if (typeof (window as any).Keyboard !== 'undefined') {
-      (window as any).Keyboard.addListener('keyboardWillShow', () => {
-        this.tecladoVisible = true;
-      });
-      
-      (window as any).Keyboard.addListener('keyboardWillHide', () => {
-        this.tecladoVisible = false;
-      });
-    }
-    
-    else if ((window as any).cordova?.plugins?.Keyboard) {
-      (window as any).cordova.plugins.Keyboard.showFormAccessoryBar(false);
+    try {
+      if (typeof (window as any).Keyboard !== 'undefined' && typeof (window as any).Keyboard.addListener === 'function') {
+        (window as any).Keyboard.addListener('keyboardWillShow', () => {
+          this.tecladoVisible = true;
+        });
+
+        (window as any).Keyboard.addListener('keyboardWillHide', () => {
+          this.tecladoVisible = false;
+        });
+      }
+
+      else if ((window as any).cordova?.plugins?.Keyboard) {
+        (window as any).cordova.plugins.Keyboard.showFormAccessoryBar(false);
+      }
+    } catch (error) {
+      console.log('Keyboard plugin no disponible:', error);
     }
   }
 
