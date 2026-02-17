@@ -184,10 +184,15 @@ export class PacienteDetallePage {
 
   editarPaciente() {
     if (!this.paciente) return;
-    // Pasar datos de edición por localStorage (Ionic cachea las páginas y los query params pueden ser stale)
+    // Pasar datos por localStorage Y query params (doble seguro contra Ionic caching)
     localStorage.setItem('editar_paciente_id', String(this.pacienteId));
-    console.log('editarPaciente - guardando ID en localStorage:', this.pacienteId);
-    this.navCtrl.navigateRoot('/agregar-paciente');
+    console.log('editarPaciente - ID:', this.pacienteId);
+    this.navCtrl.navigateRoot('/agregar-paciente', {
+      queryParams: {
+        id: this.pacienteId,
+        modoEdicion: 'true'
+      }
+    });
   }
 
   llamarPaciente() {

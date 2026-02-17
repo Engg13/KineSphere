@@ -1,5 +1,5 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { NavController, ToastController, Platform } from '@ionic/angular';
+import { NavController, ToastController, Platform, ViewWillEnter } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
 
@@ -9,7 +9,7 @@ import { DatabaseService } from '../../services/database.service';
   styleUrls: ['./agregar-paciente.page.scss'],
   standalone: false
 })
-export class AgregarPacientePage {
+export class AgregarPacientePage implements ViewWillEnter {
   paciente: any = {
     nombre: '',
     rut: '',
@@ -40,21 +40,38 @@ export class AgregarPacientePage {
     private databaseService: DatabaseService
   ) {}
 
-  // === MÉTODOS PARA MANEJAR EL TECLADO ===
+  // === LIFECYCLE ===
 
-  async ionViewDidEnter() {
+  async ionViewWillEnter() {
     this.configurarEventosTeclado();
 
-    // Leer ID de edición desde localStorage (más confiable que query params con Ionic caching)
+    // 1) Intentar leer ID de edición desde localStorage
     const editId = localStorage.getItem('editar_paciente_id');
-    localStorage.removeItem('editar_paciente_id'); // Limpiar inmediatamente
+    localStorage.removeItem('editar_paciente_id');
 
-    console.log('agregar-paciente ionViewDidEnter - editId desde localStorage:', editId);
+    // 2) Fallback: leer desde query params actuales del Router
+    const urlTree = this.router.parseUrl(this.router.url);
+    const urlId = urlTree.queryParams['id'];
+    const urlModo = urlTree.queryParams['modoEdicion'];
 
-    if (editId) {
+    // 3) Fallback: leer desde snapshot de ActivatedRoute
+    const snapId = this.route.snapshot.queryParams['id'];
+    const snapModo = this.route.snapshot.queryParams['modoEdicion'];
+
+    // Usar el primer valor disponible
+    const id = editId || (urlModo === 'true' ? urlId : null) || (snapModo === 'true' ? snapId : null);
+
+    console.log('=== agregar-paciente ionViewWillEnter ===');
+    console.log('localStorage editId:', editId);
+    console.log('router.url:', this.router.url);
+    console.log('urlParams:', { urlId, urlModo });
+    console.log('snapParams:', { snapId, snapModo });
+    console.log('ID final usado:', id);
+
+    if (id) {
       this.modoEdicion = true;
-      this.pacienteIdOriginal = editId;
-      await this.cargarPacienteParaEditar(editId);
+      this.pacienteIdOriginal = String(id);
+      await this.cargarPacienteParaEditar(String(id));
     } else {
       this.modoEdicion = false;
       this.pacienteIdOriginal = '';
