@@ -103,11 +103,52 @@
         <span class="session-count">{{ resumen.totalSesiones }}/{{ resumen.planificadas }} sesiones</span>
       </div>
 
-      <!-- BOTON PDF -->
-      <ion-button *ngIf="resumen" expand="block" class="btn-pdf" (click)="generarPDF()">
-        <ion-icon slot="start" name="document-text"></ion-icon>
-        Descargar Informe PDF
-      </ion-button>
+      <!-- INFORME KINESICO -->
+      <div *ngIf="resumen" class="informe-section">
+        <h3 class="informe-title">
+          <ion-icon name="document-text"></ion-icon>
+          Informe Kinesico
+        </h3>
+        <p class="informe-desc">Completa los campos para generar el informe PDF</p>
+
+        <div class="informe-field">
+          <div class="field-header">Evaluacion Inicial</div>
+          <ion-textarea
+            [(ngModel)]="evaluacionInicial"
+            placeholder="Describa el estado inicial del paciente, hallazgos de la evaluacion, limitaciones funcionales..."
+            rows="4"
+            autoGrow="true"
+            class="informe-textarea">
+          </ion-textarea>
+        </div>
+
+        <div class="informe-field">
+          <div class="field-header">Respuesta al Tratamiento</div>
+          <ion-textarea
+            [(ngModel)]="respuestaTratamiento"
+            placeholder="Describa la evolucion del paciente, tecnicas aplicadas, respuesta al tratamiento..."
+            rows="4"
+            autoGrow="true"
+            class="informe-textarea">
+          </ion-textarea>
+        </div>
+
+        <div class="informe-field">
+          <div class="field-header">Plan</div>
+          <ion-textarea
+            [(ngModel)]="planTratamiento"
+            placeholder="Ej: Continuar KNT, Alta, Derivar a especialista..."
+            rows="2"
+            autoGrow="true"
+            class="informe-textarea">
+          </ion-textarea>
+        </div>
+
+        <ion-button expand="block" class="btn-pdf" (click)="generarPDF()">
+          <ion-icon slot="start" name="download"></ion-icon>
+          Generar Informe PDF
+        </ion-button>
+      </div>
 
       <!-- GRAFICO EVA (DOLOR) -->
       <div *ngIf="sesiones.length >= 1" class="chart-card">

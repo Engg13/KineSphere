@@ -8,512 +8,558 @@ export interface InformeData {
   resumen: any;
   testResults?: any[];
   kinesiologo?: string;
+  evaluacionInicial?: string;
+  respuestaTratamiento?: string;
+  planTratamiento?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class PdfService {
-  // Colors
-  private readonly TEAL = [13, 148, 136];
-  private readonly DARK = [31, 41, 55];
-  private readonly GRAY = [107, 114, 128];
-  private readonly LIGHT_BG = [249, 250, 251];
-  private readonly WHITE = [255, 255, 255];
-  private readonly GREEN = [16, 185, 129];
-  private readonly RED = [239, 68, 68];
-  private readonly ORANGE = [245, 158, 11];
+  // Colors (matching professional clinical report)
+  private readonly TEAL: [number, number, number] = [13, 148, 136];
+  private readonly TEAL_LIGHT: [number, number, number] = [20, 184, 166];
+  private readonly DARK: [number, number, number] = [31, 41, 55];
+  private readonly GRAY: [number, number, number] = [107, 114, 128];
+  private readonly LIGHT_GRAY: [number, number, number] = [156, 163, 175];
+  private readonly LIGHT_BG: [number, number, number] = [249, 250, 251];
+  private readonly WHITE: [number, number, number] = [255, 255, 255];
+  private readonly GREEN: [number, number, number] = [16, 185, 129];
+  private readonly RED: [number, number, number] = [239, 68, 68];
+  private readonly ORANGE: [number, number, number] = [245, 158, 11];
+  private readonly TABLE_BORDER: [number, number, number] = [180, 180, 180];
 
   constructor(private platform: Platform) {}
 
   generarInformePaciente(data: InformeData): void {
     const doc = new jsPDF('p', 'mm', 'letter');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 18;
-    const contentWidth = pageWidth - margin * 2;
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const m = 20; // margin
+    const cw = pw - m * 2; // content width
     let y = 0;
 
-    // === HEADER ===
-    y = this.dibujarHeader(doc, pageWidth, margin);
+    // === PAGE 1: INFORME KINESICO (clinical format) ===
+    y = this.drawHeader(doc, pw, m);
+    y = this.drawTitle(doc, pw, y);
+    y = this.drawPatientTable(doc, data, y, m, cw);
+    y = this.drawClinicalSection(doc, 'Evaluacion Inicial', data.evaluacionInicial || '', y, m, cw, pw);
+    y = this.drawClinicalSection(doc, 'Respuesta al Tratamiento', data.respuestaTratamiento || '', y, m, cw, pw);
+    y = this.drawClinicalSection(doc, 'Plan', data.planTratamiento || '', y, m, cw, pw);
 
-    // === DATOS DEL PACIENTE ===
-    y = this.dibujarDatosPaciente(doc, data, y, margin, contentWidth);
-
-    // === RESUMEN DEL TRATAMIENTO ===
-    if (data.resumen) {
-      y = this.dibujarResumen(doc, data, y, margin, contentWidth);
-    }
-
-    // === TABLA DE SESIONES ===
-    if (data.sesiones.length > 0) {
-      y = this.checkPageBreak(doc, y, 60, pageWidth, margin);
-      y = this.dibujarTablaSesiones(doc, data, y, margin, contentWidth, pageWidth);
-    }
-
-    // === RESULTADOS DE TESTS ===
+    // Test results inline if any
     if (data.testResults && data.testResults.length > 0) {
-      y = this.checkPageBreak(doc, y, 40, pageWidth, margin);
-      y = this.dibujarTestResults(doc, data.testResults, y, margin, contentWidth, pageWidth);
+      y = this.checkPage(doc, y, 30, pw, m);
+      y = this.drawTestResultsSection(doc, data.testResults, y, m, cw, pw);
     }
 
-    // === GRAFICO EVA ===
-    if (data.sesiones.length >= 2) {
-      y = this.checkPageBreak(doc, y, 55, pageWidth, margin);
-      y = this.dibujarGraficoEva(doc, data.sesiones, y, margin, contentWidth);
+    // Signature
+    y = this.checkPage(doc, y, 50, pw, m);
+    this.drawSignature(doc, data, y, m, cw);
+
+    // === PAGE 2: ANEXO - Data tables and charts ===
+    if (data.sesiones.length > 0) {
+      doc.addPage();
+      y = this.drawAnexoHeader(doc, pw, m);
+
+      // Session table
+      y = this.drawSessionTable(doc, data, y, m, cw, pw);
+
+      // EVA chart
+      if (data.sesiones.length >= 2) {
+        y = this.checkPage(doc, y, 55, pw, m);
+        y = this.drawEvaChart(doc, data.sesiones, y, m, cw);
+      }
     }
 
-    // === FIRMA ===
-    y = this.checkPageBreak(doc, y, 45, pageWidth, margin);
-    this.dibujarFirma(doc, data, y, margin, contentWidth);
-
-    // === FOOTER en todas las paginas ===
+    // Footer on all pages
     const totalPages = doc.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
-      this.dibujarFooter(doc, pageWidth, i, totalPages);
+      this.drawFooter(doc, pw, ph, i, totalPages);
     }
 
-    // Descargar
-    const nombreArchivo = `Informe_${(data.paciente.nombre || 'Paciente').replace(/\s+/g, '_')}_${this.fechaHoy()}.pdf`;
-    doc.save(nombreArchivo);
+    const nombre = (data.paciente.nombre || 'Paciente').replace(/\s+/g, '_');
+    doc.save(`Informe_Kinesico_${nombre}_${this.todayStr()}.pdf`);
   }
 
   // =============================================
-  // SECCIONES DEL PDF
+  // PAGE 1: INFORME KINESICO
   // =============================================
 
-  private dibujarHeader(doc: jsPDF, pageWidth: number, margin: number): number {
-    // Barra teal superior
+  private drawHeader(doc: jsPDF, pw: number, m: number): number {
+    // Teal gradient bar at top
     doc.setFillColor(...this.TEAL);
-    doc.rect(0, 0, pageWidth, 32, 'F');
+    doc.rect(0, 0, pw, 6, 'F');
 
-    doc.setTextColor(...this.WHITE);
-    doc.setFontSize(20);
+    // Thin accent line below
+    doc.setFillColor(...this.TEAL_LIGHT);
+    doc.rect(0, 6, pw, 1.5, 'F');
+
+    // Logo area
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text('KINESPHERE', pageWidth / 2, 14, { align: 'center' });
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Informe de Tratamiento Kinesiologico', pageWidth / 2, 22, { align: 'center' });
+    doc.setTextColor(...this.TEAL);
+    doc.text('KINESPHERE', pw / 2, 18, { align: 'center' });
 
     doc.setFontSize(8);
-    doc.text(`Fecha de emision: ${this.fechaHoyFormateada()}`, pageWidth / 2, 28, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...this.LIGHT_GRAY);
+    doc.text('Kinesiologia y Rehabilitacion', pw / 2, 23, { align: 'center' });
 
-    return 40;
+    return 28;
   }
 
-  private dibujarDatosPaciente(doc: jsPDF, data: InformeData, y: number, margin: number, contentWidth: number): number {
-    // Titulo seccion
-    y = this.tituloSeccion(doc, 'DATOS DEL PACIENTE', y, margin, contentWidth);
+  private drawTitle(doc: jsPDF, pw: number, y: number): number {
+    // Main title - styled like the reference image
+    doc.setFontSize(22);
+    doc.setFont('times', 'bolditalic');
+    doc.setTextColor(...this.DARK);
+    doc.text('Informe Kinesico', pw / 2, y + 10, { align: 'center' });
 
-    const paciente = data.paciente;
-    const col1 = margin + 2;
-    const col2 = margin + contentWidth / 2;
-    const lineH = 6;
+    // Underline decoration
+    const titleW = 70;
+    doc.setDrawColor(...this.TEAL);
+    doc.setLineWidth(0.5);
+    doc.line(pw / 2 - titleW / 2, y + 13, pw / 2 + titleW / 2, y + 13);
 
-    const campos = [
-      ['Nombre:', paciente.nombre || '-', 'RUT:', paciente.rut || 'No registrado'],
-      ['Diagnostico:', paciente.diagnostico || '-', 'Edad:', paciente.edad ? `${paciente.edad} anos` : '-'],
-      ['Telefono:', paciente.telefono || '-', 'Email:', paciente.email || '-'],
+    return y + 20;
+  }
+
+  private drawPatientTable(doc: jsPDF, data: InformeData, y: number, m: number, cw: number): number {
+    const p = data.paciente;
+    const labelW = 42;
+    const rowH = 8;
+    const tableX = m;
+    const borderColor = this.TABLE_BORDER;
+
+    const rows = [
+      ['Nombre', p.nombre || '-'],
+      ['Diagnostico', p.diagnostico || '-'],
+      ['Fecha de Atencion', this.todayFormatted()],
     ];
 
-    for (const row of campos) {
-      doc.setFont('helvetica', 'bold');
+    // Add RUT if available
+    if (p.rut) {
+      rows.splice(1, 0, ['RUT', p.rut]);
+    }
+
+    for (let i = 0; i < rows.length; i++) {
+      const ry = y + i * rowH;
+
+      // Label cell (bold, with light bg)
+      doc.setFillColor(240, 240, 240);
+      doc.setDrawColor(...borderColor);
+      doc.setLineWidth(0.3);
+      doc.rect(tableX, ry, labelW, rowH, 'FD');
+
       doc.setFontSize(9);
-      doc.setTextColor(...this.GRAY);
-      doc.text(row[0], col1, y);
-      doc.text(row[2], col2, y);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...this.DARK);
+      doc.text(rows[i][0], tableX + 3, ry + 5.5);
+
+      // Value cell
+      doc.setFillColor(...this.WHITE);
+      doc.rect(tableX + labelW, ry, cw - labelW, rowH, 'FD');
 
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...this.DARK);
-      doc.text(String(row[1]), col1 + 28, y);
-      doc.text(String(row[3]), col2 + 28, y);
-      y += lineH;
+      doc.setTextColor(60, 60, 60);
+      doc.text(rows[i][1], tableX + labelW + 4, ry + 5.5);
+    }
+
+    return y + rows.length * rowH + 6;
+  }
+
+  private drawClinicalSection(doc: jsPDF, title: string, content: string, y: number, m: number, cw: number, pw: number): number {
+    y = this.checkPage(doc, y, 25, pw, m);
+
+    // Section header bar (teal, centered text - like reference image)
+    const headerH = 7;
+    doc.setFillColor(...this.TEAL);
+    doc.rect(m, y, cw, headerH, 'F');
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.WHITE);
+    doc.text(title, m + cw / 2, y + 5, { align: 'center' });
+
+    y += headerH;
+
+    // Content area with border
+    doc.setDrawColor(...this.TABLE_BORDER);
+    doc.setLineWidth(0.3);
+
+    if (content.trim()) {
+      // Split text into lines that fit the content width
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50, 50, 50);
+
+      const textLines = doc.splitTextToSize(content, cw - 8);
+      const textH = Math.max(textLines.length * 4.5 + 6, 12);
+
+      // Check if we need a page break for the content
+      if (y + textH > doc.internal.pageSize.getHeight() - 25) {
+        // Draw partial border on current page
+        doc.rect(m, y, cw, 2, 'D');
+        doc.addPage();
+        y = this.drawContinuationHeader(doc, pw, m);
+      }
+
+      doc.setFillColor(...this.WHITE);
+      doc.rect(m, y, cw, textH, 'FD');
+
+      doc.text(textLines, m + 4, y + 5);
+      y += textH;
+    } else {
+      // Empty content - small box with placeholder
+      const emptyH = 10;
+      doc.setFillColor(...this.WHITE);
+      doc.rect(m, y, cw, emptyH, 'FD');
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(...this.LIGHT_GRAY);
+      doc.text('(Sin informacion)', m + 4, y + 6.5);
+      y += emptyH;
     }
 
     return y + 4;
   }
 
-  private dibujarResumen(doc: jsPDF, data: InformeData, y: number, margin: number, contentWidth: number): number {
-    y = this.tituloSeccion(doc, 'RESUMEN DEL TRATAMIENTO', y, margin, contentWidth);
+  private drawTestResultsSection(doc: jsPDF, testResults: any[], y: number, m: number, cw: number, pw: number): number {
+    // Section header
+    const headerH = 7;
+    doc.setFillColor(...this.TEAL);
+    doc.rect(m, y, cw, headerH, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.WHITE);
+    doc.text('Resultados de Tests Aplicados', m + cw / 2, y + 5, { align: 'center' });
+    y += headerH;
 
-    const r = data.resumen;
-    const boxW = contentWidth / 4 - 3;
-    const boxH = 18;
+    // Content border
+    doc.setDrawColor(...this.TABLE_BORDER);
+    doc.setLineWidth(0.3);
 
-    const stats = [
-      { label: 'Sesiones', value: `${r.totalSesiones}`, sub: `de ${r.planificadas} planificadas` },
-      { label: 'EVA Inicial', value: r.evaPrimera !== null ? `${r.evaPrimera}/10` : '-', sub: 'Dolor inicial' },
-      { label: 'EVA Final', value: r.evaUltima !== null ? `${r.evaUltima}/10` : '-', sub: 'Dolor actual' },
-      { label: 'Ejercicios', value: `${r.porcentajeEjercicios}%`, sub: 'Cumplimiento' },
-    ];
+    const startY = y;
+    let contentH = 0;
 
-    stats.forEach((stat, i) => {
-      const x = margin + i * (boxW + 4);
+    for (const tr of testResults) {
+      const rowH = 7;
+      if (y + rowH > doc.internal.pageSize.getHeight() - 25) {
+        doc.rect(m, startY, cw, contentH, 'D');
+        doc.addPage();
+        y = this.drawContinuationHeader(doc, pw, m);
+      }
 
-      // Box background
-      doc.setFillColor(...this.LIGHT_BG);
-      doc.roundedRect(x, y, boxW, boxH, 2, 2, 'F');
-
-      // Value
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...this.TEAL);
-      doc.text(stat.value, x + boxW / 2, y + 8, { align: 'center' });
-
-      // Label
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...this.DARK);
-      doc.text(stat.label, x + boxW / 2, y + 13, { align: 'center' });
-
-      // Sub
-      doc.setFontSize(6);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...this.GRAY);
-      doc.text(stat.sub, x + boxW / 2, y + 17, { align: 'center' });
-    });
-
-    y += boxH + 4;
-
-    // Cambio EVA
-    if (r.cambioEva !== null) {
-      const mejoro = r.cambioEva > 0;
-      const color = mejoro ? this.GREEN : r.cambioEva < 0 ? this.RED : this.GRAY;
-      const texto = mejoro ? `Dolor disminuyo ${r.cambioEva} puntos en escala EVA` :
-                    r.cambioEva < 0 ? `Dolor aumento ${Math.abs(r.cambioEva)} puntos en escala EVA` :
-                    'Sin cambio en escala de dolor EVA';
-
-      doc.setFillColor(color[0], color[1], color[2]);
-      doc.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...this.WHITE);
-      doc.text(texto, margin + contentWidth / 2, y + 5.5, { align: 'center' });
-      y += 12;
-    }
+      doc.setTextColor(...this.DARK);
+      doc.text(`S${tr.sesionNumero} - ${tr.testNombre}`, m + 4, y + 5);
 
-    // Periodo
-    if (r.fechaInicio || r.fechaFin) {
-      doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...this.GRAY);
-      const periodo = `Periodo: ${this.formatearFecha(r.fechaInicio)} - ${this.formatearFecha(r.fechaFin)}`;
-      doc.text(periodo, margin + 2, y);
-      y += 6;
+      const resultText = `Puntaje: ${tr.puntajeTotal} - ${tr.resultado}`;
+      doc.text(resultText, m + cw - 4, y + 5, { align: 'right' });
+
+      y += rowH;
+      contentH += rowH;
     }
 
-    return y + 2;
+    doc.rect(m, startY, cw, contentH, 'D');
+    return y + 4;
   }
 
-  private dibujarTablaSesiones(doc: jsPDF, data: InformeData, y: number, margin: number, contentWidth: number, pageWidth: number): number {
-    y = this.tituloSeccion(doc, 'HISTORIAL DE SESIONES', y, margin, contentWidth);
+  private drawSignature(doc: jsPDF, data: InformeData, y: number, m: number, cw: number): void {
+    const centerX = m + cw / 2;
+    y += 10;
 
-    // Table header
-    const colWidths = [16, 30, 20, 22, 24, contentWidth - 112];
-    const headers = ['N', 'Fecha', 'EVA', 'Sueno', 'Ejercicios', 'Observaciones'];
+    // "Atentamente" text
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...this.DARK);
+    doc.text('Atentamente', m + 4, y);
 
-    doc.setFillColor(...this.TEAL);
-    doc.rect(margin, y, contentWidth, 7, 'F');
-    doc.setTextColor(...this.WHITE);
-    doc.setFontSize(7);
+    // Signature space
+    y += 25;
+
+    // Signature line
+    doc.setDrawColor(...this.DARK);
+    doc.setLineWidth(0.4);
+    doc.line(centerX - 40, y, centerX + 40, y);
+
+    // Name
+    y += 6;
+    const kine = data.kinesiologo || localStorage.getItem('nombreCompleto') || '';
+    if (kine) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...this.DARK);
+      doc.text(kine.toUpperCase(), centerX, y, { align: 'center' });
+    }
+
+    // Title
+    y += 5;
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.DARK);
+    doc.text('KINESIOLOGO', centerX, y, { align: 'center' });
 
-    let xPos = margin + 2;
-    headers.forEach((h, i) => {
+    // RUT (if stored)
+    const username = localStorage.getItem('username') || '';
+    if (username) {
+      y += 5;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...this.GRAY);
+      doc.text(username, centerX, y, { align: 'center' });
+    }
+  }
+
+  // =============================================
+  // PAGE 2: ANEXO
+  // =============================================
+
+  private drawAnexoHeader(doc: jsPDF, pw: number, m: number): number {
+    // Same header style
+    doc.setFillColor(...this.TEAL);
+    doc.rect(0, 0, pw, 6, 'F');
+    doc.setFillColor(...this.TEAL_LIGHT);
+    doc.rect(0, 6, pw, 1.5, 'F');
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.TEAL);
+    doc.text('ANEXO - Detalle de Sesiones', pw / 2, 16, { align: 'center' });
+
+    return 24;
+  }
+
+  private drawSessionTable(doc: jsPDF, data: InformeData, y: number, m: number, cw: number, pw: number): number {
+    // Section header
+    const headerH = 7;
+    doc.setFillColor(...this.TEAL);
+    doc.rect(m, y, cw, headerH, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.WHITE);
+    doc.text('Historial de Sesiones', m + cw / 2, y + 5, { align: 'center' });
+    y += headerH;
+
+    // Column headers
+    const cols = [14, 28, 18, 18, 22, cw - 100];
+    const hdrs = ['N', 'Fecha', 'EVA', 'Sueno', 'Ejerc.', 'Observaciones'];
+
+    doc.setFillColor(240, 240, 240);
+    doc.setDrawColor(...this.TABLE_BORDER);
+    doc.setLineWidth(0.3);
+    doc.rect(m, y, cw, 7, 'FD');
+
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.DARK);
+
+    let xPos = m + 2;
+    hdrs.forEach((h, i) => {
       doc.text(h, xPos, y + 5);
-      xPos += colWidths[i];
+      xPos += cols[i];
     });
     y += 7;
 
-    // Table rows
+    // Rows
     const sesiones = data.sesiones;
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
 
     for (let idx = 0; idx < sesiones.length; idx++) {
       const s = sesiones[idx];
 
-      // Check page break
-      if (y > doc.internal.pageSize.getHeight() - 30) {
+      if (y > doc.internal.pageSize.getHeight() - 25) {
         doc.addPage();
-        y = this.dibujarHeaderContinuacion(doc, pageWidth, margin);
+        y = this.drawContinuationHeader(doc, pw, m);
       }
 
-      // Alternating row color
+      // Alternating bg
       if (idx % 2 === 0) {
         doc.setFillColor(...this.LIGHT_BG);
-        doc.rect(margin, y, contentWidth, 7, 'F');
+      } else {
+        doc.setFillColor(...this.WHITE);
       }
+      doc.rect(m, y, cw, 7, 'FD');
 
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...this.DARK);
-
-      xPos = margin + 2;
-
-      // Numero sesion
+      xPos = m + 2;
       doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...this.DARK);
       doc.text(`S${s.numero_sesion || idx + 1}`, xPos, y + 5);
-      xPos += colWidths[0];
+      xPos += cols[0];
 
       doc.setFont('helvetica', 'normal');
+      doc.text(this.formatDate(s.fecha || s.fecha_creacion), xPos, y + 5);
+      xPos += cols[1];
 
-      // Fecha
-      doc.text(this.formatearFecha(s.fecha || s.fecha_creacion), xPos, y + 5);
-      xPos += colWidths[1];
-
-      // EVA
+      // EVA colored
       const eva = s.eva ?? s.nivelDolor ?? '-';
       const evaNum = Number(eva);
       if (!isNaN(evaNum)) {
         doc.setTextColor(...(evaNum <= 3 ? this.GREEN : evaNum <= 6 ? this.ORANGE : this.RED));
       }
       doc.text(String(eva), xPos, y + 5);
-      xPos += colWidths[2];
+      xPos += cols[2];
       doc.setTextColor(...this.DARK);
 
-      // Sueno
       const sueno = s['sue\u00f1o'] ?? s.calidadSueno ?? s.sueno ?? '-';
       doc.text(String(sueno), xPos, y + 5);
-      xPos += colWidths[3];
+      xPos += cols[3];
 
-      // Ejercicios
-      const ejercicios = (s.ejercicios === 'Realizados' || s.ejerciciosRealizados === true) ? 'Si' : 'No';
-      doc.setTextColor(...(ejercicios === 'Si' ? this.GREEN : this.GRAY));
-      doc.text(ejercicios, xPos, y + 5);
-      xPos += colWidths[4];
+      const ej = (s.ejercicios === 'Realizados' || s.ejerciciosRealizados === true) ? 'Si' : 'No';
+      doc.setTextColor(...(ej === 'Si' ? this.GREEN : this.LIGHT_GRAY));
+      doc.text(ej, xPos, y + 5);
+      xPos += cols[4];
+
       doc.setTextColor(...this.DARK);
-
-      // Observaciones (truncated)
-      const obs = (s.observaciones || '-').substring(0, 40);
+      doc.setFont('helvetica', 'normal');
+      const obs = (s.observaciones || '-').substring(0, 45);
       doc.text(obs, xPos, y + 5);
 
       y += 7;
     }
 
-    return y + 4;
+    return y + 6;
   }
 
-  private dibujarTestResults(doc: jsPDF, testResults: any[], y: number, margin: number, contentWidth: number, pageWidth: number): number {
-    y = this.tituloSeccion(doc, 'RESULTADOS DE TESTS', y, margin, contentWidth);
+  private drawEvaChart(doc: jsPDF, sesiones: any[], y: number, m: number, cw: number): number {
+    // Chart section header
+    const headerH = 7;
+    doc.setFillColor(...this.TEAL);
+    doc.rect(m, y, cw, headerH, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.WHITE);
+    doc.text('Evolucion del Dolor (EVA)', m + cw / 2, y + 5, { align: 'center' });
+    y += headerH + 2;
 
-    for (const tr of testResults) {
-      if (y > doc.internal.pageSize.getHeight() - 30) {
-        doc.addPage();
-        y = this.dibujarHeaderContinuacion(doc, pageWidth, margin);
-      }
-
-      // Test row background
-      doc.setFillColor(...this.LIGHT_BG);
-      doc.roundedRect(margin, y, contentWidth, 12, 2, 2, 'F');
-
-      // Left border accent
-      doc.setFillColor(...this.TEAL);
-      doc.rect(margin, y, 2, 12, 'F');
-
-      // Session badge
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...this.TEAL);
-      doc.text(`S${tr.sesionNumero}`, margin + 6, y + 5);
-
-      // Test name
-      doc.setFontSize(9);
-      doc.setTextColor(...this.DARK);
-      doc.text(tr.testNombre || '-', margin + 18, y + 5);
-
-      // Date
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...this.GRAY);
-      doc.text(this.formatearFecha(tr.fecha), margin + 18, y + 10);
-
-      // Score
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...this.TEAL);
-      const scoreX = margin + contentWidth - 50;
-      doc.text(String(tr.puntajeTotal), scoreX, y + 7);
-
-      // Result badge
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      const resultado = tr.resultado || '-';
-      const badgeX = margin + contentWidth - 35;
-      const badgeW = 33;
-      doc.setFillColor(...this.TEAL);
-      doc.roundedRect(badgeX, y + 2, badgeW, 8, 2, 2, 'F');
-      doc.setTextColor(...this.WHITE);
-      doc.text(resultado, badgeX + badgeW / 2, y + 7.5, { align: 'center' });
-
-      y += 15;
-    }
-
-    return y + 2;
-  }
-
-  private dibujarGraficoEva(doc: jsPDF, sesiones: any[], y: number, margin: number, contentWidth: number): number {
-    y = this.tituloSeccion(doc, 'EVOLUCION DEL DOLOR (EVA)', y, margin, contentWidth);
-
-    const chartX = margin + 10;
-    const chartW = contentWidth - 20;
+    const chartX = m + 12;
+    const chartW = cw - 22;
     const chartH = 35;
     const chartY = y;
 
-    // Background
+    // Chart background
     doc.setFillColor(...this.LIGHT_BG);
-    doc.roundedRect(margin, y - 2, contentWidth, chartH + 12, 2, 2, 'F');
+    doc.setDrawColor(...this.TABLE_BORDER);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(m, y - 2, cw, chartH + 14, 2, 2, 'FD');
 
     // Y-axis labels
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...this.GRAY);
-    doc.text('10', margin + 3, chartY + 3);
-    doc.text('5', margin + 5, chartY + chartH / 2 + 1);
-    doc.text('0', margin + 5, chartY + chartH + 1);
+    doc.text('10', m + 4, chartY + 3);
+    doc.text('5', m + 6, chartY + chartH / 2 + 1);
+    doc.text('0', m + 6, chartY + chartH + 1);
 
     // Grid lines
-    doc.setDrawColor(229, 231, 235);
-    doc.setLineWidth(0.2);
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.15);
     doc.line(chartX, chartY, chartX + chartW, chartY);
     doc.line(chartX, chartY + chartH / 2, chartX + chartW, chartY + chartH / 2);
     doc.line(chartX, chartY + chartH, chartX + chartW, chartY + chartH);
 
-    // Plot points
-    const points: { x: number; y: number; val: number }[] = [];
+    // Points
+    const pts: { x: number; y: number; v: number }[] = [];
     sesiones.forEach((s, i) => {
       const eva = s.eva ?? s.nivelDolor ?? 0;
       const px = sesiones.length === 1 ? chartX + chartW / 2 :
         chartX + (i / (sesiones.length - 1)) * chartW;
       const py = chartY + ((10 - eva) / 10) * chartH;
-      points.push({ x: px, y: py, val: eva });
+      pts.push({ x: px, y: py, v: eva });
     });
 
-    // Draw line
-    if (points.length >= 2) {
+    // Line
+    if (pts.length >= 2) {
       doc.setDrawColor(...this.RED);
       doc.setLineWidth(0.8);
-      for (let i = 0; i < points.length - 1; i++) {
-        doc.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+      for (let i = 0; i < pts.length - 1; i++) {
+        doc.line(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y);
       }
     }
 
-    // Draw points and labels
-    points.forEach((p, i) => {
-      const color = p.val <= 3 ? this.GREEN : p.val <= 6 ? this.ORANGE : this.RED;
-      doc.setFillColor(...color);
+    // Points and labels
+    pts.forEach((p, i) => {
+      const c = p.v <= 3 ? this.GREEN : p.v <= 6 ? this.ORANGE : this.RED;
+      doc.setFillColor(...c);
       doc.circle(p.x, p.y, 1.5, 'F');
 
       doc.setFontSize(6);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...this.DARK);
-      doc.text(String(p.val), p.x, p.y - 3, { align: 'center' });
+      doc.text(String(p.v), p.x, p.y - 3, { align: 'center' });
 
-      // X-axis label
       doc.setFontSize(5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...this.GRAY);
       doc.text(`S${sesiones[i].numero_sesion || i + 1}`, p.x, chartY + chartH + 6, { align: 'center' });
     });
 
-    return chartY + chartH + 12;
-  }
-
-  private dibujarFirma(doc: jsPDF, data: InformeData, y: number, margin: number, contentWidth: number): void {
-    y += 8;
-    const centerX = margin + contentWidth / 2;
-
-    // Line
-    doc.setDrawColor(...this.GRAY);
-    doc.setLineWidth(0.3);
-    doc.line(centerX - 35, y, centerX + 35, y);
-
-    y += 5;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...this.DARK);
-    doc.text('Firma del Kinesiologo', centerX, y, { align: 'center' });
-
-    y += 5;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...this.GRAY);
-    const kine = data.kinesiologo || localStorage.getItem('nombreCompleto') || 'Kinesiologo';
-    doc.text(kine, centerX, y, { align: 'center' });
-
-    y += 4;
-    doc.text(`Fecha: ${this.fechaHoyFormateada()}`, centerX, y, { align: 'center' });
-  }
-
-  private dibujarFooter(doc: jsPDF, pageWidth: number, pageNum: number, totalPages: number): void {
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const y = pageHeight - 8;
-
-    doc.setFontSize(6);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...this.GRAY);
-    doc.text('Documento generado por KineSphere App', pageWidth / 2, y, { align: 'center' });
-    doc.text(`Pagina ${pageNum} de ${totalPages}`, pageWidth - 18, y, { align: 'right' });
+    return chartY + chartH + 14;
   }
 
   // =============================================
   // HELPERS
   // =============================================
 
-  private tituloSeccion(doc: jsPDF, titulo: string, y: number, margin: number, contentWidth: number): number {
-    // Accent bar
+  private drawContinuationHeader(doc: jsPDF, pw: number, m: number): number {
     doc.setFillColor(...this.TEAL);
-    doc.rect(margin, y, 3, 7, 'F');
+    doc.rect(0, 0, pw, 6, 'F');
+    doc.setFillColor(...this.TEAL_LIGHT);
+    doc.rect(0, 6, pw, 1.5, 'F');
 
-    // Title text
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...this.DARK);
-    doc.text(titulo, margin + 6, y + 5);
-
-    // Underline
-    doc.setDrawColor(229, 231, 235);
-    doc.setLineWidth(0.3);
-    doc.line(margin, y + 8, margin + contentWidth, y + 8);
-
-    return y + 13;
-  }
-
-  private dibujarHeaderContinuacion(doc: jsPDF, pageWidth: number, margin: number): number {
-    doc.setFillColor(...this.TEAL);
-    doc.rect(0, 0, pageWidth, 12, 'F');
-    doc.setTextColor(...this.WHITE);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('KINESPHERE - Informe de Tratamiento (cont.)', pageWidth / 2, 8, { align: 'center' });
+    doc.setTextColor(...this.TEAL);
+    doc.text('KINESPHERE - Informe Kinesico (cont.)', pw / 2, 14, { align: 'center' });
     return 20;
   }
 
-  private checkPageBreak(doc: jsPDF, y: number, needed: number, pageWidth: number, margin: number): number {
-    if (y + needed > doc.internal.pageSize.getHeight() - 20) {
+  private checkPage(doc: jsPDF, y: number, need: number, pw: number, m: number): number {
+    if (y + need > doc.internal.pageSize.getHeight() - 20) {
       doc.addPage();
-      return this.dibujarHeaderContinuacion(doc, pageWidth, margin);
+      return this.drawContinuationHeader(doc, pw, m);
     }
     return y;
   }
 
-  private fechaHoy(): string {
+  private drawFooter(doc: jsPDF, pw: number, ph: number, page: number, total: number): void {
+    // Thin teal line
+    doc.setDrawColor(...this.TEAL);
+    doc.setLineWidth(0.3);
+    doc.line(20, ph - 12, pw - 20, ph - 12);
+
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...this.LIGHT_GRAY);
+    doc.text('Documento generado por KineSphere', 20, ph - 8);
+    doc.text(`Pagina ${page} de ${total}`, pw - 20, ph - 8, { align: 'right' });
+  }
+
+  private todayStr(): string {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
-  private fechaHoyFormateada(): string {
+  private todayFormatted(): string {
     return new Date().toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
-  private formatearFecha(fechaString: string | undefined | null): string {
-    if (!fechaString) return '-';
+  private formatDate(s: string | undefined | null): string {
+    if (!s) return '-';
     try {
-      if (fechaString.includes('/')) return fechaString;
-      const fecha = new Date(fechaString);
-      if (isNaN(fecha.getTime())) return fechaString;
-      return fecha.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      if (s.includes('/')) return s;
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return s;
+      return d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch {
-      return String(fechaString);
+      return String(s);
     }
   }
 }

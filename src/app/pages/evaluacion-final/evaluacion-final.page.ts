@@ -17,6 +17,11 @@ export class EvaluacionFinalPage implements ViewWillEnter {
   resumen: any = null;
   testResults: any[] = [];
 
+  // Clinical narrative fields for PDF
+  evaluacionInicial = '';
+  respuestaTratamiento = '';
+  planTratamiento = '';
+
   constructor(
     private navCtrl: NavController,
     private databaseService: DatabaseService,
@@ -29,6 +34,9 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     this.sesiones = [];
     this.resumen = null;
     this.testResults = [];
+    this.evaluacionInicial = '';
+    this.respuestaTratamiento = '';
+    this.planTratamiento = '';
     await this.cargarPacientes();
   }
 
@@ -63,6 +71,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
 
       this.calcularResumen();
       this.extraerTestResults();
+      this.autoRellenarNarrativas();
     } catch (error) {
       console.error('Error cargando sesiones:', error);
       this.sesiones = [];
@@ -121,6 +130,28 @@ export class EvaluacionFinalPage implements ViewWillEnter {
         resultado: s.test.resultado,
         respuestas: s.test.respuestas || []
       }));
+  }
+
+  private autoRellenarNarrativas() {
+    if (!this.resumen || !this.pacienteSeleccionado) return;
+    const p = this.pacienteSeleccionado;
+    const r = this.resumen;
+
+    // Auto-populate evaluacion inicial with available data
+    const evaInicial = r.evaPrimera !== null ? `EVA inicial: ${r.evaPrimera}/10.` : '';
+    this.evaluacionInicial = `Paciente ingresa con diagnostico de ${p.diagnostico || '...'}.${evaInicial ? ' ' + evaInicial : ''} `;
+
+    // Auto-populate respuesta al tratamiento
+    const numSesiones = r.totalSesiones;
+    let evolucion = '';
+    if (r.cambioEva !== null) {
+      if (r.cambioEva > 0) evolucion = `EVA disminuye de ${r.evaPrimera} a ${r.evaUltima}.`;
+      else if (r.cambioEva < 0) evolucion = `EVA aumenta de ${r.evaPrimera} a ${r.evaUltima}.`;
+      else evolucion = `EVA se mantiene en ${r.evaUltima}.`;
+    }
+    this.respuestaTratamiento = `Se realizan ${numSesiones} sesiones de KNT. ${evolucion} Ejercicios domiciliarios: ${r.porcentajeEjercicios}% cumplimiento. `;
+
+    this.planTratamiento = '';
   }
 
   getTestResultColor(resultado: string): string {
@@ -206,7 +237,10 @@ export class EvaluacionFinalPage implements ViewWillEnter {
         paciente: this.pacienteSeleccionado,
         sesiones: this.sesiones,
         resumen: this.resumen,
-        testResults: this.testResults
+        testResults: this.testResults,
+        evaluacionInicial: this.evaluacionInicial,
+        respuestaTratamiento: this.respuestaTratamiento,
+        planTratamiento: this.planTratamiento
       });
       const toast = await this.toastCtrl.create({
         message: 'PDF generado correctamente',

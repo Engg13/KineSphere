@@ -197,6 +197,59 @@
   }
 }
 
+// INFORME KINESICO SECTION
+.informe-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 16px;
+
+  .informe-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-icon { color: #0d9488; font-size: 20px; }
+  }
+
+  .informe-desc {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 14px;
+  }
+}
+
+.informe-field {
+  margin-bottom: 14px;
+
+  .field-header {
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+  }
+
+  .informe-textarea {
+    --background: #f9fafb;
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --padding-top: 10px;
+    border: 1px solid #e5e7eb;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
 // PDF BUTTON
 .btn-pdf {
   --background: linear-gradient(135deg, #0d9488, #14b8a6);
@@ -204,7 +257,7 @@
   height: 48px;
   font-weight: 600;
   font-size: 15px;
-  margin-bottom: 16px;
+  margin-top: 4px;
   --box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
 }
 
