@@ -197,6 +197,17 @@
   }
 }
 
+// PDF BUTTON
+.btn-pdf {
+  --background: linear-gradient(135deg, #0d9488, #14b8a6);
+  --border-radius: 14px;
+  height: 48px;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 16px;
+  --box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+}
+
 // CHART CARD
 .chart-card {
   background: white;

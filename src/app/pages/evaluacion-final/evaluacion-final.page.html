@@ -103,6 +103,12 @@
         <span class="session-count">{{ resumen.totalSesiones }}/{{ resumen.planificadas }} sesiones</span>
       </div>
 
+      <!-- BOTON PDF -->
+      <ion-button *ngIf="resumen" expand="block" class="btn-pdf" (click)="generarPDF()">
+        <ion-icon slot="start" name="document-text"></ion-icon>
+        Descargar Informe PDF
+      </ion-button>
+
       <!-- GRAFICO EVA (DOLOR) -->
       <div *ngIf="sesiones.length >= 1" class="chart-card">
         <h3 class="chart-title">

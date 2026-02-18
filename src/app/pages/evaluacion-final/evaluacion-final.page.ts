@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { NavController, ViewWillEnter } from '@ionic/angular';
+import { NavController, ViewWillEnter, ToastController } from '@ionic/angular';
 import { DatabaseService } from '../../services/database.service';
+import { PdfService } from '../../services/pdf.services';
 
 @Component({
   selector: 'app-evaluacion-final',
@@ -18,7 +19,9 @@ export class EvaluacionFinalPage implements ViewWillEnter {
 
   constructor(
     private navCtrl: NavController,
-    private databaseService: DatabaseService
+    private databaseService: DatabaseService,
+    private pdfService: PdfService,
+    private toastCtrl: ToastController
   ) {}
 
   async ionViewWillEnter() {
@@ -194,6 +197,34 @@ export class EvaluacionFinalPage implements ViewWillEnter {
   // Helper to access sueño without ñ in templates (Angular lexer doesn't support ñ)
   getSuenoValue(s: any): number | null {
     return s['sue\u00f1o'] ?? s.calidadSueno ?? s.sueno ?? null;
+  }
+
+  async generarPDF() {
+    if (!this.pacienteSeleccionado || !this.resumen) return;
+    try {
+      this.pdfService.generarInformePaciente({
+        paciente: this.pacienteSeleccionado,
+        sesiones: this.sesiones,
+        resumen: this.resumen,
+        testResults: this.testResults
+      });
+      const toast = await this.toastCtrl.create({
+        message: 'PDF generado correctamente',
+        duration: 2000,
+        color: 'success',
+        position: 'bottom'
+      });
+      await toast.present();
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      const toast = await this.toastCtrl.create({
+        message: 'Error al generar el PDF',
+        duration: 2000,
+        color: 'danger',
+        position: 'bottom'
+      });
+      await toast.present();
+    }
   }
 
   volverAtras() {
