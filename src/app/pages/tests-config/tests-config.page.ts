@@ -222,6 +222,131 @@ const TESTS_PREDETERMINADOS: TestTemplate[] = [
       { nombre: 'Extrema', min: 135, max: 168, color: '#ef4444' }
     ],
     fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_30s_sit_stand',
+    nombre: '30s Sit to Stand Test',
+    descripcion: 'Mide la fuerza funcional de extremidades inferiores y resistencia. El paciente se levanta y sienta de una silla el mayor numero de veces en 30 segundos. Se registra el numero total de repeticiones.',
+    preguntas: [
+      { texto: 'Numero de repeticiones completadas en 30 segundos (sentarse y levantarse)', puntajeMin: 0, puntajeMax: 30 }
+    ],
+    rangos: [
+      { nombre: 'Muy por debajo del promedio', min: 0, max: 7, color: '#ef4444' },
+      { nombre: 'Por debajo del promedio', min: 8, max: 11, color: '#f97316' },
+      { nombre: 'Promedio', min: 12, max: 16, color: '#f59e0b' },
+      { nombre: 'Por encima del promedio', min: 17, max: 21, color: '#22c55e' },
+      { nombre: 'Muy por encima del promedio', min: 22, max: 30, color: '#10b981' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_pcs',
+    nombre: 'PCS - Pain Catastrophizing Scale',
+    descripcion: 'Escala de Catastrofismo ante el Dolor. Evalua pensamientos y sentimientos catastroficos asociados al dolor. 13 items en 3 dimensiones: Rumiacion, Magnificacion e Indefension. Cada item 0-4, puntaje total 0-52.',
+    preguntas: [
+      // RUMIACION (4 items)
+      { texto: 'R1. No puedo dejar de pensar en lo mucho que me duele (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'R2. No paro de pensar en cuanto deseo que desaparezca el dolor (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'R3. No puedo apartar el dolor de mi mente (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'R4. No dejo de pensar en lo dolorosa que es la experiencia (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      // MAGNIFICACION (3 items)
+      { texto: 'M1. Me pregunto si algo grave puede suceder (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'M2. Siento que no puedo soportarlo mas (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'M3. Tengo miedo de que el dolor empeore (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      // INDEFENSION (6 items)
+      { texto: 'I1. Siento que no puedo seguir asi (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'I2. Me parece que no hay nada que pueda hacer para reducir la intensidad del dolor (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'I3. Me pregunto si me puede pasar algo grave (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'I4. Pienso que esto nunca se va a acabar (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'I5. No hay nada que pueda hacer para aliviar mi dolor (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'I6. Me preocupa que el dolor no desaparecera (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 }
+    ],
+    rangos: [
+      { nombre: 'Bajo catastrofismo', min: 0, max: 14, color: '#10b981' },
+      { nombre: 'Moderado', min: 15, max: 25, color: '#f59e0b' },
+      { nombre: 'Alto catastrofismo', min: 26, max: 38, color: '#f97316' },
+      { nombre: 'Catastrofismo severo', min: 39, max: 52, color: '#ef4444' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_sane',
+    nombre: 'SANE - Single Assessment Numeric Evaluation',
+    descripcion: 'Evaluacion numerica unica. Pregunta global que mide la percepcion del paciente sobre la funcion de la articulacion o zona afectada en una escala de 0 (peor posible) a 100 (normal, sin problemas).',
+    preguntas: [
+      { texto: 'Como calificaria la funcion de su articulacion/zona afectada? (0=peor posible, 100=normal sin problemas)', puntajeMin: 0, puntajeMax: 100 }
+    ],
+    rangos: [
+      { nombre: 'Funcion muy pobre', min: 0, max: 24, color: '#ef4444' },
+      { nombre: 'Funcion pobre', min: 25, max: 49, color: '#f97316' },
+      { nombre: 'Funcion aceptable', min: 50, max: 69, color: '#f59e0b' },
+      { nombre: 'Buena funcion', min: 70, max: 84, color: '#22c55e' },
+      { nombre: 'Funcion normal', min: 85, max: 100, color: '#10b981' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_spadi',
+    nombre: 'SPADI-Sp - Indice Dolor y Discapacidad de Hombro',
+    descripcion: 'Shoulder Pain and Disability Index version espanola. Evalua dolor (5 items) y discapacidad funcional (8 items) del hombro. Cada item 0-10, puntaje total 0-130. Valores mas altos indican mayor dolor/discapacidad.',
+    preguntas: [
+      // DOLOR (5 items)
+      { texto: 'D1. Dolor en el peor momento (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'D2. Dolor al acostarse sobre el lado afectado (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'D3. Dolor al alcanzar algo en un estante alto (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'D4. Dolor al tocarse la nuca (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'D5. Dolor al empujar con el brazo afectado (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      // DISCAPACIDAD (8 items)
+      { texto: 'F1. Lavarse el pelo (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'F2. Lavarse la espalda (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'F3. Ponerse una camiseta o jersey (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'F4. Ponerse una camisa con botones por delante (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'F5. Ponerse los pantalones (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'F6. Colocar un objeto en un estante alto (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'F7. Cargar un objeto pesado (+5kg) (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'F8. Sacar algo del bolsillo trasero (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 }
+    ],
+    rangos: [
+      { nombre: 'Sin discapacidad', min: 0, max: 19, color: '#10b981' },
+      { nombre: 'Discapacidad leve', min: 20, max: 45, color: '#22c55e' },
+      { nombre: 'Discapacidad moderada', min: 46, max: 75, color: '#f59e0b' },
+      { nombre: 'Discapacidad severa', min: 76, max: 105, color: '#f97316' },
+      { nombre: 'Discapacidad maxima', min: 106, max: 130, color: '#ef4444' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_prwe',
+    nombre: 'PRWE - Evaluacion Muneca y Mano (Version Espanola)',
+    descripcion: 'Patient-Rated Wrist Evaluation version espanola. Evalua dolor (5 items) y funcion (10 items) de la muneca. Dolor: cada item 0-10 (subtotal 0-50). Funcion: cada item 0-10 dividido por 2 (subtotal 0-50). Puntaje total 0-100.',
+    preguntas: [
+      // DOLOR (5 items)
+      { texto: 'D1. Dolor en reposo (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'D2. Dolor durante movimientos repetitivos de muneca (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'D3. Dolor al levantar un objeto pesado (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'D4. Dolor cuando esta en su peor momento (0=sin dolor, 10=el peor imaginable)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'D5. Con que frecuencia tiene dolor? (0=nunca, 10=siempre)', puntajeMin: 0, puntajeMax: 10 },
+      // ACTIVIDADES ESPECIFICAS (6 items)
+      { texto: 'E1. Girar la perilla de una puerta (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'E2. Cortar carne con cuchillo (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'E3. Abrochar botones de camisa (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'E4. Usar la mano afectada para empujar y levantarse de una silla (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'E5. Cargar 5kg con la mano afectada (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'E6. Usar papel higienico con la mano afectada (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      // ACTIVIDADES HABITUALES (4 items)
+      { texto: 'H1. Cuidado personal (vestirse, lavarse) (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'H2. Tareas del hogar (limpieza, cocina) (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'H3. Trabajo habitual (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 },
+      { texto: 'H4. Actividades recreativas (0=sin dificultad, 10=imposible)', puntajeMin: 0, puntajeMax: 10 }
+    ],
+    rangos: [
+      { nombre: 'Sin discapacidad', min: 0, max: 25, color: '#10b981' },
+      { nombre: 'Discapacidad leve', min: 26, max: 55, color: '#22c55e' },
+      { nombre: 'Discapacidad moderada', min: 56, max: 95, color: '#f59e0b' },
+      { nombre: 'Discapacidad severa', min: 96, max: 125, color: '#f97316' },
+      { nombre: 'Discapacidad maxima', min: 126, max: 150, color: '#ef4444' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
   }
 ];
 
