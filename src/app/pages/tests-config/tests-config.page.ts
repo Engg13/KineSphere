@@ -160,6 +160,68 @@ const TESTS_PREDETERMINADOS: TestTemplate[] = [
       { nombre: 'Maxima discapacidad', min: 35, max: 50, color: '#ef4444' }
     ],
     fechaCreacion: '2025-01-01T00:00:00.000Z'
+  },
+  {
+    id: 'predefinido_koos',
+    nombre: 'KOOS - Rodilla',
+    descripcion: 'Knee injury and Osteoarthritis Outcome Score. Evalua dolor, sintomas, funcion en AVD, deporte/recreacion y calidad de vida en patologias de rodilla. 42 items, cada uno 0 (sin problemas) a 4 (problemas extremos). Puntaje total 0-168.',
+    preguntas: [
+      // SINTOMAS (7 items)
+      { texto: 'S1. Tiene inflamacion en la rodilla? (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'S2. Siente crujidos o chasquidos al mover la rodilla? (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'S3. Se le traba o bloquea la rodilla? (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'S4. Puede estirar la rodilla completamente? (0=siempre, 4=nunca)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'S5. Puede doblar la rodilla completamente? (0=siempre, 4=nunca)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'S6. Rigidez matutina de rodilla (0=ninguna, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'S7. Rigidez durante el dia tras estar sentado/acostado (0=ninguna, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      // DOLOR (9 items)
+      { texto: 'D1. Frecuencia del dolor de rodilla (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'D2. Dolor al girar/rotar sobre la rodilla (0=ninguno, 4=extremo)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'D3. Dolor al estirar la rodilla completamente (0=ninguno, 4=extremo)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'D4. Dolor al doblar la rodilla completamente (0=ninguno, 4=extremo)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'D5. Dolor al caminar en superficie plana (0=ninguno, 4=extremo)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'D6. Dolor al subir o bajar escaleras (0=ninguno, 4=extremo)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'D7. Dolor durante la noche en cama (0=ninguno, 4=extremo)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'D8. Dolor al estar sentado o acostado (0=ninguno, 4=extremo)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'D9. Dolor al estar de pie (0=ninguno, 4=extremo)', puntajeMin: 0, puntajeMax: 4 },
+      // AVD - ACTIVIDADES VIDA DIARIA (17 items)
+      { texto: 'A1. Bajar escaleras (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A2. Subir escaleras (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A3. Levantarse de estar sentado (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A4. Estar de pie (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A5. Agacharse al suelo/recoger objeto (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A6. Caminar en superficie plana (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A7. Entrar/salir del auto (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A8. Ir de compras (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A9. Ponerse calcetines/medias (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A10. Levantarse de la cama (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A11. Quitarse calcetines/medias (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A12. Girar/darse vuelta en la cama (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A13. Entrar/salir de la banera o ducha (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A14. Sentarse (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A15. Sentarse/levantarse del retrete (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A16. Tareas domesticas pesadas (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'A17. Tareas domesticas ligeras (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      // DEPORTE Y RECREACION (5 items)
+      { texto: 'R1. Ponerse en cuclillas (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'R2. Correr (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'R3. Saltar (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'R4. Girar/rotar sobre la rodilla afectada (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'R5. Arrodillarse (0=ninguna dificultad, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      // CALIDAD DE VIDA (4 items)
+      { texto: 'Q1. Con que frecuencia es consciente de su problema de rodilla? (0=nunca, 4=siempre)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'Q2. Ha modificado su estilo de vida para evitar actividades daninas? (0=nada, 4=totalmente)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'Q3. Cuanta falta de confianza siente en su rodilla? (0=ninguna, 4=extrema)', puntajeMin: 0, puntajeMax: 4 },
+      { texto: 'Q4. En general, cuanta dificultad tiene con su rodilla? (0=ninguna, 4=extrema)', puntajeMin: 0, puntajeMax: 4 }
+    ],
+    rangos: [
+      { nombre: 'Sin problemas / Normal', min: 0, max: 33, color: '#10b981' },
+      { nombre: 'Leve', min: 34, max: 67, color: '#22c55e' },
+      { nombre: 'Moderada', min: 68, max: 101, color: '#f59e0b' },
+      { nombre: 'Severa', min: 102, max: 134, color: '#f97316' },
+      { nombre: 'Extrema', min: 135, max: 168, color: '#ef4444' }
+    ],
+    fechaCreacion: '2025-01-01T00:00:00.000Z'
   }
 ];
 
