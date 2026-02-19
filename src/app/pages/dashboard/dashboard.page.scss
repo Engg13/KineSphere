@@ -34,12 +34,27 @@
   line-height: 1.2;
 }
 
-.platform-chip {
-  --background: rgba(255, 255, 255, 0.15);
-  --color: rgba(255, 255, 255, 0.9);
-  font-size: 0.7rem;
-  height: 28px;
-  margin-top: 4px;
+.profile-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+
+  ion-icon {
+    font-size: 24px;
+    color: #ffffff;
+  }
+
+  &:active {
+    background: rgba(255, 255, 255, 0.25);
+  }
 }
 
 /* ===== LOADING ===== */

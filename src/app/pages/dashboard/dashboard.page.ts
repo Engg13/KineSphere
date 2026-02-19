@@ -5,6 +5,7 @@ import { JsonServerService } from '../../services/json-server.service';
 import { firstValueFrom } from 'rxjs';
 import { PlatformService } from '../../services/platform.service';
 import { BackupService } from '../../services/backup.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -36,12 +37,14 @@ export class DashboardPage implements OnInit {
     private platformService: PlatformService,
     private animationCtrl: AnimationController,
     private backupService: BackupService,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {}
 
   ionViewDidEnter() {
+    this.usuarioNombre = this.authService.getNombreCompleto();
     this.cargarDatosDashboard();
     this.actualizarBackupStats();
   }
@@ -194,7 +197,7 @@ export class DashboardPage implements OnInit {
   }
 
   crearSesionParaPaciente(paciente: any) {
-    this.navCtrl.navigateForward('/sesion', {
+    this.navCtrl.navigateRoot('/sesion', {
       queryParams: { pacienteId: paciente.id, pacienteNombre: paciente.nombre }
     });
   }
@@ -205,5 +208,9 @@ export class DashboardPage implements OnInit {
 
   agregarPaciente() {
     this.navCtrl.navigateRoot('/agregar-paciente');
+  }
+
+  irAPerfil() {
+    this.navCtrl.navigateRoot('/perfil-profesional');
   }
 }

@@ -68,6 +68,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/tests-config/tests-config.module').then(m => m.TestsConfigPageModule),
     canActivate: [AuthGuard]
   },
+  {
+    path: 'perfil-profesional',
+    loadChildren: () => import('./pages/perfil-profesional/perfil-profesional.module').then(m => m.PerfilProfesionalPageModule),
+    canActivate: [AuthGuard]
+  },
   
   {
     path: '**',

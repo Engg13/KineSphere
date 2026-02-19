@@ -17,12 +17,9 @@
           <small class="greeting-label">Bienvenido de vuelta</small>
           <h1 class="user-name">{{ usuarioNombre }}</h1>
         </div>
-        @if (plataformaUsada) {
-          <ion-chip class="platform-chip" color="light">
-            <ion-icon name="cloud-outline"></ion-icon>
-            <ion-label>{{ plataformaUsada }}</ion-label>
-          </ion-chip>
-        }
+        <button class="profile-btn" (click)="irAPerfil()">
+          <ion-icon name="person-circle-outline"></ion-icon>
+        </button>
       </div>
     </div>
 

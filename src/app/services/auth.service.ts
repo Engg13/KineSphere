@@ -17,8 +17,21 @@ export class AuthService {
   ];
 
   constructor(private platform: Platform) {
-    console.log('🔐 AuthService inicializado');
+    console.log('AuthService inicializado');
+    this.loadPasswordOverrides();
     this.checkStoredAuth();
+  }
+
+  private loadPasswordOverrides(): void {
+    try {
+      const overrides = JSON.parse(localStorage.getItem('passwordOverrides') || '{}');
+      for (const [username, password] of Object.entries(overrides)) {
+        const user = this.validUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+        if (user) {
+          user.password = password as string;
+        }
+      }
+    } catch {}
   }
 
   /**
@@ -188,8 +201,61 @@ export class AuthService {
    */
   getNombreCompleto(): string {
     const nombre = localStorage.getItem('nombreCompleto') || 'Profesional Kinesiólogo';
-    console.log('👨‍⚕️ AuthService.getNombreCompleto():', nombre);
     return nombre;
+  }
+
+  /**
+   *  CAMBIAR NOMBRE COMPLETO
+   */
+  cambiarNombre(nuevoNombre: string): boolean {
+    if (!nuevoNombre || nuevoNombre.trim().length < 2) {
+      return false;
+    }
+    const nombre = nuevoNombre.trim();
+    localStorage.setItem('nombreCompleto', nombre);
+
+    // Update in validUsers list for current session
+    const username = this.getUsername();
+    const user = this.validUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (user) {
+      user.nombre = nombre;
+    }
+    return true;
+  }
+
+  /**
+   *  CAMBIAR CONTRASEÑA
+   */
+  cambiarPassword(passwordActual: string, passwordNueva: string): { success: boolean; message: string } {
+    const username = this.getUsername();
+    if (!username) {
+      return { success: false, message: 'No hay sesion activa' };
+    }
+
+    // Validate current password
+    const user = this.validUsers.find(u =>
+      u.username.toLowerCase() === username.toLowerCase() && u.password === passwordActual
+    );
+    if (!user) {
+      return { success: false, message: 'La contraseña actual es incorrecta' };
+    }
+
+    // Validate new password format (4 numeric digits)
+    if (!passwordNueva || passwordNueva.length !== 4 || !/^\d+$/.test(passwordNueva)) {
+      return { success: false, message: 'La nueva contraseña debe ser 4 digitos numericos' };
+    }
+
+    // Update password in memory
+    user.password = passwordNueva;
+
+    // Also store override in localStorage so it persists across reloads
+    try {
+      const overrides = JSON.parse(localStorage.getItem('passwordOverrides') || '{}');
+      overrides[username.toLowerCase()] = passwordNueva;
+      localStorage.setItem('passwordOverrides', JSON.stringify(overrides));
+    } catch {}
+
+    return { success: true, message: 'Contraseña actualizada correctamente' };
   }
 
   /**
