@@ -191,9 +191,8 @@ export class DashboardPage implements OnInit {
   }
 
   verDetallePaciente(paciente: any) {
-    this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: { id: paciente.id }
-    });
+    localStorage.setItem('ver_paciente_id', String(paciente.id));
+    this.navCtrl.navigateRoot('/paciente-detalle');
   }
 
   crearSesionParaPaciente(paciente: any) {
@@ -212,5 +211,139 @@ export class DashboardPage implements OnInit {
 
   irAPerfil() {
     this.navCtrl.navigateRoot('/perfil-profesional');
+  }
+
+  async cargarPacienteEjemplo() {
+    const EJEMPLO_ID = 'ejemplo_maria_gonzalez';
+
+    // Verificar si ya existe
+    const pacientes = this.getUserPacientes();
+    if (pacientes.some((p: any) => p.id === EJEMPLO_ID)) {
+      const toast = await this.toastCtrl.create({
+        message: 'La paciente ejemplo ya existe',
+        duration: 2000, position: 'bottom', color: 'warning'
+      });
+      await toast.present();
+      return;
+    }
+
+    // Fecha base: 5 semanas atras
+    const hoy = new Date();
+    const fechaInicio = new Date(hoy);
+    fechaInicio.setDate(fechaInicio.getDate() - 35);
+
+    const paciente = {
+      id: EJEMPLO_ID,
+      nombre: 'Maria Gonzalez Soto',
+      rut: '12.345.678-9',
+      fechaNacimiento: '1973-06-15',
+      edad: 52,
+      email: 'maria.gonzalez@email.com',
+      telefono: '+56912345678',
+      diagnostico: 'Gonartrosis bilateral - Predominio derecho',
+      direccion: 'Av. Providencia 1234, Santiago',
+      sesionesPlanificadas: 10,
+      sesionesCompletadas: 10,
+      activo: false,
+      es_demo: false,
+      fechaIngreso: fechaInicio.toISOString(),
+      fechaCreacion: fechaInicio.toISOString(),
+      observaciones: 'Paciente derivada por traumatologo. Dolor cronico de rodillas hace 2 anios.'
+    };
+
+    // Datos de las 10 sesiones con progresion clinica realista
+    const sesionesData = [
+      {
+        n: 1, diasOffset: 0, eva: 7, sueno: 2, ejercicios: false,
+        obs: 'Evaluacion inicial. Dolor bilateral predominio derecho. ROM flexion 90 grados. Fuerza cuadriceps 3/5. Se inicia plan con isometricos y crioterapia.'
+      },
+      {
+        n: 2, diasOffset: 3, eva: 7, sueno: 2, ejercicios: false,
+        obs: 'Persiste dolor importante. Educacion sobre manejo del dolor y actividad fisica. Crioterapia post ejercicio. Se entregan ejercicios domiciliarios.'
+      },
+      {
+        n: 3, diasOffset: 7, eva: 6, sueno: 3, ejercicios: true,
+        obs: 'Leve mejoria subjetiva. Tolera mejor ejercicios en cadena cerrada. Se agrega bicicleta estatica 10 min sin carga. ROM flexion 95 grados.'
+      },
+      {
+        n: 4, diasOffset: 10, eva: 6, sueno: 3, ejercicios: true,
+        obs: 'Reporta mejor descanso nocturno. Avanza en ROM flexion 100 grados. Fuerza cuadriceps 3+/5. Buena tolerancia a bicicleta.'
+      },
+      {
+        n: 5, diasOffset: 14, eva: 5, sueno: 3, ejercicios: true,
+        obs: 'Mejoria progresiva. Se agregan sentadillas parciales asistidas. Camina 20 min en plano sin dolor. Test EVA Funcional: 28/50 (moderado).',
+        test: { testId: 'predefinido_eva_funcional', testNombre: 'EVA Funcional', puntajeTotal: 28, resultado: 'Moderado' }
+      },
+      {
+        n: 6, diasOffset: 17, eva: 4, sueno: 4, ejercicios: true,
+        obs: 'Buena adherencia a ejercicios domiciliarios. ROM flexion 110 grados. Se progresa carga en sentadillas. Fuerza cuadriceps 4/5.'
+      },
+      {
+        n: 7, diasOffset: 21, eva: 4, sueno: 4, ejercicios: true,
+        obs: 'Estable. Tolera subir escaleras con menos dolor. Se inicia trabajo de propiocepcion basica. Bicicleta 15 min con carga leve.'
+      },
+      {
+        n: 8, diasOffset: 24, eva: 3, sueno: 4, ejercicios: true,
+        obs: 'Mejoria notable. Propiocepcion en superficie inestable. Sentadilla a 70 grados sin dolor. Se educa sobre actividad fisica a largo plazo.'
+      },
+      {
+        n: 9, diasOffset: 28, eva: 2, sueno: 5, ejercicios: true,
+        obs: 'Funcionalidad recuperada para AVD. ROM flexion 118 grados. Fuerza cuadriceps 4+/5. Se planifica alta para proxima sesion.'
+      },
+      {
+        n: 10, diasOffset: 31, eva: 2, sueno: 5, ejercicios: true,
+        obs: 'Alta kinesiologica. ROM flexion 120 grados. Fuerza 4+/5 bilateral. Se entrega plan de ejercicios domiciliarios para mantenimiento. Control en 1 mes.',
+        test: { testId: 'predefinido_eva_funcional', testNombre: 'EVA Funcional', puntajeTotal: 12, resultado: 'Leve' }
+      }
+    ];
+
+    const sesiones = sesionesData.map(s => {
+      const fechaSesion = new Date(fechaInicio);
+      fechaSesion.setDate(fechaSesion.getDate() + s.diasOffset);
+      const fechaStr = fechaSesion.toISOString().split('T')[0];
+
+      const sesion: any = {
+        id: Date.now() + s.n,
+        paciente_id: EJEMPLO_ID,
+        paciente_nombre: paciente.nombre,
+        numero_sesion: s.n,
+        fecha: fechaStr,
+        ejercicios: s.ejercicios ? 'Realizados' : 'No realizados',
+        ejercicios_realizados: s.ejercicios,
+        observaciones: s.obs,
+        eva: s.eva,
+        sueno: s.sueno,
+        enviado_whatsapp: false,
+        fecha_creacion: fechaSesion.toISOString(),
+        creado_en: fechaSesion.toISOString()
+      };
+
+      if (s.test) {
+        sesion.test = s.test;
+      }
+
+      return sesion;
+    });
+
+    // Guardar en localStorage
+    pacientes.push(paciente);
+    localStorage.setItem('user_pacientes', JSON.stringify(pacientes));
+    localStorage.setItem(`sesiones_${EJEMPLO_ID}`, JSON.stringify(sesiones));
+
+    const toast = await this.toastCtrl.create({
+      message: 'Paciente ejemplo creada con 10 sesiones',
+      duration: 2500, position: 'bottom', color: 'success'
+    });
+    await toast.present();
+
+    await this.cargarDatosDashboard();
+    this.actualizarBackupStats();
+  }
+
+  private getUserPacientes(): any[] {
+    try {
+      const stored = localStorage.getItem('user_pacientes');
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
   }
 }
