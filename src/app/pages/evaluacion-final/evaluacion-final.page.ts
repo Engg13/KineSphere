@@ -261,6 +261,34 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     }
   }
 
+  async generarDetalleSesionesPDF() {
+    if (!this.pacienteSeleccionado || !this.sesiones.length) return;
+    try {
+      this.pdfService.generarDetalleSesiones({
+        paciente: this.pacienteSeleccionado,
+        sesiones: this.sesiones,
+        resumen: this.resumen,
+        testResults: this.testResults
+      });
+      const toast = await this.toastCtrl.create({
+        message: 'Detalle de sesiones PDF generado',
+        duration: 2000,
+        color: 'success',
+        position: 'bottom'
+      });
+      await toast.present();
+    } catch (error) {
+      console.error('Error generando detalle PDF:', error);
+      const toast = await this.toastCtrl.create({
+        message: 'Error al generar el PDF',
+        duration: 2000,
+        color: 'danger',
+        position: 'bottom'
+      });
+      await toast.present();
+    }
+  }
+
   volverAtras() {
     this.navCtrl.navigateRoot('/dashboard');
   }

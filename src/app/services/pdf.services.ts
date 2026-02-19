@@ -40,7 +40,7 @@ export class PdfService {
     const cw = pw - m * 2; // content width
     let y = 0;
 
-    // === PAGE 1: INFORME KINESICO (clinical format) ===
+    // === INFORME KINESICO (sin detalle de sesiones) ===
     y = this.drawHeader(doc, pw, m);
     y = this.drawTitle(doc, pw, y);
     y = this.drawPatientTable(doc, data, y, m, cw);
@@ -58,19 +58,36 @@ export class PdfService {
     y = this.checkPage(doc, y, 50, pw, m);
     this.drawSignature(doc, data, y, m, cw);
 
-    // === PAGE 2: ANEXO - Data tables and charts ===
-    if (data.sesiones.length > 0) {
-      doc.addPage();
-      y = this.drawAnexoHeader(doc, pw, m);
+    // Footer on all pages
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      this.drawFooter(doc, pw, ph, i, totalPages);
+    }
 
-      // Session table
-      y = this.drawSessionTable(doc, data, y, m, cw, pw);
+    const nombre = (data.paciente.nombre || 'Paciente').replace(/\s+/g, '_');
+    doc.save(`Informe_Kinesico_${nombre}_${this.todayStr()}.pdf`);
+  }
 
-      // EVA chart
-      if (data.sesiones.length >= 2) {
-        y = this.checkPage(doc, y, 55, pw, m);
-        y = this.drawEvaChart(doc, data.sesiones, y, m, cw);
-      }
+  generarDetalleSesiones(data: InformeData): void {
+    if (!data.sesiones || data.sesiones.length === 0) return;
+
+    const doc = new jsPDF('p', 'mm', 'letter');
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const m = 20;
+    const cw = pw - m * 2;
+
+    // Header
+    let y = this.drawAnexoHeader(doc, pw, m, data.paciente);
+
+    // Session table
+    y = this.drawSessionTable(doc, data, y, m, cw, pw);
+
+    // EVA chart
+    if (data.sesiones.length >= 2) {
+      y = this.checkPage(doc, y, 55, pw, m);
+      y = this.drawEvaChart(doc, data.sesiones, y, m, cw);
     }
 
     // Footer on all pages
@@ -81,7 +98,7 @@ export class PdfService {
     }
 
     const nombre = (data.paciente.nombre || 'Paciente').replace(/\s+/g, '_');
-    doc.save(`Informe_Kinesico_${nombre}_${this.todayStr()}.pdf`);
+    doc.save(`Detalle_Sesiones_${nombre}_${this.todayStr()}.pdf`);
   }
 
   // =============================================
@@ -101,7 +118,7 @@ export class PdfService {
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...this.TEAL);
-    doc.text('KINESPHERE', pw / 2, 18, { align: 'center' });
+    doc.text('KINESIOLOGIA FUNDADORES', pw / 2, 18, { align: 'center' });
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
@@ -322,19 +339,33 @@ export class PdfService {
   // PAGE 2: ANEXO
   // =============================================
 
-  private drawAnexoHeader(doc: jsPDF, pw: number, m: number): number {
+  private drawAnexoHeader(doc: jsPDF, pw: number, m: number, paciente?: any): number {
     // Same header style
     doc.setFillColor(...this.TEAL);
     doc.rect(0, 0, pw, 6, 'F');
     doc.setFillColor(...this.TEAL_LIGHT);
     doc.rect(0, 6, pw, 1.5, 'F');
 
-    doc.setFontSize(12);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...this.TEAL);
-    doc.text('ANEXO - Detalle de Sesiones', pw / 2, 16, { align: 'center' });
+    doc.text('KINESIOLOGIA FUNDADORES', pw / 2, 16, { align: 'center' });
 
-    return 24;
+    doc.setFontSize(11);
+    doc.setFont('times', 'bolditalic');
+    doc.setTextColor(...this.DARK);
+    doc.text('Detalle de Sesiones', pw / 2, 24, { align: 'center' });
+
+    let y = 28;
+    if (paciente) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...this.GRAY);
+      doc.text(`Paciente: ${paciente.nombre || '-'} | Diagnostico: ${paciente.diagnostico || '-'}`, pw / 2, y + 4, { align: 'center' });
+      y += 10;
+    }
+
+    return y;
   }
 
   private drawSessionTable(doc: jsPDF, data: InformeData, y: number, m: number, cw: number, pw: number): number {
@@ -517,7 +548,7 @@ export class PdfService {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...this.TEAL);
-    doc.text('KINESPHERE - Informe Kinesico (cont.)', pw / 2, 14, { align: 'center' });
+    doc.text('KINESIOLOGIA FUNDADORES - Informe Kinesico (cont.)', pw / 2, 14, { align: 'center' });
     return 20;
   }
 
@@ -538,7 +569,7 @@ export class PdfService {
     doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...this.LIGHT_GRAY);
-    doc.text('Documento generado por KineSphere', 20, ph - 8);
+    doc.text('Documento generado por Kinesiologia Fundadores', 20, ph - 8);
     doc.text(`Pagina ${page} de ${total}`, pw - 20, ph - 8, { align: 'right' });
   }
 
