@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Platform } from '@ionic/angular';
 import { jsPDF } from 'jspdf';
+import {
+  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  WidthType, AlignmentType, BorderStyle, HeadingLevel
+} from 'docx';
+import { saveAs } from 'file-saver';
 
 export interface InformeData {
   paciente: any;
@@ -69,12 +74,7 @@ export class PdfService {
     doc.save(`Informe_Kinesico_${nombre}_${this.todayStr()}.pdf`);
   }
 
-  generarDetalleSesiones(data: InformeData): void {
-    const doc = new jsPDF('p', 'mm', 'letter');
-    const pw = doc.internal.pageSize.getWidth();
-    const ph = doc.internal.pageSize.getHeight();
-    const m = 25;
-    const cw = pw - m * 2;
+  async generarDetalleSesiones(data: InformeData): Promise<void> {
     const p = data.paciente;
 
     // Professional info from localStorage
@@ -83,159 +83,151 @@ export class PdfService {
     const kineTelefono = localStorage.getItem('telefonoProfesional') || '+56932774294';
     const kineEmail = localStorage.getItem('emailProfesional') || 'kinesiologiafundadores@gmail.com';
 
-    // === LOGO / HEADER ===
-    let y = 18;
-    doc.setFontSize(15);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(11, 122, 110);
-    doc.text('Fundadores', pw / 2, y, { align: 'center' });
-    y += 5;
-    doc.setFontSize(10);
-    doc.setTextColor(200, 155, 50);
-    doc.text('Kinesiologia', pw / 2, y, { align: 'center' });
-    y += 12;
-
-    // === GREETING ===
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.text('Estimados/as,', m, y);
-    y += 8;
-
-    // === FORMAL PARAGRAPH ===
-    // Generate dates for sessions
+    // Generate session dates
     const totalSesiones = p.sesionesPlanificadas || data.sesiones.length || 10;
     const sesionDates = this.generarFechasSesiones(data, totalSesiones);
     const fechaInicio = sesionDates.length > 0 ? sesionDates[0].fecha : this.todayDDMMYY();
     const diagnostico = p.diagnostico || '...';
 
-    const parrafo =
-      `Nos dirigimos a ustedes para informar formalmente que ` +
-      `${p.nombre || '...'}, Rut: ${p.rut || '...'} ` +
-      `el dia ${fechaInicio} ha comenzado un nuevo ciclo de sesiones de Kinesioterapia ` +
-      `por diagnostico de ${diagnostico} en nuestro ` +
-      `Centro de Rehabilitacion ubicado en Av. Fundadores 564, Valparaiso. ` +
-      `Detalle a continuacion:`;
+    const thinBorder = { style: BorderStyle.SINGLE, size: 1, color: '000000' };
+    const cellBorders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const lines = doc.splitTextToSize(parrafo, cw);
-    doc.text(lines, m, y);
-    y += lines.length * 5 + 8;
+    // Build session table rows
+    const headerRow = new TableRow({
+      children: ['N° Sesion', 'Fecha', 'Hora', 'Detalle'].map(text =>
+        new TableCell({
+          borders: cellBorders,
+          width: text === 'Detalle' ? { size: 4500, type: WidthType.DXA } :
+                 text === 'Fecha' ? { size: 1800, type: WidthType.DXA } :
+                 { size: 1200, type: WidthType.DXA },
+          children: [new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text, bold: true, size: 20, font: 'Calibri' })]
+          })]
+        })
+      )
+    });
 
-    // === SESSION TABLE ===
-    const colWidths = [22, 34, 24, cw - 80];
-    const headers = ['N Sesion', 'Fecha', 'Hora', 'Detalle'];
-    const rowH = 10;
+    const dataRows = sesionDates.map((sd, i) =>
+      new TableRow({
+        children: [
+          new TableCell({
+            borders: cellBorders,
+            width: { size: 1200, type: WidthType.DXA },
+            children: [new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: String(i + 1), size: 20, font: 'Calibri' })]
+            })]
+          }),
+          new TableCell({
+            borders: cellBorders,
+            width: { size: 1800, type: WidthType.DXA },
+            children: [new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: sd.fecha, bold: true, size: 20, font: 'Calibri' })]
+            })]
+          }),
+          new TableCell({
+            borders: cellBorders,
+            width: { size: 1200, type: WidthType.DXA },
+            children: [new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: sd.hora, size: 20, font: 'Calibri' })]
+            })]
+          }),
+          new TableCell({
+            borders: cellBorders,
+            width: { size: 4500, type: WidthType.DXA },
+            children: [new Paragraph({
+              children: [new TextRun({ text: sd.detalle, size: 18, font: 'Calibri' })]
+            })]
+          })
+        ]
+      })
+    );
 
-    // Table header
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.4);
-    doc.setFillColor(255, 255, 255);
-    let xPos = m;
-    for (let c = 0; c < headers.length; c++) {
-      doc.rect(xPos, y, colWidths[c], rowH, 'D');
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text(headers[c], xPos + colWidths[c] / 2, y + 6.5, { align: 'center' });
-      xPos += colWidths[c];
-    }
-    y += rowH;
-
-    // Table rows
-    for (let i = 0; i < sesionDates.length; i++) {
-      const sd = sesionDates[i];
-
-      // Check page break
-      if (y + rowH > ph - 50) {
-        doc.addPage();
-        y = 20;
-      }
-
-      xPos = m;
-      const rowData = [String(i + 1), sd.fecha, sd.hora, sd.detalle];
-
-      for (let c = 0; c < rowData.length; c++) {
-        doc.rect(xPos, y, colWidths[c], rowH, 'D');
-        doc.setFontSize(9);
-        doc.setFont('helvetica', c === 1 ? 'bold' : 'normal');
-        doc.setTextColor(0, 0, 0);
-
-        if (c === 3) {
-          // Detalle: left-aligned with padding, may wrap
-          const detalleLines = doc.splitTextToSize(rowData[c], colWidths[c] - 4);
-          const actualH = Math.max(rowH, detalleLines.length * 4.5 + 4);
-          // Redraw cell if taller
-          if (actualH > rowH) {
-            // Re-draw all cells in this row with new height
-            let rx = m;
-            for (let rc = 0; rc < colWidths.length; rc++) {
-              doc.setFillColor(255, 255, 255);
-              doc.rect(rx, y, colWidths[rc], actualH, 'D');
-              rx += colWidths[rc];
-            }
-            // Re-draw previous cell content
-            doc.setFont('helvetica', 'bold');
-            doc.text(rowData[0], m + colWidths[0] / 2, y + actualH / 2 + 1, { align: 'center' });
-            doc.text(rowData[1], m + colWidths[0] + colWidths[1] / 2, y + actualH / 2 + 1, { align: 'center' });
-            doc.setFont('helvetica', 'normal');
-            doc.text(rowData[2], m + colWidths[0] + colWidths[1] + colWidths[2] / 2, y + actualH / 2 + 1, { align: 'center' });
-          }
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(8.5);
-          doc.text(detalleLines, xPos + 2, y + 4.5);
-
-          if (actualH > rowH) {
-            y += actualH;
-          } else {
-            y += rowH;
-          }
-        } else {
-          doc.text(rowData[c], xPos + colWidths[c] / 2, y + 6.5, { align: 'center' });
-        }
-        xPos += colWidths[c];
-      }
-      if (xPos > m) {
-        // y was already advanced in the detalle column handling
-      }
-    }
-
-    // === CLOSING TEXT ===
-    y += 12;
-    if (y > ph - 80) {
-      doc.addPage();
-      y = 25;
-    }
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.text('Quedamos a disposicion para cualquier informacion adicional que puedan necesitar. Atentamente,', m, y, { maxWidth: cw });
-    y += 25;
-
-    // === SIGNATURE ===
-    const centerX = pw / 2;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text(kineNombre, centerX, y, { align: 'center' });
-    y += 5;
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    // Build signature lines
+    const signatureLines: Paragraph[] = [
+      new Paragraph({ spacing: { before: 400 } }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: kineNombre, bold: true, size: 22, font: 'Calibri' })]
+      })
+    ];
     if (kineRut) {
-      doc.text(kineRut, centerX, y, { align: 'center' });
-      y += 5;
+      signatureLines.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: kineRut, size: 20, font: 'Calibri' })]
+      }));
     }
-    doc.text('Kinesiologo Kinesiologia Fundadores', centerX, y, { align: 'center' });
-    y += 5;
-    doc.text(`Fono contacto: ${kineTelefono}`, centerX, y, { align: 'center' });
-    y += 5;
-    doc.text(`Email: ${kineEmail}`, centerX, y, { align: 'center' });
+    signatureLines.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: 'Kinesiologo Kinesiologia Fundadores', size: 20, font: 'Calibri' })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: `Fono contacto: ${kineTelefono}`, size: 20, font: 'Calibri' })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: `Email: ${kineEmail}`, size: 20, font: 'Calibri' })]
+      })
+    );
 
+    const doc = new Document({
+      sections: [{
+        children: [
+          // Logo header
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text: 'Fundadores', bold: true, size: 30, color: '0B7A6E', font: 'Calibri' })]
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 300 },
+            children: [new TextRun({ text: 'Kinesiologia', size: 22, color: 'C89B32', font: 'Calibri' })]
+          }),
+          // Greeting
+          new Paragraph({
+            spacing: { after: 200 },
+            children: [new TextRun({ text: 'Estimados/as,', size: 22, font: 'Calibri' })]
+          }),
+          // Formal paragraph
+          new Paragraph({
+            spacing: { after: 300 },
+            children: [new TextRun({
+              text: `Nos dirigimos a ustedes para informar formalmente que ${p.nombre || '...'}, ` +
+                `Rut: ${p.rut || '...'} el dia ${fechaInicio} ha comenzado un nuevo ciclo de sesiones ` +
+                `de Kinesioterapia por diagnostico de ${diagnostico} en nuestro Centro de Rehabilitacion ` +
+                `ubicado en Av. Fundadores 564, Valparaiso. Detalle a continuacion:`,
+              size: 22,
+              font: 'Calibri'
+            })]
+          }),
+          // Session table
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [headerRow, ...dataRows]
+          }),
+          // Closing
+          new Paragraph({ spacing: { before: 400 } }),
+          new Paragraph({
+            children: [new TextRun({
+              text: 'Quedamos a disposicion para cualquier informacion adicional que puedan necesitar. Atentamente,',
+              size: 22,
+              font: 'Calibri'
+            })]
+          }),
+          // Signature
+          ...signatureLines
+        ]
+      }]
+    });
+
+    const blob = await Packer.toBlob(doc);
     const nombre = (p.nombre || 'Paciente').replace(/\s+/g, '_');
-    doc.save(`Carta_ISAPRE_${nombre}_${this.todayStr()}.pdf`);
+    saveAs(blob, `Carta_ISAPRE_${nombre}_${this.todayStr()}.docx`);
   }
 
   private generarFechasSesiones(data: InformeData, total: number): { fecha: string; hora: string; detalle: string }[] {
@@ -252,6 +244,9 @@ export class PdfService {
       currentDate = new Date();
     }
 
+    // Ensure start date is a weekday
+    currentDate = this.nextWeekday(currentDate);
+
     // Hours pool for realistic variation
     const horas = ['19:30', '19:00', '19:45', '19:30', '19:00', '19:00', '19:00', '19:00', '19:00', '19:30'];
 
@@ -259,16 +254,18 @@ export class PdfService {
       let fecha: string;
 
       if (i < sesiones.length && sesiones[i].fecha) {
-        // Use real session date
+        // Use real session date but ensure weekday
         const d = new Date(sesiones[i].fecha + 'T12:00:00');
-        fecha = this.formatDateDDMMYY(d);
-        currentDate = new Date(d);
+        const weekdayD = this.nextWeekday(d);
+        fecha = this.formatDateDDMMYY(weekdayD);
+        currentDate = new Date(weekdayD);
       } else if (i === 0) {
         fecha = this.formatDateDDMMYY(currentDate);
       } else {
-        // Generate next date: alternate 3-4 day gaps
+        // Generate next date: alternate 3-4 day gaps, then ensure weekday
         const advance = (i % 2 === 0) ? 4 : 3;
         currentDate.setDate(currentDate.getDate() + advance);
+        currentDate = this.nextWeekday(currentDate);
         fecha = this.formatDateDDMMYY(currentDate);
       }
 
@@ -284,6 +281,18 @@ export class PdfService {
       result.push({ fecha, hora, detalle });
     }
 
+    return result;
+  }
+
+  /** Move date forward to next weekday (Mon-Fri) if it falls on Sat or Sun */
+  private nextWeekday(d: Date): Date {
+    const result = new Date(d);
+    const day = result.getDay();
+    if (day === 0) { // Sunday -> Monday
+      result.setDate(result.getDate() + 1);
+    } else if (day === 6) { // Saturday -> Monday
+      result.setDate(result.getDate() + 2);
+    }
     return result;
   }
 

@@ -264,23 +264,23 @@ export class EvaluacionFinalPage implements ViewWillEnter {
   async generarDetalleSesionesPDF() {
     if (!this.pacienteSeleccionado || !this.sesiones.length) return;
     try {
-      this.pdfService.generarDetalleSesiones({
+      await this.pdfService.generarDetalleSesiones({
         paciente: this.pacienteSeleccionado,
         sesiones: this.sesiones,
         resumen: this.resumen,
         testResults: this.testResults
       });
       const toast = await this.toastCtrl.create({
-        message: 'Detalle de sesiones PDF generado',
+        message: 'Carta ISAPRE generada (.docx)',
         duration: 2000,
         color: 'success',
         position: 'bottom'
       });
       await toast.present();
     } catch (error) {
-      console.error('Error generando detalle PDF:', error);
+      console.error('Error generando carta ISAPRE:', error);
       const toast = await this.toastCtrl.create({
-        message: 'Error al generar el PDF',
+        message: 'Error al generar la carta ISAPRE',
         duration: 2000,
         color: 'danger',
         position: 'bottom'
