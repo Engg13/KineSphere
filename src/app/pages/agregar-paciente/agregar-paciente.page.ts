@@ -1,5 +1,5 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { NavController, ToastController, Platform } from '@ionic/angular';
+import { NavController, ToastController, AlertController, Platform } from '@ionic/angular';
 import { JsonServerService } from '../../services/json-server.service';
 import { DatabaseService } from '../../services/database.service';
 import { firstValueFrom } from 'rxjs';
@@ -32,6 +32,7 @@ export class AgregarPacientePage {
   constructor(
     private navCtrl: NavController,
     private toastController: ToastController,
+    private alertController: AlertController,
     private platform: Platform,
     private jsonServerService: JsonServerService,
     private databaseService: DatabaseService
@@ -233,8 +234,35 @@ export class AgregarPacientePage {
     await toast.present();
   }
 
-  volverAPacientes() {
-    this.navCtrl.navigateRoot('/pacientes-lista');
+  async volverAPacientes() {
+    if (this.hayUnsavedChanges()) {
+      const alert = await this.alertController.create({
+        header: 'Cambios sin guardar',
+        message: '¿Deseas salir? Se perderán los datos ingresados.',
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          {
+            text: 'Salir',
+            role: 'destructive',
+            handler: () => { this.navCtrl.navigateRoot('/pacientes-lista'); }
+          }
+        ]
+      });
+      await alert.present();
+    } else {
+      this.navCtrl.navigateRoot('/pacientes-lista');
+    }
+  }
+
+  private hayUnsavedChanges(): boolean {
+    return !!(
+      this.paciente.nombre ||
+      this.paciente.rut ||
+      this.paciente.telefono ||
+      this.paciente.diagnostico ||
+      this.paciente.email ||
+      this.paciente.fechaNacimiento
+    );
   }
 
   // === MÉTODOS DE FORMATEO (MANTENIDOS) ===
@@ -258,11 +286,25 @@ export class AgregarPacientePage {
 
   validarRut(): boolean {
     if (!this.paciente.rut) return false;
-    
+
     const rutLimpio = this.paciente.rut.replace(/[^0-9kK]/g, '');
     if (rutLimpio.length < 2) return false;
-    
-    return true; 
+
+    const num = rutLimpio.slice(0, -1);
+    const dv = rutLimpio.slice(-1).toUpperCase();
+
+    if (!num || isNaN(Number(num))) return false;
+
+    let suma = 0;
+    let multiplicador = 2;
+    for (let i = num.length - 1; i >= 0; i--) {
+      suma += parseInt(num[i]) * multiplicador;
+      multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+    }
+    const dvEsperado = 11 - (suma % 11);
+    const dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : String(dvEsperado);
+
+    return dv === dvCalculado;
   }
 
   formatearTelefono() {

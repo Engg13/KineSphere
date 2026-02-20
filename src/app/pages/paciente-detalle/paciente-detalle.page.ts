@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NavController } from '@ionic/angular';
+import { NavController, ToastController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { JsonServerService } from '../../services/json-server.service';
@@ -14,6 +14,7 @@ import { DatabaseService } from '../../services/database.service';
 export class PacienteDetallePage implements OnInit, OnDestroy {
   paciente: any = null;
   estaCargando: boolean = true;
+  errorCarga: string = '';
   historialSesiones: any[] = [];
   pacienteId: string = '';
   fechaActual = new Date().toISOString();
@@ -23,7 +24,8 @@ export class PacienteDetallePage implements OnInit, OnDestroy {
     private navCtrl: NavController,
     private route: ActivatedRoute,
     private jsonServerService: JsonServerService,
-    private databaseService: DatabaseService
+    private databaseService: DatabaseService,
+    private toastController: ToastController
   ) { }
 
   ngOnDestroy() {
@@ -41,18 +43,38 @@ export class PacienteDetallePage implements OnInit, OnDestroy {
 
   private async cargarPacienteDesdeParams() {
     this.estaCargando = true;
-    
+    this.errorCarga = '';
+
     this.routeSub = this.route.queryParams.subscribe(async (params: any) => {
       const pacienteId = params['id'];
-      
+
       if (pacienteId && pacienteId !== 'undefined' && pacienteId !== 'null') {
         this.pacienteId = pacienteId;
         await this.cargarPacienteSQLite(pacienteId);
       } else {
-        console.log('❌ No hay ID de paciente disponible');
         this.estaCargando = false;
+        this.errorCarga = 'No se recibió el identificador del paciente. Vuelve a la lista e intenta nuevamente.';
+        this.mostrarToast('No se pudo identificar al paciente', 'warning');
       }
     });
+  }
+
+  async reintentar() {
+    if (this.pacienteId) {
+      await this.cargarPacienteSQLite(this.pacienteId);
+    } else {
+      this.volverALista();
+    }
+  }
+
+  private async mostrarToast(mensaje: string, color: string = 'primary') {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 3000,
+      color,
+      position: 'bottom'
+    });
+    await toast.present();
   }
 
   //  MÉTODO PRINCIPAL: CARGAR DESDE SQLite 
@@ -74,25 +96,19 @@ export class PacienteDetallePage implements OnInit, OnDestroy {
       const paciente = await this.databaseService.getPaciente(idNumero);
       
       if (paciente) {
-        console.log('✅ Paciente cargado desde SQLite:', paciente);
         this.paciente = paciente;
-        
-        //  ASEGURAR QUE LA EDAD SE MUESTRE
         this.verificarYCorregirEdad();
-        
-        // Cargar historial de sesiones
         await this.cargarHistorialSesionesSQLite(idNumero);
-        
       } else {
-        console.log('❌ Paciente no encontrado en SQLite');
-        // Fallback a datos de demostración
-        await this.cargarPacienteDemo();
+        this.paciente = null;
+        this.errorCarga = 'No se encontró el paciente. Es posible que haya sido eliminado.';
+        this.mostrarToast('Paciente no encontrado', 'warning');
       }
-      
+
     } catch (error) {
-      console.error('❌ Error cargando paciente desde SQLite:', error);
-      // Fallback a datos de demostración
-      await this.cargarPacienteDemo();
+      this.paciente = null;
+      this.errorCarga = 'Error al cargar los datos. Verifica tu conexión e intenta nuevamente.';
+      this.mostrarToast('Error al cargar el paciente', 'danger');
     } finally {
       this.estaCargando = false;
     }
@@ -170,17 +186,18 @@ export class PacienteDetallePage implements OnInit, OnDestroy {
       );
       
       if (pacienteEncontrado) {
-        console.log('✅ Paciente encontrado por ID string:', pacienteEncontrado);
         this.paciente = pacienteEncontrado;
         this.verificarYCorregirEdad();
         await this.cargarHistorialSesionesSQLite(pacienteEncontrado.id);
       } else {
-        console.log('❌ Paciente no encontrado, cargando demo');
-        await this.cargarPacienteDemo();
+        this.paciente = null;
+        this.errorCarga = 'No se encontró el paciente con ese identificador.';
+        this.mostrarToast('Paciente no encontrado', 'warning');
       }
     } catch (error) {
-      console.error('Error buscando paciente:', error);
-      await this.cargarPacienteDemo();
+      this.paciente = null;
+      this.errorCarga = 'Error al buscar el paciente. Intenta nuevamente.';
+      this.mostrarToast('Error al cargar el paciente', 'danger');
     }
   }
 

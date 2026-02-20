@@ -188,8 +188,11 @@
     <div class="error-state ion-text-center ion-padding">
       <ion-icon name="warning-outline" size="large" color="danger"></ion-icon>
       <h3>No se pudo cargar el paciente</h3>
-      <p>El paciente solicitado no existe o no se pudo cargar</p>
-      <ion-button (click)="volverALista()" color="primary">
+      <p>{{ errorCarga || 'El paciente solicitado no existe o no se pudo cargar' }}</p>
+      <ion-button (click)="reintentar()" color="primary" style="margin-bottom: 8px;">
+        Reintentar
+      </ion-button>
+      <ion-button (click)="volverALista()" fill="outline" color="medium">
         Volver a la lista
       </ion-button>
     </div>
