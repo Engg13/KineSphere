@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { NavController } from '@ionic/angular';
+import { NavController, LoadingController, ToastController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { JsonServerService } from 'src/app/services/json-server.service';
 import { DatabaseService } from 'src/app/services/database.service';
@@ -32,7 +32,9 @@ export class SesionPage implements OnInit {
     private navCtrl: NavController,
     private route: ActivatedRoute,
     private jsonServerService: JsonServerService,
-    private databaseService: DatabaseService
+    private databaseService: DatabaseService,
+    private loadingCtrl: LoadingController,
+    private toastCtrl: ToastController
   ) {}
 
   async ngOnInit() {
@@ -169,21 +171,26 @@ export class SesionPage implements OnInit {
   // MÉTODO guardarSesion ACTUALIZADO
   async guardarSesion() {
     if (!this.esFormularioValido()) {
-      alert('Por favor, complete la evaluación de dolor (EVA)');
+      await this.mostrarToast('Por favor, complete la evaluación de dolor (EVA)', 'warning');
       return;
     }
 
     if (!this.pacienteId) {
-      alert('Error: No se identificó al paciente. Regrese y seleccione un paciente.');
+      await this.mostrarToast('Error: No se identificó al paciente. Regrese y seleccione un paciente.', 'danger');
       return;
     }
 
+    const loading = await this.loadingCtrl.create({
+      message: 'Guardando sesión...',
+      spinner: 'crescent'
+    });
+    await loading.present();
+
     try {
-      // Preparar datos para la sesión (formato compatible con DatabaseService)
       const datosSesion = {
-        paciente_id: Number(this.pacienteId), // Convertir a número
+        paciente_id: Number(this.pacienteId),
         paciente_nombre: this.pacienteNombre,
-        fecha: new Date().toISOString().split('T')[0], // Solo fecha YYYY-MM-DD
+        fecha: new Date().toISOString().split('T')[0],
         ejercicios: this.sesionData.ejerciciosRealizados ? 'Realizados' : 'No realizados',
         observaciones: this.sesionData.observaciones,
         eva: this.sesionData.nivelDolor,
@@ -191,27 +198,18 @@ export class SesionPage implements OnInit {
         enviado_whatsapp: false
       };
 
-      console.log('💾 Preparando sesión para guardar:', datosSesion);
-
-      // ESTRATEGIA DE GUARDADO MEJORADA
       let exitoLocal = false;
-      let exitoServer = false;
-      let mensajes = [];
 
       // 1. GUARDAR EN DatabaseService (SQLite/localStorage) - SIEMPRE
       try {
-        const respuestaLocal = await this.databaseService.addSesion(datosSesion);
-        console.log('✅ Sesión guardada localmente:', respuestaLocal);
+        await this.databaseService.addSesion(datosSesion);
         exitoLocal = true;
-        mensajes.push('✅ Guardado localmente');
       } catch (errorLocal) {
         console.error('❌ Error guardando localmente:', errorLocal);
-        mensajes.push('❌ No se pudo guardar localmente');
       }
 
       // 2. GUARDAR EN JSON-Server (OPCIONAL - solo si hay conexión)
       try {
-        // Preparar datos para JSON-Server (formato diferente)
         const datosParaServer = {
           paciente_id: this.pacienteId,
           paciente_nombre: this.pacienteNombre,
@@ -224,53 +222,44 @@ export class SesionPage implements OnInit {
           fecha_registro: new Date().toLocaleDateString('es-CL'),
           hora_registro: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
         };
-
-        const respuestaServer = await firstValueFrom(
-          this.jsonServerService.createSesion(datosParaServer)
-        );
-        console.log('✅ Sesión guardada en servidor:', respuestaServer);
-        exitoServer = true;
-        mensajes.push('✅ Sincronizado con servidor');
+        await firstValueFrom(this.jsonServerService.createSesion(datosParaServer));
       } catch (errorServer) {
-        console.log('⚠️ No se pudo guardar en servidor (modo offline):', errorServer);
-        mensajes.push('⚠️ Modo offline - solo guardado local');
+        console.log('⚠️ JSON-Server no disponible (modo offline):', errorServer);
       }
 
-      // Mostrar resumen
-      const resumen = `
-        📋 SESIÓN GUARDADA
-        
-        • Paciente: ${this.pacienteNombre}
-        • Sesión N°: ${this.numeroSesion}
-        • Fecha: ${new Date().toLocaleDateString('es-CL')}
-        
-        📊 EVALUACIÓN:
-        • Dolor EVA: ${this.sesionData.nivelDolor}/10
-        • Calidad sueño: ${this.sesionData.calidadSueno}/5
-        • Ejercicios: ${this.sesionData.ejerciciosRealizados ? '✅ Realizados' : '❌ No realizados'}
-        
-        💾 ESTADO:
-        ${mensajes.join('\n')}
-        
-        ${this.sesionData.observaciones ? `\n📝 OBSERVACIONES:\n${this.sesionData.observaciones}` : ''}
-      `;
+      await loading.dismiss();
 
-      alert(resumen.trim());
+      if (exitoLocal) {
+        await this.mostrarToast(`Sesión N°${this.numeroSesion} guardada correctamente`, 'success');
+      } else {
+        await this.mostrarToast('No se pudo guardar la sesión. Intente nuevamente.', 'danger');
+        return;
+      }
 
-      // Redirigir a detalle del paciente con parámetros actualizados
       this.navCtrl.navigateBack(['/paciente-detalle'], {
-        queryParams: { 
+        queryParams: {
           id: this.pacienteId,
           sesionGuardada: true,
           numeroSesion: this.numeroSesion,
-          timestamp: Date.now() // Para forzar recarga
+          timestamp: Date.now()
         }
       });
 
     } catch (error) {
+      await loading.dismiss();
       console.error('❌ Error crítico al guardar sesión:', error);
-      alert('❌ Error al guardar la sesión. Los datos se perdieron. Intente nuevamente.');
+      await this.mostrarToast('Error al guardar la sesión. Intente nuevamente.', 'danger');
     }
+  }
+
+  private async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning' = 'primary') {
+    const toast = await this.toastCtrl.create({
+      message: mensaje,
+      duration: 3000,
+      position: 'bottom',
+      color
+    });
+    await toast.present();
   }
 
   volverAPaciente() {

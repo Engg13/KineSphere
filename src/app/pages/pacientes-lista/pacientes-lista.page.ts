@@ -14,6 +14,8 @@ import { firstValueFrom } from 'rxjs';
 export class PacientesListaPage {
   tituloPagina: string = 'Lista de Pacientes';
   pacientes: any[] = [];
+  pacientesFiltrados: any[] = [];
+  terminoBusqueda: string = '';
   estaCargando: boolean = false;
   plataformaInfo: any;
 
@@ -41,10 +43,12 @@ export class PacientesListaPage {
     try {
       // Siempre usar DatabaseService: maneja localStorage (web) y SQLite (nativo)
       this.pacientes = await this.databaseService.getPacientesConConteoSesiones();
+      this.pacientesFiltrados = [...this.pacientes];
       console.log(`📊 ${this.pacientes.length} pacientes cargados`);
     } catch (error) {
       console.error('❌ Error cargando pacientes:', error);
       this.pacientes = [];
+      this.pacientesFiltrados = [];
       this.mostrarToast('Error cargando pacientes', 'danger');
     } finally {
       this.estaCargando = false;
@@ -56,6 +60,19 @@ export class PacientesListaPage {
     if (event) {
       event.target.complete();
     }
+  }
+
+  filtrarPacientes() {
+    const termino = this.terminoBusqueda.toLowerCase().trim();
+    if (!termino) {
+      this.pacientesFiltrados = [...this.pacientes];
+      return;
+    }
+    this.pacientesFiltrados = this.pacientes.filter(p =>
+      p.nombre?.toLowerCase().includes(termino) ||
+      p.diagnostico?.toLowerCase().includes(termino) ||
+      p.rut?.toLowerCase().includes(termino)
+    );
   }
 
   get totalPacientes(): number {
