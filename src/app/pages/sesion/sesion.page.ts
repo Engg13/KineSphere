@@ -252,7 +252,7 @@ export class SesionPage implements OnInit {
     }
   }
 
-  private async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning' = 'primary') {
+  private async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning' | 'primary' = 'primary') {
     const toast = await this.toastCtrl.create({
       message: mensaje,
       duration: 3000,
