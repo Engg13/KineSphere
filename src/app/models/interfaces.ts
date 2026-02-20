@@ -32,6 +32,10 @@ export interface Sesion {
   nivel_dolor?: number;
   calidad_sueno?: number;
   sueño?: number;
+  zona_tratamiento?: string;
+  tecnicas_aplicadas?: string[];
+  rom?: string;
+  objetivo_proxima?: string;
   enviado_whatsapp?: boolean;
   creado_en?: string;
   fecha_creacion?: string;

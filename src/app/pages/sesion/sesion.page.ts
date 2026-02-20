@@ -1,6 +1,6 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { NavController } from '@ionic/angular';
-import { ActivatedRoute } from '@angular/router';
+import { Component, ViewChild, ElementRef } from '@angular/core';
+import { NavController, ToastController } from '@ionic/angular';
+import { Router } from '@angular/router';
 import { DatabaseService } from 'src/app/services/database.service';
 
 @Component({
@@ -9,19 +9,55 @@ import { DatabaseService } from 'src/app/services/database.service';
   styleUrls: ['./sesion.page.scss'],
   standalone: false
 })
-export class SesionPage implements OnInit {
+export class SesionPage {
   // Datos del paciente
   pacienteId: string = '';
   pacienteNombre: string = '';
+  pacienteDiagnostico: string = '';
   numeroSesion: number = 1;
+  sesionesPlanificadas: number = 10;
 
-  // Objeto principal de datos de la sesion
+  // Datos de la sesion
   sesionData = {
     nivelDolor: null as number | null,
     calidadSueno: 3,
     ejerciciosRealizados: false,
-    observaciones: ''
+    observaciones: '',
+    fechaSesion: new Date().toISOString().split('T')[0],
+    zonaTratamiento: '',
+    tecnicasAplicadas: [] as string[],
+    rom: '',
+    objetivoProxima: ''
   };
+
+  // Zonas de tratamiento
+  zonasTratamiento: string[] = [
+    'Columna cervical',
+    'Columna dorsal',
+    'Columna lumbar',
+    'Hombro',
+    'Codo',
+    'Muñeca/Mano',
+    'Cadera',
+    'Rodilla',
+    'Tobillo/Pie',
+    'ATM',
+    'Otra'
+  ];
+
+  // Técnicas kinésicas
+  tecnicasDisponibles: { nombre: string; seleccionada: boolean }[] = [
+    { nombre: 'Masoterapia', seleccionada: false },
+    { nombre: 'Movilizacion articular', seleccionada: false },
+    { nombre: 'Ejercicio terapeutico', seleccionada: false },
+    { nombre: 'Electroterapia', seleccionada: false },
+    { nombre: 'Termoterapia', seleccionada: false },
+    { nombre: 'Crioterapia', seleccionada: false },
+    { nombre: 'Puncion seca', seleccionada: false },
+    { nombre: 'Vendaje neuromuscular', seleccionada: false },
+    { nombre: 'Estiramiento', seleccionada: false },
+    { nombre: 'Educacion al paciente', seleccionada: false }
+  ];
 
   // Tests predeterminados
   testsDisponibles: any[] = [];
@@ -30,37 +66,58 @@ export class SesionPage implements OnInit {
   puntajeTotal = 0;
   resultadoTest = '';
 
-  // Referencias para los textarea
   @ViewChild('observacionesTextarea') observacionesTextarea!: ElementRef;
 
   constructor(
     private navCtrl: NavController,
-    private route: ActivatedRoute,
-    private databaseService: DatabaseService
+    private router: Router,
+    private databaseService: DatabaseService,
+    private toastCtrl: ToastController
   ) {}
 
-  async ngOnInit() {
-    console.log('Inicializando pagina de sesion...');
-    this.cargarTestsDisponibles();
+  ionViewDidEnter() {
+    // Read params from current URL to avoid stale cached params
+    const tree = this.router.parseUrl(this.router.url);
+    const params = tree.queryParams;
 
-    // Obtener parametros de la URL
-    this.route.queryParams.subscribe(async params => {
-      console.log('📋 Parámetros recibidos:', params);
-      
-      this.pacienteId = params['pacienteId'] || '';
-      this.pacienteNombre = params['pacienteNombre'] || 'Paciente';
-      
-      // Calcular número de sesión basado en sesiones existentes
-      await this.calcularNumeroSesion();
-      
-      console.log(`📝 Configurando sesión ${this.numeroSesion} para:`, this.pacienteNombre);
-      
-      // Si no hay pacienteId, mostrar advertencia
-      if (!this.pacienteId) {
-        console.warn('⚠️ No se recibió pacienteId. Usando datos de prueba.');
-        this.pacienteNombre = 'Juan Perez (prueba)';
+    this.pacienteId = params['pacienteId'] || '';
+    this.pacienteNombre = params['pacienteNombre'] || 'Paciente';
+    this.pacienteDiagnostico = params['diagnostico'] || '';
+
+    // Reset form
+    this.sesionData = {
+      nivelDolor: null,
+      calidadSueno: 3,
+      ejerciciosRealizados: false,
+      observaciones: '',
+      fechaSesion: new Date().toISOString().split('T')[0],
+      zonaTratamiento: '',
+      tecnicasAplicadas: [],
+      rom: '',
+      objetivoProxima: ''
+    };
+    this.tecnicasDisponibles.forEach(t => t.seleccionada = false);
+    this.testSeleccionado = null;
+    this.respuestasTest = [];
+    this.puntajeTotal = 0;
+    this.resultadoTest = '';
+
+    this.cargarTestsDisponibles();
+    this.calcularNumeroSesion();
+    this.cargarDatosPaciente();
+  }
+
+  async cargarDatosPaciente() {
+    if (!this.pacienteId) return;
+    try {
+      const pacientes = await this.databaseService.getPacientes();
+      const p = pacientes.find((pac: any) => String(pac.id) === String(this.pacienteId));
+      if (p) {
+        this.pacienteNombre = p.nombre || this.pacienteNombre;
+        this.pacienteDiagnostico = p.diagnostico || '';
+        this.sesionesPlanificadas = p.sesionesPlanificadas || 10;
       }
-    });
+    } catch {}
   }
 
   async calcularNumeroSesion() {
@@ -68,90 +125,62 @@ export class SesionPage implements OnInit {
       this.numeroSesion = 1;
       return;
     }
-
     try {
       const sesiones = await this.databaseService.getSesionesByPaciente(this.pacienteId);
       this.numeroSesion = sesiones.length + 1;
-      console.log(`📊 ${sesiones.length} sesiones existentes, próxima: ${this.numeroSesion}`);
-    } catch (error) {
-      console.log('Error obteniendo sesiones, usando sesión 1:', error);
+    } catch {
       this.numeroSesion = 1;
     }
   }
 
-  // === NUEVO MÉTODO PARA MANEJAR ENTER EN OBSERVACIONES ===
+  // Keyboard handling
   onEnterObservaciones(event: any) {
-    if (event.preventDefault) {
-      event.preventDefault();
-    }
-    
+    if (event.preventDefault) event.preventDefault();
     this.cerrarTeclado();
-    
-    setTimeout(() => {
-      this.moverFocoAlBotonGuardar();
-    }, 100);
-    
     return false;
   }
 
   cerrarTeclado() {
-    console.log('Cerrando teclado...');
-    
     const activeElement = document.activeElement as HTMLElement;
-    if (activeElement) {
-      activeElement.blur();
-    }
-    
+    if (activeElement) activeElement.blur();
     if (typeof (window as any).Keyboard !== 'undefined') {
-      try {
-        (window as any).Keyboard.hide();
-      } catch (error) {
-        console.log('Keyboard plugin no disponible:', error);
-      }
-    }
-    
-    else if ((window as any).cordova?.plugins?.Keyboard) {
-      try {
-        (window as any).cordova.plugins.Keyboard.hide();
-      } catch (error) {
-        console.log('Cordova Keyboard plugin no disponible:', error);
-      }
-    }
-  }
-
-  moverFocoAlBotonGuardar() {
-    const guardarBtn = document.querySelector('ion-button[expand="block"]') as HTMLElement;
-    if (guardarBtn) {
-      guardarBtn.focus();
+      try { (window as any).Keyboard.hide(); } catch {}
     }
   }
 
   onContentClick(event: any) {
-    const clickedElement = event.target as HTMLElement;
-    const esCampoTexto = clickedElement.closest('ion-input') || 
-                         clickedElement.closest('ion-textarea') ||
-                         clickedElement.closest('ion-range') ||
-                         clickedElement.closest('ion-checkbox');
-    
-    if (!esCampoTexto) {
-      this.cerrarTeclado();
-    }
+    const el = event.target as HTMLElement;
+    const isInput = el.closest('ion-input') || el.closest('ion-textarea') ||
+                    el.closest('ion-range') || el.closest('ion-checkbox') ||
+                    el.closest('ion-select') || el.closest('ion-toggle');
+    if (!isInput) this.cerrarTeclado();
   }
 
-  // Validación del formulario
+  // Técnicas toggle
+  toggleTecnica(tecnica: { nombre: string; seleccionada: boolean }) {
+    tecnica.seleccionada = !tecnica.seleccionada;
+    this.sesionData.tecnicasAplicadas = this.tecnicasDisponibles
+      .filter(t => t.seleccionada)
+      .map(t => t.nombre);
+  }
+
+  // Form validation
   esFormularioValido(): boolean {
-    return this.sesionData.nivelDolor !== null && 
-           this.sesionData.nivelDolor >= 0;
+    return this.sesionData.nivelDolor !== null && this.sesionData.nivelDolor >= 0;
+  }
+
+  getProgresoSesiones(): number {
+    return Math.min((this.numeroSesion / this.sesionesPlanificadas) * 100, 100);
   }
 
   async guardarSesion() {
     if (!this.esFormularioValido()) {
-      alert('Por favor, complete la evaluación de dolor (EVA)');
+      this.mostrarToast('Completa la evaluacion de dolor (EVA)', 'warning');
       return;
     }
 
     if (!this.pacienteId) {
-      alert('Error: No se identificó al paciente. Regrese y seleccione un paciente.');
+      this.mostrarToast('No se identifico al paciente. Regrese e intente nuevamente.', 'danger');
       return;
     }
 
@@ -160,15 +189,19 @@ export class SesionPage implements OnInit {
         paciente_id: this.pacienteId,
         paciente_nombre: this.pacienteNombre,
         numero_sesion: this.numeroSesion,
-        fecha: new Date().toISOString().split('T')[0],
+        fecha: this.sesionData.fechaSesion,
         ejercicios: this.sesionData.ejerciciosRealizados ? 'Realizados' : 'No realizados',
         observaciones: this.sesionData.observaciones,
         eva: this.sesionData.nivelDolor,
         sueno: this.sesionData.calidadSueno,
+        zona_tratamiento: this.sesionData.zonaTratamiento,
+        tecnicas_aplicadas: this.sesionData.tecnicasAplicadas,
+        rom: this.sesionData.rom,
+        objetivo_proxima: this.sesionData.objetivoProxima,
         enviado_whatsapp: false
       };
 
-      // Incluir resultados del test si se aplico uno
+      // Include test results if applied
       if (this.testSeleccionado) {
         datosSesion.test = {
           testId: this.testSeleccionado.id,
@@ -179,25 +212,21 @@ export class SesionPage implements OnInit {
         };
       }
 
-      console.log('💾 Guardando sesión:', datosSesion);
-
       await this.databaseService.addSesion(datosSesion);
-      console.log('✅ Sesión guardada exitosamente');
 
-      alert(`Sesión ${this.numeroSesion} guardada para ${this.pacienteNombre}`);
+      this.mostrarToast(`Sesion ${this.numeroSesion} guardada correctamente`, 'success');
 
-      // Volver al detalle del paciente
+      // Navigate back to patient detail
       localStorage.setItem('ver_paciente_id', String(this.pacienteId));
       this.navCtrl.navigateRoot('/paciente-detalle');
 
     } catch (error) {
-      console.error('Error al guardar sesión:', error);
-      alert('Error al guardar la sesión. Intente nuevamente.');
+      console.error('Error al guardar sesion:', error);
+      this.mostrarToast('Error al guardar la sesion. Intente nuevamente.', 'danger');
     }
   }
 
-  // === TESTS PREDETERMINADOS ===
-
+  // Tests
   cargarTestsDisponibles() {
     try {
       const data = localStorage.getItem('test_templates');
@@ -226,8 +255,6 @@ export class SesionPage implements OnInit {
   calcularPuntajeTest() {
     if (!this.testSeleccionado) return;
     this.puntajeTotal = this.respuestasTest.reduce((sum, val) => sum + (val || 0), 0);
-
-    // Buscar rango
     const rango = this.testSeleccionado.rangos.find((r: any) =>
       this.puntajeTotal >= r.min && this.puntajeTotal <= r.max
     );
@@ -247,21 +274,17 @@ export class SesionPage implements OnInit {
       localStorage.setItem('ver_paciente_id', String(this.pacienteId));
       this.navCtrl.navigateRoot('/paciente-detalle');
     } else {
-      this.navCtrl.navigateRoot('/pacientes-lista');
+      this.navCtrl.navigateRoot('/dashboard');
     }
   }
 
-  volverAlDashboard() {
-    this.navCtrl.navigateRoot('/dashboard');
-  }
-
-  // Método para limpiar formulario
-  limpiarFormulario() {
-    this.sesionData = {
-      nivelDolor: null,
-      calidadSueno: 3,
-      ejerciciosRealizados: false,
-      observaciones: ''
-    };
+  private async mostrarToast(message: string, color: string) {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2500,
+      position: 'bottom',
+      color
+    });
+    await toast.present();
   }
 }
