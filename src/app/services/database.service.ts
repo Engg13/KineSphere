@@ -230,16 +230,14 @@ export class DatabaseService {
    */
   async getPacientesConConteoSesiones(): Promise<any[]> {
     const pacientes = await this.getPacientes();
-    const pacientesConSesiones = [];
-    
-    for (const paciente of pacientes) {
-      const numSesiones = await this.getNumeroSesionesByPaciente(paciente.id);
-      pacientesConSesiones.push({
-        ...paciente,
-        num_sesiones: numSesiones
-      });
-    }
-    
+
+    const pacientesConSesiones = await Promise.all(
+      pacientes.map(async (paciente) => {
+        const numSesiones = await this.getNumeroSesionesByPaciente(paciente.id);
+        return { ...paciente, num_sesiones: numSesiones };
+      })
+    );
+
     console.log(`✅ ${pacientesConSesiones.length} pacientes cargados con conteo de sesiones`);
     return pacientesConSesiones;
   }
@@ -256,7 +254,7 @@ export class DatabaseService {
             return pacientes;
           }
         } catch (err) {
-          console.log('Firestore no disponible, usando localStorage');
+          console.warn('⚠️ Firestore no disponible, usando localStorage como fuente de datos');
         }
       }
       const userPacientes = this.getUserPacientesFromStorage();
@@ -512,7 +510,7 @@ export class DatabaseService {
           await this.firestoreService.addSesion(sesionConId);
           console.log('✅ Sesion guardada en Firestore');
         } catch (err) {
-          console.log('Firestore no disponible para sesion');
+          console.warn('⚠️ Firestore no disponible para sesión, guardando solo localmente');
         }
       }
 

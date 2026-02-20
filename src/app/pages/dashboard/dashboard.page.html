@@ -123,7 +123,7 @@
         </div>
 
         <div class="patients-list animated-item">
-          @for (paciente of pacientesRecientes; track paciente; let i = $index) {
+          @for (paciente of pacientesRecientes; track paciente.id; let i = $index) {
             <div class="patient-card" (click)="verDetallePaciente(paciente)">
               <div class="patient-avatar" [class.active]="paciente.activo">
                 <ion-icon name="person"></ion-icon>

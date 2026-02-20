@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { JsonServerService } from '../../services/json-server.service';
 import { DatabaseService } from '../../services/database.service';
 
@@ -10,12 +11,13 @@ import { DatabaseService } from '../../services/database.service';
   styleUrls: ['./paciente-detalle.page.scss'],
   standalone: false
 })
-export class PacienteDetallePage implements OnInit {
+export class PacienteDetallePage implements OnInit, OnDestroy {
   paciente: any = null;
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
   pacienteId: string = '';
   fechaActual = new Date().toISOString();
+  private routeSub!: Subscription;
 
   constructor(
     private navCtrl: NavController,
@@ -23,6 +25,12 @@ export class PacienteDetallePage implements OnInit {
     private jsonServerService: JsonServerService,
     private databaseService: DatabaseService
   ) { }
+
+  ngOnDestroy() {
+    if (this.routeSub) {
+      this.routeSub.unsubscribe();
+    }
+  }
 
   async ngOnInit() {
     await this.cargarPacienteDesdeParams();
@@ -34,7 +42,7 @@ export class PacienteDetallePage implements OnInit {
   private async cargarPacienteDesdeParams() {
     this.estaCargando = true;
     
-    this.route.queryParams.subscribe(async (params: any) => {
+    this.routeSub = this.route.queryParams.subscribe(async (params: any) => {
       const pacienteId = params['id'];
       
       if (pacienteId && pacienteId !== 'undefined' && pacienteId !== 'null') {

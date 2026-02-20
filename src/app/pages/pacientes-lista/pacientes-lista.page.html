@@ -27,7 +27,10 @@
     <div class="search-wrapper animated-item">
       <ion-icon name="search-outline" class="search-icon"></ion-icon>
       <ion-searchbar
-        placeholder="Buscar paciente..."
+        [(ngModel)]="terminoBusqueda"
+        (ionInput)="filtrarPacientes()"
+        (ionClear)="filtrarPacientes()"
+        placeholder="Buscar por nombre, diagnóstico o RUT..."
         animated
         class="custom-searchbar">
       </ion-searchbar>
@@ -41,7 +44,7 @@
       </div>
     }
 
-    <!-- EMPTY STATE -->
+    <!-- EMPTY STATE - sin pacientes en total -->
     @if (!estaCargando && pacientes.length === 0) {
       <div class="empty-state">
         <div class="empty-icon-wrapper">
@@ -52,10 +55,24 @@
       </div>
     }
 
+    <!-- EMPTY STATE - sin resultados de busqueda -->
+    @if (!estaCargando && pacientes.length > 0 && pacientesFiltrados.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon-wrapper">
+          <ion-icon name="search-outline"></ion-icon>
+        </div>
+        <h3>Sin resultados</h3>
+        <p>No se encontraron pacientes con "{{ terminoBusqueda }}"</p>
+        <ion-button fill="clear" color="primary" (click)="terminoBusqueda = ''; filtrarPacientes()">
+          Ver todos los pacientes
+        </ion-button>
+      </div>
+    }
+
     <!-- PATIENT LIST -->
-    @if (!estaCargando && pacientes.length > 0) {
+    @if (!estaCargando && pacientesFiltrados.length > 0) {
       <div class="patients-list animated-item">
-        @for (paciente of pacientes; track paciente; let i = $index) {
+        @for (paciente of pacientesFiltrados; track paciente.id; let i = $index) {
           <div class="patient-card" (click)="verDetallePaciente(paciente)">
             <div class="patient-avatar" [class.active]="paciente.activo">
               <ion-icon name="person"></ion-icon>
