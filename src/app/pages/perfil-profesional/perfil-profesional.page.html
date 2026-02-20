@@ -17,14 +17,16 @@
       </div>
     </div>
 
-    <!-- NOMBRE SECTION -->
+    <!-- DATOS PROFESIONALES SECTION -->
     <div class="section-card">
       <div class="section-title-row">
         <ion-icon name="create-outline" class="section-icon"></ion-icon>
-        <h3>Nombre Profesional</h3>
+        <h3>Datos Profesionales</h3>
       </div>
-      <p class="section-description">Este nombre aparece en los informes PDF y en el dashboard</p>
+      <p class="section-description">Estos datos aparecen en los informes PDF y en la carta ISAPRE</p>
+
       <div class="input-group">
+        <label class="input-label">Nombre completo</label>
         <input
           type="text"
           class="perfil-input"
@@ -33,9 +35,43 @@
           maxlength="50"
         />
       </div>
-      <button class="btn-primary" (click)="guardarNombre()">
+
+      <div class="input-group">
+        <label class="input-label">RUT</label>
+        <input
+          type="text"
+          class="perfil-input"
+          [(ngModel)]="rutProfesional"
+          placeholder="Ej: 12.345.678-9"
+          maxlength="15"
+        />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Telefono</label>
+        <input
+          type="tel"
+          class="perfil-input"
+          [(ngModel)]="telefonoProfesional"
+          placeholder="Ej: +56 9 1234 5678"
+          maxlength="20"
+        />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Email</label>
+        <input
+          type="email"
+          class="perfil-input"
+          [(ngModel)]="emailProfesional"
+          placeholder="Ej: contacto@kinesiologia.cl"
+          maxlength="50"
+        />
+      </div>
+
+      <button class="btn-primary" (click)="guardarDatosProfesionales()">
         <ion-icon name="checkmark-outline"></ion-icon>
-        <span>Guardar Nombre</span>
+        <span>Guardar Datos</span>
       </button>
     </div>
 
@@ -101,6 +137,18 @@
       <div class="info-row">
         <span class="info-label">Nombre</span>
         <span class="info-value">{{ nombreCompleto }}</span>
+      </div>
+      <div class="info-row" *ngIf="rutProfesional">
+        <span class="info-label">RUT</span>
+        <span class="info-value">{{ rutProfesional }}</span>
+      </div>
+      <div class="info-row" *ngIf="telefonoProfesional">
+        <span class="info-label">Telefono</span>
+        <span class="info-value">{{ telefonoProfesional }}</span>
+      </div>
+      <div class="info-row" *ngIf="emailProfesional">
+        <span class="info-label">Email</span>
+        <span class="info-value">{{ emailProfesional }}</span>
       </div>
     </div>
 

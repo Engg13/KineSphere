@@ -12,6 +12,9 @@ export class PerfilProfesionalPage {
 
   nombreCompleto: string = '';
   username: string = '';
+  rutProfesional: string = '';
+  telefonoProfesional: string = '';
+  emailProfesional: string = '';
 
   passwordActual: string = '';
   passwordNueva: string = '';
@@ -27,23 +30,34 @@ export class PerfilProfesionalPage {
   ionViewDidEnter() {
     this.nombreCompleto = this.authService.getNombreCompleto();
     this.username = this.authService.getUsername();
+    this.rutProfesional = localStorage.getItem('rutProfesional') || '';
+    this.telefonoProfesional = localStorage.getItem('telefonoProfesional') || '';
+    this.emailProfesional = localStorage.getItem('emailProfesional') || '';
     this.passwordActual = '';
     this.passwordNueva = '';
     this.passwordConfirmar = '';
   }
 
-  async guardarNombre() {
+  async guardarDatosProfesionales() {
     if (!this.nombreCompleto || this.nombreCompleto.trim().length < 2) {
       this.mostrarToast('El nombre debe tener al menos 2 caracteres', 'warning');
       return;
     }
 
-    const exito = this.authService.cambiarNombre(this.nombreCompleto.trim());
-    if (exito) {
-      this.mostrarToast('Nombre actualizado correctamente', 'success');
-    } else {
-      this.mostrarToast('Error al actualizar el nombre', 'danger');
+    this.authService.cambiarNombre(this.nombreCompleto.trim());
+
+    // Save professional details for ISAPRE PDF
+    if (this.rutProfesional.trim()) {
+      localStorage.setItem('rutProfesional', this.rutProfesional.trim());
     }
+    if (this.telefonoProfesional.trim()) {
+      localStorage.setItem('telefonoProfesional', this.telefonoProfesional.trim());
+    }
+    if (this.emailProfesional.trim()) {
+      localStorage.setItem('emailProfesional', this.emailProfesional.trim());
+    }
+
+    this.mostrarToast('Datos profesionales guardados', 'success');
   }
 
   async cambiarPassword() {

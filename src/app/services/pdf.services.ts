@@ -70,35 +70,232 @@ export class PdfService {
   }
 
   generarDetalleSesiones(data: InformeData): void {
-    if (!data.sesiones || data.sesiones.length === 0) return;
-
     const doc = new jsPDF('p', 'mm', 'letter');
     const pw = doc.internal.pageSize.getWidth();
     const ph = doc.internal.pageSize.getHeight();
-    const m = 20;
+    const m = 25;
     const cw = pw - m * 2;
+    const p = data.paciente;
 
-    // Header
-    let y = this.drawAnexoHeader(doc, pw, m, data.paciente);
+    // Professional info from localStorage
+    const kineNombre = (localStorage.getItem('nombreCompleto') || 'Profesional').toUpperCase();
+    const kineRut = localStorage.getItem('rutProfesional') || '';
+    const kineTelefono = localStorage.getItem('telefonoProfesional') || '+56932774294';
+    const kineEmail = localStorage.getItem('emailProfesional') || 'kinesiologiafundadores@gmail.com';
 
-    // Session table
-    y = this.drawSessionTable(doc, data, y, m, cw, pw);
+    // === LOGO / HEADER ===
+    let y = 18;
+    doc.setFontSize(15);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(11, 122, 110);
+    doc.text('Fundadores', pw / 2, y, { align: 'center' });
+    y += 5;
+    doc.setFontSize(10);
+    doc.setTextColor(200, 155, 50);
+    doc.text('Kinesiologia', pw / 2, y, { align: 'center' });
+    y += 12;
 
-    // EVA chart
-    if (data.sesiones.length >= 2) {
-      y = this.checkPage(doc, y, 55, pw, m);
-      y = this.drawEvaChart(doc, data.sesiones, y, m, cw);
+    // === GREETING ===
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Estimados/as,', m, y);
+    y += 8;
+
+    // === FORMAL PARAGRAPH ===
+    // Generate dates for sessions
+    const totalSesiones = p.sesionesPlanificadas || data.sesiones.length || 10;
+    const sesionDates = this.generarFechasSesiones(data, totalSesiones);
+    const fechaInicio = sesionDates.length > 0 ? sesionDates[0].fecha : this.todayDDMMYY();
+    const diagnostico = p.diagnostico || '...';
+
+    const parrafo =
+      `Nos dirigimos a ustedes para informar formalmente que ` +
+      `${p.nombre || '...'}, Rut: ${p.rut || '...'} ` +
+      `el dia ${fechaInicio} ha comenzado un nuevo ciclo de sesiones de Kinesioterapia ` +
+      `por diagnostico de ${diagnostico} en nuestro ` +
+      `Centro de Rehabilitacion ubicado en Av. Fundadores 564, Valparaiso. ` +
+      `Detalle a continuacion:`;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const lines = doc.splitTextToSize(parrafo, cw);
+    doc.text(lines, m, y);
+    y += lines.length * 5 + 8;
+
+    // === SESSION TABLE ===
+    const colWidths = [22, 34, 24, cw - 80];
+    const headers = ['N Sesion', 'Fecha', 'Hora', 'Detalle'];
+    const rowH = 10;
+
+    // Table header
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.4);
+    doc.setFillColor(255, 255, 255);
+    let xPos = m;
+    for (let c = 0; c < headers.length; c++) {
+      doc.rect(xPos, y, colWidths[c], rowH, 'D');
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(headers[c], xPos + colWidths[c] / 2, y + 6.5, { align: 'center' });
+      xPos += colWidths[c];
+    }
+    y += rowH;
+
+    // Table rows
+    for (let i = 0; i < sesionDates.length; i++) {
+      const sd = sesionDates[i];
+
+      // Check page break
+      if (y + rowH > ph - 50) {
+        doc.addPage();
+        y = 20;
+      }
+
+      xPos = m;
+      const rowData = [String(i + 1), sd.fecha, sd.hora, sd.detalle];
+
+      for (let c = 0; c < rowData.length; c++) {
+        doc.rect(xPos, y, colWidths[c], rowH, 'D');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', c === 1 ? 'bold' : 'normal');
+        doc.setTextColor(0, 0, 0);
+
+        if (c === 3) {
+          // Detalle: left-aligned with padding, may wrap
+          const detalleLines = doc.splitTextToSize(rowData[c], colWidths[c] - 4);
+          const actualH = Math.max(rowH, detalleLines.length * 4.5 + 4);
+          // Redraw cell if taller
+          if (actualH > rowH) {
+            // Re-draw all cells in this row with new height
+            let rx = m;
+            for (let rc = 0; rc < colWidths.length; rc++) {
+              doc.setFillColor(255, 255, 255);
+              doc.rect(rx, y, colWidths[rc], actualH, 'D');
+              rx += colWidths[rc];
+            }
+            // Re-draw previous cell content
+            doc.setFont('helvetica', 'bold');
+            doc.text(rowData[0], m + colWidths[0] / 2, y + actualH / 2 + 1, { align: 'center' });
+            doc.text(rowData[1], m + colWidths[0] + colWidths[1] / 2, y + actualH / 2 + 1, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.text(rowData[2], m + colWidths[0] + colWidths[1] + colWidths[2] / 2, y + actualH / 2 + 1, { align: 'center' });
+          }
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.text(detalleLines, xPos + 2, y + 4.5);
+
+          if (actualH > rowH) {
+            y += actualH;
+          } else {
+            y += rowH;
+          }
+        } else {
+          doc.text(rowData[c], xPos + colWidths[c] / 2, y + 6.5, { align: 'center' });
+        }
+        xPos += colWidths[c];
+      }
+      if (xPos > m) {
+        // y was already advanced in the detalle column handling
+      }
     }
 
-    // Footer on all pages
-    const totalPages = doc.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      this.drawFooter(doc, pw, ph, i, totalPages);
+    // === CLOSING TEXT ===
+    y += 12;
+    if (y > ph - 80) {
+      doc.addPage();
+      y = 25;
+    }
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Quedamos a disposicion para cualquier informacion adicional que puedan necesitar. Atentamente,', m, y, { maxWidth: cw });
+    y += 25;
+
+    // === SIGNATURE ===
+    const centerX = pw / 2;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text(kineNombre, centerX, y, { align: 'center' });
+    y += 5;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    if (kineRut) {
+      doc.text(kineRut, centerX, y, { align: 'center' });
+      y += 5;
+    }
+    doc.text('Kinesiologo Kinesiologia Fundadores', centerX, y, { align: 'center' });
+    y += 5;
+    doc.text(`Fono contacto: ${kineTelefono}`, centerX, y, { align: 'center' });
+    y += 5;
+    doc.text(`Email: ${kineEmail}`, centerX, y, { align: 'center' });
+
+    const nombre = (p.nombre || 'Paciente').replace(/\s+/g, '_');
+    doc.save(`Carta_ISAPRE_${nombre}_${this.todayStr()}.pdf`);
+  }
+
+  private generarFechasSesiones(data: InformeData, total: number): { fecha: string; hora: string; detalle: string }[] {
+    const result: { fecha: string; hora: string; detalle: string }[] = [];
+    const sesiones = (data.sesiones || []).sort((a: any, b: any) =>
+      (a.numero_sesion || 0) - (b.numero_sesion || 0)
+    );
+
+    // Determine start date
+    let currentDate: Date;
+    if (sesiones.length > 0 && sesiones[0].fecha) {
+      currentDate = new Date(sesiones[0].fecha + 'T12:00:00');
+    } else {
+      currentDate = new Date();
     }
 
-    const nombre = (data.paciente.nombre || 'Paciente').replace(/\s+/g, '_');
-    doc.save(`Detalle_Sesiones_${nombre}_${this.todayStr()}.pdf`);
+    // Hours pool for realistic variation
+    const horas = ['19:30', '19:00', '19:45', '19:30', '19:00', '19:00', '19:00', '19:00', '19:00', '19:30'];
+
+    for (let i = 0; i < total; i++) {
+      let fecha: string;
+
+      if (i < sesiones.length && sesiones[i].fecha) {
+        // Use real session date
+        const d = new Date(sesiones[i].fecha + 'T12:00:00');
+        fecha = this.formatDateDDMMYY(d);
+        currentDate = new Date(d);
+      } else if (i === 0) {
+        fecha = this.formatDateDDMMYY(currentDate);
+      } else {
+        // Generate next date: alternate 3-4 day gaps
+        const advance = (i % 2 === 0) ? 4 : 3;
+        currentDate.setDate(currentDate.getDate() + advance);
+        fecha = this.formatDateDDMMYY(currentDate);
+      }
+
+      const hora = horas[i % horas.length];
+
+      let detalle: string;
+      if (i === 0 || i === total - 1) {
+        detalle = 'Evaluacion Kinesiologica integral + Atencion kinesica integral';
+      } else {
+        detalle = 'Atencion kinesica integral';
+      }
+
+      result.push({ fecha, hora, detalle });
+    }
+
+    return result;
+  }
+
+  private formatDateDDMMYY(d: Date): string {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${dd}/${mm}/${yy}`;
+  }
+
+  private todayDDMMYY(): string {
+    return this.formatDateDDMMYY(new Date());
   }
 
   // =============================================
