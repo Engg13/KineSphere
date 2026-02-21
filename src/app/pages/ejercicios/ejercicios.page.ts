@@ -433,17 +433,17 @@ export class EjerciciosPage implements OnInit {
 
   // ==================== WHATSAPP ====================
 
-  enviarWhatsapp() {
-    if (!this.rutinaActiva) return;
-    this.ejerciciosService.enviarPorWhatsapp(this.rutinaActiva);
+  enviarWhatsappRutina(rutina: RutinaEjercicios) {
+    this.ejerciciosService.enviarPorWhatsapp(rutina);
     this.mostrarToast('Abriendo WhatsApp...', 'success');
   }
 
-  async enviarWhatsappConNumero() {
-    if (!this.rutinaActiva) return;
+  async enviarWhatsappConNumero(rutina: RutinaEjercicios | null) {
+    if (!rutina) return;
 
     const alert = await this.alertCtrl.create({
       header: 'Enviar por WhatsApp',
+      message: rutina.nombre,
       inputs: [
         {
           name: 'telefono',
@@ -452,14 +452,14 @@ export class EjerciciosPage implements OnInit {
         }
       ],
       buttons: [
-        { text: 'Sin numero', handler: () => { this.enviarWhatsapp(); } },
+        { text: 'Sin numero', handler: () => { this.enviarWhatsappRutina(rutina); } },
         {
           text: 'Enviar',
           handler: (data) => {
             if (data.telefono) {
-              this.ejerciciosService.enviarPorWhatsapp(this.rutinaActiva!, data.telefono);
+              this.ejerciciosService.enviarPorWhatsapp(rutina, data.telefono);
             } else {
-              this.enviarWhatsapp();
+              this.enviarWhatsappRutina(rutina);
             }
           }
         }

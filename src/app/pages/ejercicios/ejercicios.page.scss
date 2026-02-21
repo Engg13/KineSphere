@@ -455,6 +455,32 @@
   margin: 0;
 }
 
+.btn-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 12px;
+  background: #25d366;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 1.2rem;
+  }
+
+  &:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
+}
+
 .btn-agregar-mas {
   margin: 8px 16px;
   --border-radius: 10px;
@@ -512,10 +538,38 @@
     }
   }
 
+  .anterior-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   .anterior-ejercicios {
     font-size: 0.78rem;
     color: var(--pri);
     font-weight: 600;
+  }
+
+  .anterior-whatsapp-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: #25d366;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    ion-icon {
+      font-size: 1.1rem;
+    }
+
+    &:active {
+      opacity: 0.8;
+    }
   }
 }
 

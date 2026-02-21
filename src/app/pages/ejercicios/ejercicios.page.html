@@ -8,7 +8,7 @@
     <ion-title>Ejercicios</ion-title>
     <ion-buttons slot="end">
       @if (rutinaActiva && vista === 'rutina') {
-        <ion-button (click)="enviarWhatsappConNumero()">
+        <ion-button (click)="enviarWhatsappConNumero(rutinaActiva)">
           <ion-icon name="logo-whatsapp"></ion-icon>
         </ion-button>
       }
@@ -244,6 +244,12 @@
               Finalizar rutina ({{ getProgresoRutina() }}%)
             </ion-button>
           }
+          @if (rutinaActiva.ejercicios.length > 0) {
+            <button class="btn-whatsapp" (click)="enviarWhatsappConNumero(rutinaActiva)">
+              <ion-icon name="logo-whatsapp"></ion-icon>
+              <span>Enviar rutina por WhatsApp</span>
+            </button>
+          }
         </div>
 
         <!-- Rutinas anteriores -->
@@ -256,7 +262,12 @@
                   <strong>{{ rut.nombre }}</strong>
                   <span>{{ rut.fechaCompletada | date:'dd/MM/yyyy' }}</span>
                 </div>
-                <span class="anterior-ejercicios">{{ rut.ejercicios.length }} ejercicios</span>
+                <div class="anterior-actions">
+                  <span class="anterior-ejercicios">{{ rut.ejercicios.length }} ej.</span>
+                  <button class="anterior-whatsapp-btn" (click)="enviarWhatsappConNumero(rut)">
+                    <ion-icon name="logo-whatsapp"></ion-icon>
+                  </button>
+                </div>
               </div>
             }
           </div>
