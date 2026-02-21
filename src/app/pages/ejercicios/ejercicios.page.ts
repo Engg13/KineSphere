@@ -471,6 +471,10 @@ export class EjerciciosPage implements OnInit {
   // ==================== UTILIDADES ====================
 
   volverAtras() {
+    // Re-setear ID para que paciente-detalle lo encuentre al volver
+    if (this.pacienteId && this.pacienteId !== 'general') {
+      localStorage.setItem('ver_paciente_id', this.pacienteId);
+    }
     this.navCtrl.back();
   }
 

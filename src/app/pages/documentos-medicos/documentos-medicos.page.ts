@@ -163,8 +163,9 @@ export class DocumentosMedicosPage implements OnInit {
   }
 
   volverAlPaciente() {
-    this.navCtrl.navigateBack('/paciente-detalle', {
-      queryParams: { id: this.pacienteId }
-    });
+    if (this.pacienteId) {
+      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
+    }
+    this.navCtrl.navigateBack('/paciente-detalle');
   }
 }

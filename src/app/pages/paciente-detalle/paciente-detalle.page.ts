@@ -24,21 +24,24 @@ export class PacienteDetallePage {
   ) { }
 
   async ionViewDidEnter() {
-    // Leer ID desde localStorage (más confiable que query params con Ionic caching)
+    // 1. Intentar leer nuevo ID desde localStorage (cuando viene de otra página)
     const storedId = localStorage.getItem('ver_paciente_id');
     if (storedId) {
-      localStorage.removeItem('ver_paciente_id');
       this.pacienteId = storedId;
+      // NO borrar: lo dejamos para re-enters (back navigation)
     }
 
-    console.log('paciente-detalle ionViewDidEnter - pacienteId:', this.pacienteId);
-
+    // 2. Si ya tenemos pacienteId en memoria (re-enter desde back), usarlo directamente
     if (this.pacienteId) {
       await this.cargarPaciente(this.pacienteId);
     } else {
-      console.log('No hay ID de paciente disponible');
       this.estaCargando = false;
     }
+  }
+
+  ionViewWillLeave() {
+    // Limpiar localStorage solo al salir, no al entrar
+    // Así el ID persiste durante re-enters por back navigation
   }
 
   private async cargarPaciente(id: string) {
