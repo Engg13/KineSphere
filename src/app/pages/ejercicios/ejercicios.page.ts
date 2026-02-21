@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AlertController, NavController, ToastController, ModalController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { EjerciciosService } from '../../services/ejercicios.service';
+import { DatabaseService } from '../../services/database.service';
 import {
   EjercicioLocal,
   EjercicioEnRutina,
@@ -21,6 +22,7 @@ export class EjerciciosPage implements OnInit {
   // Datos del paciente
   pacienteId: string = '';
   pacienteNombre: string = '';
+  pacienteTelefono: string = '';
 
   // Vista actual
   vista: 'rutina' | 'biblioteca' | 'historial' = 'rutina';
@@ -50,6 +52,7 @@ export class EjerciciosPage implements OnInit {
 
   constructor(
     private ejerciciosService: EjerciciosService,
+    private databaseService: DatabaseService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private navCtrl: NavController,
@@ -66,6 +69,18 @@ export class EjerciciosPage implements OnInit {
 
   ionViewDidEnter() {
     this.cargarDatos();
+    this.cargarTelefonoPaciente();
+  }
+
+  private async cargarTelefonoPaciente() {
+    if (!this.pacienteId || this.pacienteId === 'general') return;
+    try {
+      const pacientes = await this.databaseService.getPacientes();
+      const p = pacientes.find((pac: any) => String(pac.id) === String(this.pacienteId));
+      if (p?.telefono) {
+        this.pacienteTelefono = p.telefono;
+      }
+    } catch {}
   }
 
   cargarDatos() {
@@ -433,14 +448,17 @@ export class EjerciciosPage implements OnInit {
 
   // ==================== WHATSAPP ====================
 
-  enviarWhatsappRutina(rutina: RutinaEjercicios) {
-    this.ejerciciosService.enviarPorWhatsapp(rutina);
-    this.mostrarToast('Abriendo WhatsApp...', 'success');
-  }
-
   async enviarWhatsappConNumero(rutina: RutinaEjercicios | null) {
     if (!rutina) return;
 
+    // Si tenemos teléfono del paciente, enviar directo
+    if (this.pacienteTelefono) {
+      this.ejerciciosService.enviarPorWhatsapp(rutina, this.pacienteTelefono);
+      this.mostrarToast('Abriendo WhatsApp...', 'success');
+      return;
+    }
+
+    // Si no hay teléfono, preguntar
     const alert = await this.alertCtrl.create({
       header: 'Enviar por WhatsApp',
       message: rutina.nombre,
@@ -452,15 +470,18 @@ export class EjerciciosPage implements OnInit {
         }
       ],
       buttons: [
-        { text: 'Sin numero', handler: () => { this.enviarWhatsappRutina(rutina); } },
+        {
+          text: 'Sin numero',
+          handler: () => {
+            this.ejerciciosService.enviarPorWhatsapp(rutina);
+            this.mostrarToast('Abriendo WhatsApp...', 'success');
+          }
+        },
         {
           text: 'Enviar',
           handler: (data) => {
-            if (data.telefono) {
-              this.ejerciciosService.enviarPorWhatsapp(rutina, data.telefono);
-            } else {
-              this.enviarWhatsappRutina(rutina);
-            }
+            this.ejerciciosService.enviarPorWhatsapp(rutina, data.telefono || undefined);
+            this.mostrarToast('Abriendo WhatsApp...', 'success');
           }
         }
       ]
