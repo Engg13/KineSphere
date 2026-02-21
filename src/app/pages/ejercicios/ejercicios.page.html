@@ -347,7 +347,7 @@
       }
 
       @for (ejercicio of ejerciciosFiltrados; track trackByEjercicioLocal($index, ejercicio)) {
-        <div class="biblioteca-card">
+        <div class="biblioteca-card" [class.en-rutina]="estaEnRutina(ejercicio.id)">
           <div class="biblioteca-card-header">
             <div class="cat-indicator" [style.background]="getColorCategoria(ejercicio.categoria)">
               <ion-icon [name]="getIconoCategoria(ejercicio.categoria)"></ion-icon>
@@ -359,6 +359,16 @@
               </span>
               <p class="biblioteca-desc">{{ ejercicio.descripcion }}</p>
             </div>
+            <!-- BOTÓN + SIEMPRE VISIBLE -->
+            @if (!estaEnRutina(ejercicio.id)) {
+              <button class="add-to-rutina-btn" (click)="agregarARutina(ejercicio)">
+                <ion-icon name="add-circle"></ion-icon>
+              </button>
+            } @else {
+              <div class="already-added">
+                <ion-icon name="checkmark-circle" color="success"></ion-icon>
+              </div>
+            }
           </div>
 
           <div class="biblioteca-card-footer">
@@ -374,12 +384,6 @@
             <ion-button fill="clear" size="small" color="danger" (click)="eliminarEjercicioBiblioteca(ejercicio)">
               <ion-icon name="trash-outline"></ion-icon>
             </ion-button>
-            @if (pacienteId) {
-              <ion-button fill="solid" size="small" color="primary" (click)="agregarARutina(ejercicio)">
-                <ion-icon name="add-outline" slot="start"></ion-icon>
-                Agregar
-              </ion-button>
-            }
           </div>
         </div>
       }

@@ -72,11 +72,10 @@ export class EjerciciosPage implements OnInit {
     this.ejerciciosBiblioteca = this.ejerciciosService.getEjercicios();
     this.ejerciciosFiltrados = [...this.ejerciciosBiblioteca];
 
-    if (this.pacienteId) {
-      const rutinas = this.ejerciciosService.getRutinasPorPaciente(this.pacienteId);
-      this.rutinaActiva = rutinas.find(r => !r.completada) || null;
-      this.rutinasAnteriores = rutinas.filter(r => r.completada);
-    }
+    const id = this.pacienteId || 'general';
+    const rutinas = this.ejerciciosService.getRutinasPorPaciente(id);
+    this.rutinaActiva = rutinas.find(r => !r.completada) || null;
+    this.rutinasAnteriores = rutinas.filter(r => r.completada);
   }
 
   // ==================== NAVEGACIÓN VISTAS ====================
@@ -93,6 +92,11 @@ export class EjerciciosPage implements OnInit {
   // ==================== RUTINA ====================
 
   async crearNuevaRutina() {
+    if (!this.pacienteId) {
+      this.pacienteId = 'general';
+      this.pacienteNombre = this.pacienteNombre || 'Sin paciente';
+    }
+
     const alert = await this.alertCtrl.create({
       header: 'Nueva Rutina',
       inputs: [
@@ -112,7 +116,9 @@ export class EjerciciosPage implements OnInit {
             this.rutinaActiva = this.ejerciciosService.crearRutina(
               this.pacienteId, data.nombre.trim(), this.pacienteNombre
             );
-            this.mostrarToast('Rutina creada. Agrega ejercicios desde la biblioteca.', 'success');
+            this.mostrarToast('Rutina creada. Agrega ejercicios.', 'success');
+            // Ir a biblioteca para que agregue ejercicios
+            this.cambiarVista('biblioteca');
             return true;
           }
         }
@@ -290,9 +296,10 @@ export class EjerciciosPage implements OnInit {
   }
 
   async agregarARutina(ejercicio: EjercicioLocal) {
+    // Si no hay pacienteId, usar uno genérico para rutinas sin paciente
     if (!this.pacienteId) {
-      this.mostrarToast('Selecciona un paciente primero', 'warning');
-      return;
+      this.pacienteId = 'general';
+      this.pacienteNombre = this.pacienteNombre || 'Sin paciente';
     }
 
     if (!this.rutinaActiva) {
@@ -479,6 +486,10 @@ export class EjerciciosPage implements OnInit {
 
   trackByEjercicio(index: number, item: EjercicioEnRutina): string {
     return item.ejercicioId;
+  }
+
+  estaEnRutina(ejercicioId: string): boolean {
+    return !!this.rutinaActiva?.ejercicios.some(e => e.ejercicioId === ejercicioId);
   }
 
   trackByEjercicioLocal(index: number, item: EjercicioLocal): string {
