@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
-import { NavController, ToastController } from '@ionic/angular';
+import { NavController, ToastController, IonicModule } from '@ionic/angular';
 import { AuthService } from 'src/app/services/auth.service';
-import { NgForm } from '@angular/forms';
+import { NgForm, FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.page.html',
-  styleUrls: ['./login.page.scss'],
-  standalone: false
+    selector: 'app-login',
+    templateUrl: './login.page.html',
+    styleUrls: ['./login.page.scss'],
+    standalone: true,
+    imports: [IonicModule, FormsModule]
 })
 export class LoginPage {
   username: string = '';

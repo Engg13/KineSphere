@@ -1,13 +1,15 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { NavController, ToastController, Platform, ViewWillEnter } from '@ionic/angular';
+import { NavController, ToastController, Platform, ViewWillEnter, IonicModule } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-agregar-paciente',
-  templateUrl: './agregar-paciente.page.html',
-  styleUrls: ['./agregar-paciente.page.scss'],
-  standalone: false
+    selector: 'app-agregar-paciente',
+    templateUrl: './agregar-paciente.page.html',
+    styleUrls: ['./agregar-paciente.page.scss'],
+    standalone: true,
+    imports: [IonicModule, FormsModule]
 })
 export class AgregarPacientePage implements ViewWillEnter {
   paciente: any = {

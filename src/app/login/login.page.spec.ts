@@ -61,19 +61,19 @@ describe('LoginPage', () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [LoginPage],
-      imports: [
+    imports: [
         IonicModule.forRoot(),
-        FormsModule
-      ],
-      providers: [
+        FormsModule,
+        LoginPage
+    ],
+    providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: NavController, useValue: navCtrlSpy },
         { provide: ToastController, useValue: toastCtrlSpy },
         { provide: Router, useValue: routerSpy }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+}).compileComponents();
 
     fixture = TestBed.createComponent(LoginPage);
     component = fixture.componentInstance;

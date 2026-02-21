@@ -10,14 +10,13 @@ import { DashboardPage } from './dashboard.page';
 import { PacienteCardComponent } from '../../components/paciente-card/paciente-card.component';
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    DashboardPageRoutingModule
-  ],
-  declarations: [DashboardPage,
-    PacienteCardComponent 
-  ]
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        DashboardPageRoutingModule,
+        DashboardPage,
+        PacienteCardComponent
+    ]
 })
 export class DashboardPageModule {}

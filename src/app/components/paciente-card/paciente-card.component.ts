@@ -1,10 +1,13 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { IonicModule } from '@ionic/angular';
+import { DatePipe } from '@angular/common';
 
 @Component({
-  selector: 'app-paciente-card',
-  templateUrl: './paciente-card.component.html',
-  styleUrls: ['./paciente-card.component.scss'],
-  standalone: false
+    selector: 'app-paciente-card',
+    templateUrl: './paciente-card.component.html',
+    styleUrls: ['./paciente-card.component.scss'],
+    standalone: true,
+    imports: [IonicModule, DatePipe]
 })
 export class PacienteCardComponent {
   @Input() paciente: any;

@@ -9,9 +9,8 @@ describe('EvaScaleComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ EvaScaleComponent ],
-      imports: [IonicModule.forRoot()]
-    }).compileComponents();
+    imports: [IonicModule.forRoot(), EvaScaleComponent]
+}).compileComponents();
 
     fixture = TestBed.createComponent(EvaScaleComponent);
     component = fixture.componentInstance;

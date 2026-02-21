@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { NavController, AlertController } from '@ionic/angular';
+import { NavController, AlertController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-  selector: 'app-documentos-medicos',
-  templateUrl: './documentos-medicos.page.html',
-  styleUrls: ['./documentos-medicos.page.scss'],
-  standalone: false
+    selector: 'app-documentos-medicos',
+    templateUrl: './documentos-medicos.page.html',
+    styleUrls: ['./documentos-medicos.page.scss'],
+    standalone: true,
+    imports: [IonicModule]
 })
 export class DocumentosMedicosPage implements OnInit {
   documentos: any[] = [];

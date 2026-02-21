@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
-import { NavController, LoadingController, ToastController, AlertController } from '@ionic/angular';
+import { NavController, LoadingController, ToastController, AlertController, IonicModule } from '@ionic/angular';
 import { DatabaseService } from '../../services/database.service';
 import { PlatformService } from '../../services/platform.service';
+import { DatePipe } from '@angular/common';
 
 @Component({
-  selector: 'app-pacientes-lista',
-  templateUrl: './pacientes-lista.page.html',
-  styleUrls: ['./pacientes-lista.page.scss'],
-  standalone: false
+    selector: 'app-pacientes-lista',
+    templateUrl: './pacientes-lista.page.html',
+    styleUrls: ['./pacientes-lista.page.scss'],
+    standalone: true,
+    imports: [IonicModule, DatePipe]
 })
 export class PacientesListaPage {
   tituloPagina: string = 'Lista de Pacientes';

@@ -9,12 +9,12 @@ import { EjerciciosPageRoutingModule } from './ejercicios-routing.module';
 import { EjerciciosPage } from './ejercicios.page';
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    EjerciciosPageRoutingModule
-  ],
-  declarations: [EjerciciosPage]
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        EjerciciosPageRoutingModule,
+        EjerciciosPage
+    ]
 })
 export class EjerciciosPageModule {}

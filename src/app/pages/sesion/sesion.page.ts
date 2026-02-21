@@ -1,15 +1,19 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { NavController, ToastController } from '@ionic/angular';
+import { NavController, ToastController, IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { DatabaseService } from 'src/app/services/database.service';
 import { EjerciciosService } from 'src/app/services/ejercicios.service';
 import { RutinaEjercicios } from 'src/app/models/interfaces';
+import { NgIf, NgFor } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
 
 @Component({
-  selector: 'app-sesion',
-  templateUrl: './sesion.page.html',
-  styleUrls: ['./sesion.page.scss'],
-  standalone: false
+    selector: 'app-sesion',
+    templateUrl: './sesion.page.html',
+    styleUrls: ['./sesion.page.scss'],
+    standalone: true,
+    imports: [IonicModule, NgIf, FormsModule, SleepQualityComponent, NgFor]
 })
 export class SesionPage {
   // Datos del paciente

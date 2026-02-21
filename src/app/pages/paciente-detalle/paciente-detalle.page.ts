@@ -1,15 +1,16 @@
 import { Component } from '@angular/core';
-import { NavController } from '@ionic/angular';
+import { NavController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { RutinaEjercicios } from '../../models/interfaces';
 
 @Component({
-  selector: 'app-paciente-detalle',
-  templateUrl: './paciente-detalle.page.html',
-  styleUrls: ['./paciente-detalle.page.scss'],
-  standalone: false
+    selector: 'app-paciente-detalle',
+    templateUrl: './paciente-detalle.page.html',
+    styleUrls: ['./paciente-detalle.page.scss'],
+    standalone: true,
+    imports: [IonicModule]
 })
 export class PacienteDetallePage {
   paciente: any = null;

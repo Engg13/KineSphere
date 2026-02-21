@@ -72,18 +72,17 @@ describe('EjerciciosPage', () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [EjerciciosPage],
-      imports: [IonicModule.forRoot()],
-      providers: [
+    imports: [IonicModule.forRoot(), EjerciciosPage],
+    providers: [
         { provide: WgerApiService, useValue: mockWgerService },
         { provide: AlertController, useValue: mockAlertController },
         { provide: LoadingController, useValue: mockLoadingController },
         { provide: NavController, useValue: mockNavController },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+}).compileComponents();
 
     fixture = TestBed.createComponent(EjerciciosPage);
     component = fixture.componentInstance;

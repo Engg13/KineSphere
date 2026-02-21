@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AlertController, NavController, ToastController, ModalController } from '@ionic/angular';
+import { AlertController, NavController, ToastController, ModalController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { DatabaseService } from '../../services/database.service';
@@ -11,12 +11,15 @@ import {
   CategoriaEjercicio,
   HistorialEjercicio
 } from '../../models/interfaces';
+import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 
 @Component({
-  selector: 'app-ejercicios',
-  templateUrl: './ejercicios.page.html',
-  styleUrls: ['./ejercicios.page.scss'],
-  standalone: false
+    selector: 'app-ejercicios',
+    templateUrl: './ejercicios.page.html',
+    styleUrls: ['./ejercicios.page.scss'],
+    standalone: true,
+    imports: [IonicModule, FormsModule, DatePipe]
 })
 export class EjerciciosPage implements OnInit {
   // Datos del paciente

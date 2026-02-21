@@ -1,10 +1,14 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { ConfigService, AppConfig } from '../../core/config/config.service';
+import { IonicModule } from '@ionic/angular';
+import { NgFor, JsonPipe } from '@angular/common';
 
 @Component({
-  selector: 'app-config-test',
-  templateUrl: './config-test.page.html',
-  styleUrls: ['./config-test.page.scss']
+    selector: 'app-config-test',
+    templateUrl: './config-test.page.html',
+    styleUrls: ['./config-test.page.scss'],
+    standalone: true,
+    imports: [IonicModule, NgFor, JsonPipe]
 })
 export class ConfigTestPage implements OnInit {
   config: AppConfig | undefined;

@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, ViewChildren, QueryList } from '@angular/core';
-import { NavController, AnimationController, ToastController } from '@ionic/angular';
+import { NavController, AnimationController, ToastController, IonicModule } from '@ionic/angular';
 import { DatabaseService } from '../../services/database.service';
 import { JsonServerService } from '../../services/json-server.service';
 import { firstValueFrom } from 'rxjs';
@@ -8,10 +8,11 @@ import { BackupService } from '../../services/backup.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-dashboard',
-  templateUrl: './dashboard.page.html',
-  styleUrls: ['./dashboard.page.scss'],
-  standalone: false
+    selector: 'app-dashboard',
+    templateUrl: './dashboard.page.html',
+    styleUrls: ['./dashboard.page.scss'],
+    standalone: true,
+    imports: [IonicModule]
 })
 export class DashboardPage implements OnInit {
 

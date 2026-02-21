@@ -37,23 +37,23 @@ describe('AgregarPacientePage', () => {
     );
 
     await TestBed.configureTestingModule({
-      declarations: [AgregarPacientePage],
-      imports: [
+    imports: [
         IonicModule.forRoot(),
         HttpClientTestingModule,
         ReactiveFormsModule,
-        FormsModule
-      ],
-      providers: [
+        FormsModule,
+        AgregarPacientePage
+    ],
+    providers: [
         // Usa las CLASES REALES como tokens, no strings
         { provide: DatabaseService, useValue: databaseServiceMock },
         { provide: PlatformService, useValue: platformServiceMock },
         { provide: JsonServerService, useValue: jsonServerServiceMock },
         { provide: NavController, useValue: navControllerMock },
         { provide: ToastController, useValue: toastControllerMock }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+}).compileComponents();
 
     fixture = TestBed.createComponent(AgregarPacientePage);
     component = fixture.componentInstance;

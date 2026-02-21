@@ -9,9 +9,8 @@ describe('SleepQualityComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SleepQualityComponent ],
-      imports: [IonicModule.forRoot()]
-    }).compileComponents();
+    imports: [IonicModule.forRoot(), SleepQualityComponent]
+}).compileComponents();
 
     fixture = TestBed.createComponent(SleepQualityComponent);
     component = fixture.componentInstance;
