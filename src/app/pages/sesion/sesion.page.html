@@ -9,7 +9,9 @@
       <div class="hero-info">
         <h1 class="hero-title">Sesion {{ numeroSesion }}</h1>
         <p class="hero-patient">{{ pacienteNombre }}</p>
-        <p class="hero-diagnosis" *ngIf="pacienteDiagnostico">{{ pacienteDiagnostico }}</p>
+        @if (pacienteDiagnostico) {
+          <p class="hero-diagnosis">{{ pacienteDiagnostico }}</p>
+        }
       </div>
       <div class="session-progress">
         <div class="progress-circle">
@@ -53,15 +55,17 @@
           <ion-label slot="end">10</ion-label>
         </ion-range>
 
-        <div class="eva-value-display" *ngIf="sesionData.nivelDolor !== null">
-          <span class="eva-number"
-            [class.eva-low]="sesionData.nivelDolor <= 3"
-            [class.eva-mid]="sesionData.nivelDolor > 3 && sesionData.nivelDolor <= 6"
-            [class.eva-high]="sesionData.nivelDolor > 6">
-            {{ sesionData.nivelDolor }}
-          </span>
-          <span class="eva-label">/ 10</span>
-        </div>
+        @if (sesionData.nivelDolor !== null) {
+          <div class="eva-value-display">
+            <span class="eva-number"
+              [class.eva-low]="sesionData.nivelDolor <= 3"
+              [class.eva-mid]="sesionData.nivelDolor > 3 && sesionData.nivelDolor <= 6"
+              [class.eva-high]="sesionData.nivelDolor > 6">
+              {{ sesionData.nivelDolor }}
+            </span>
+            <span class="eva-label">/ 10</span>
+          </div>
+        }
 
         <div class="eva-indicators">
           <span class="ind-low">Sin dolor</span>
@@ -95,9 +99,9 @@
           [(ngModel)]="sesionData.zonaTratamiento"
           placeholder="Seleccionar zona..."
           interface="action-sheet">
-          <ion-select-option *ngFor="let zona of zonasTratamiento" [value]="zona">
-            {{ zona }}
-          </ion-select-option>
+          @for (zona of zonasTratamiento; track zona) {
+            <ion-select-option [value]="zona">{{ zona }}</ion-select-option>
+          }
         </ion-select>
       </ion-item>
     </div>
@@ -111,14 +115,15 @@
       <p class="section-desc">Selecciona las tecnicas utilizadas en esta sesion</p>
 
       <div class="tecnicas-grid">
-        <button
-          *ngFor="let tecnica of tecnicasDisponibles"
-          class="tecnica-chip"
-          [class.tecnica-activa]="tecnica.seleccionada"
-          (click)="toggleTecnica(tecnica)">
-          <ion-icon [name]="tecnica.seleccionada ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
-          <span>{{ tecnica.nombre }}</span>
-        </button>
+        @for (tecnica of tecnicasDisponibles; track tecnica.nombre) {
+          <button
+            class="tecnica-chip"
+            [class.tecnica-activa]="tecnica.seleccionada"
+            (click)="toggleTecnica(tecnica)">
+            <ion-icon [name]="tecnica.seleccionada ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
+            <span>{{ tecnica.nombre }}</span>
+          </button>
+        }
       </div>
     </div>
 
@@ -186,54 +191,60 @@
     </div>
 
     <!-- TEST PREDETERMINADO (OPCIONAL) -->
-    <div class="section-card" *ngIf="testsDisponibles.length > 0">
-      <div class="section-header">
-        <ion-icon name="clipboard-outline" class="section-icon"></ion-icon>
-        <h3>Test de Evaluacion</h3>
-        <span class="optional-badge">Opcional</span>
-      </div>
-
-      <ion-item lines="none" class="select-item">
-        <ion-select placeholder="Seleccionar test..." interface="action-sheet" (ionChange)="seleccionarTest($event)">
-          <ion-select-option [value]="null">Ninguno</ion-select-option>
-          <ion-select-option *ngFor="let t of testsDisponibles" [value]="t.id">
-            {{ t.nombre }}
-          </ion-select-option>
-        </ion-select>
-      </ion-item>
-
-      <!-- Preguntas del test -->
-      <div *ngIf="testSeleccionado" class="test-preguntas">
-        <div *ngFor="let pregunta of testSeleccionado.preguntas; let i = index" class="test-pregunta-item">
-          <span class="pregunta-texto">{{ i + 1 }}. {{ pregunta.texto }}</span>
-          <div class="pregunta-range-row">
-            <ion-range
-              [(ngModel)]="respuestasTest[i]"
-              [min]="pregunta.puntajeMin"
-              [max]="pregunta.puntajeMax"
-              step="1"
-              snaps="true"
-              ticks="true"
-              (ionChange)="calcularPuntajeTest()">
-              <ion-label slot="start">{{ pregunta.puntajeMin }}</ion-label>
-              <ion-label slot="end">{{ pregunta.puntajeMax }}</ion-label>
-            </ion-range>
-            <span class="pregunta-badge">{{ respuestasTest[i] || 0 }}</span>
-          </div>
+    @if (testsDisponibles.length > 0) {
+      <div class="section-card">
+        <div class="section-header">
+          <ion-icon name="clipboard-outline" class="section-icon"></ion-icon>
+          <h3>Test de Evaluacion</h3>
+          <span class="optional-badge">Opcional</span>
         </div>
 
-        <!-- Resultado -->
-        <div class="test-resultado">
-          <div class="resultado-puntaje">
-            <span class="resultado-label">Puntaje Total:</span>
-            <span class="resultado-valor" [style.color]="getResultadoColor()">{{ puntajeTotal }}</span>
+        <ion-item lines="none" class="select-item">
+          <ion-select placeholder="Seleccionar test..." interface="action-sheet" (ionChange)="seleccionarTest($event)">
+            <ion-select-option [value]="null">Ninguno</ion-select-option>
+            @for (t of testsDisponibles; track t.id) {
+              <ion-select-option [value]="t.id">{{ t.nombre }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+
+        <!-- Preguntas del test -->
+        @if (testSeleccionado) {
+          <div class="test-preguntas">
+            @for (pregunta of testSeleccionado.preguntas; track pregunta; let i = $index) {
+              <div class="test-pregunta-item">
+                <span class="pregunta-texto">{{ i + 1 }}. {{ pregunta.texto }}</span>
+                <div class="pregunta-range-row">
+                  <ion-range
+                    [(ngModel)]="respuestasTest[i]"
+                    [min]="pregunta.puntajeMin"
+                    [max]="pregunta.puntajeMax"
+                    step="1"
+                    snaps="true"
+                    ticks="true"
+                    (ionChange)="calcularPuntajeTest()">
+                    <ion-label slot="start">{{ pregunta.puntajeMin }}</ion-label>
+                    <ion-label slot="end">{{ pregunta.puntajeMax }}</ion-label>
+                  </ion-range>
+                  <span class="pregunta-badge">{{ respuestasTest[i] || 0 }}</span>
+                </div>
+              </div>
+            }
+
+            <!-- Resultado -->
+            <div class="test-resultado">
+              <div class="resultado-puntaje">
+                <span class="resultado-label">Puntaje Total:</span>
+                <span class="resultado-valor" [style.color]="getResultadoColor()">{{ puntajeTotal }}</span>
+              </div>
+              <div class="resultado-clasificacion" [style.color]="getResultadoColor()">
+                {{ resultadoTest }}
+              </div>
+            </div>
           </div>
-          <div class="resultado-clasificacion" [style.color]="getResultadoColor()">
-            {{ resultadoTest }}
-          </div>
-        </div>
+        }
       </div>
-    </div>
+    }
 
     <!-- SPACER FOR FIXED BUTTONS -->
     <div class="botones-spacer"></div>
