@@ -1,21 +1,48 @@
-import { Component } from '@angular/core';
-import { NavController, LoadingController, ToastController, AlertController, IonicModule } from '@ionic/angular';
+import { Component, signal, computed, HostListener } from '@angular/core';
+import {
+  NavController,
+  LoadingController,
+  ToastController,
+  AlertController,
+  IonicModule
+} from '@ionic/angular';
+import { DatePipe } from '@angular/common';
 import { DatabaseService } from '../../services/database.service';
 import { PlatformService } from '../../services/platform.service';
-import { DatePipe } from '@angular/common';
 
 @Component({
-    selector: 'app-pacientes-lista',
-    templateUrl: './pacientes-lista.page.html',
-    styleUrls: ['./pacientes-lista.page.scss'],
-    standalone: true,
-    imports: [IonicModule, DatePipe]
+  selector: 'app-pacientes-lista',
+  templateUrl: './pacientes-lista.page.html',
+  styleUrls: ['./pacientes-lista.page.scss'],
+  standalone: true,
+  imports: [IonicModule, DatePipe]
 })
 export class PacientesListaPage {
+
   tituloPagina: string = 'Lista de Pacientes';
   pacientes: any[] = [];
   estaCargando: boolean = false;
   plataformaInfo: any;
+
+  // 🔎 SEARCH PROFESIONAL
+  busqueda = signal('');
+  mostrarResultados = signal(false);
+
+  pacientesFiltrados = computed(() => {
+    const texto = this.busqueda().toLowerCase().trim();
+
+    if (!texto) return [];
+
+    return this.pacientes.filter(p =>
+      (p.nombre || p.nombre_completo || '')
+        .toLowerCase()
+        .includes(texto)
+      ||
+      (p.rut || '')
+        .toLowerCase()
+        .includes(texto)
+    );
+  });
 
   constructor(
     private navCtrl: NavController,
@@ -34,11 +61,14 @@ export class PacientesListaPage {
     this.cargarPacientes();
   }
 
+  // ==============================
+  // CARGAR PACIENTES
+  // ==============================
+
   async cargarPacientes() {
     this.estaCargando = true;
 
     try {
-      // Siempre usar DatabaseService: maneja localStorage (web) y SQLite (nativo)
       this.pacientes = await this.databaseService.getPacientesConConteoSesiones();
       console.log(`📊 ${this.pacientes.length} pacientes cargados`);
     } catch (error) {
@@ -57,6 +87,28 @@ export class PacientesListaPage {
     }
   }
 
+  // ==============================
+  // SEARCH SELECCIÓN
+  // ==============================
+
+  seleccionarDesdeBusqueda(paciente: any) {
+    this.busqueda.set(paciente.nombre || paciente.nombre_completo);
+    this.mostrarResultados.set(false);
+    this.verDetallePaciente(paciente);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: Event) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.search-container')) {
+      this.mostrarResultados.set(false);
+    }
+  }
+
+  // ==============================
+  // MÉTRICAS
+  // ==============================
+
   get totalPacientes(): number {
     return this.pacientes.length;
   }
@@ -65,17 +117,15 @@ export class PacientesListaPage {
     return this.pacientes.filter(p => p.activo).length;
   }
 
+  // ==============================
+  // NAVEGACIÓN
+  // ==============================
+
   agregarPaciente() {
-    console.log('Navegando a agregar paciente...');
     this.navCtrl.navigateRoot('/agregar-paciente');
   }
 
   verDetallePaciente(paciente: any) {
-    console.log('👤 Ver detalle del paciente:', paciente);
-    console.log('🆔 ID del paciente:', paciente.id);
-    console.log('📊 Número de sesiones:', paciente.num_sesiones || 0);
-
-    // Pasar ID por localStorage (Ionic cachea páginas y query params pueden ser stale)
     localStorage.setItem('ver_paciente_id', String(paciente.id));
     this.navCtrl.navigateRoot('/paciente-detalle');
   }
@@ -84,7 +134,10 @@ export class PacientesListaPage {
     this.navCtrl.navigateRoot('/dashboard');
   }
 
-  // BORRAR TODOS LOS PACIENTES
+  // ==============================
+  // BORRADO MASIVO
+  // ==============================
+
   async borrarTodosLosPacientes() {
     const alert = await this.alertController.create({
       header: '⚠️ Confirmar Eliminación',
@@ -92,15 +145,12 @@ export class PacientesListaPage {
       buttons: [
         {
           text: 'Cancelar',
-          role: 'cancel',
-          cssClass: 'secondary'
+          role: 'cancel'
         },
         {
           text: 'Sí, Eliminar Todo',
           role: 'destructive',
-          handler: () => {
-            this.confirmarBorradoCompleto();
-          }
+          handler: () => this.confirmarBorradoCompleto()
         }
       ]
     });
@@ -108,48 +158,37 @@ export class PacientesListaPage {
     await alert.present();
   }
 
-  // CONFIRMAR Y EJECUTAR BORRADO
   private async confirmarBorradoCompleto() {
     const loading = await this.loadingController.create({
-      message: 'Eliminando todos los pacientes...'
+      message: 'Eliminando pacientes...'
     });
 
     await loading.present();
 
     try {
-      const todosLosPacientes = [...this.pacientes];
-      let eliminadosExitosos = 0;
+      const copiaPacientes = [...this.pacientes];
 
-      // Eliminar uno por uno de Firestore/localStorage
-      for (const paciente of todosLosPacientes) {
-        try {
-          await this.databaseService.deletePaciente(paciente.id);
-          eliminadosExitosos++;
-        } catch (error) {
-          console.error(`Error eliminando paciente ${paciente.id}:`, error);
-        }
+      for (const paciente of copiaPacientes) {
+        await this.databaseService.deletePaciente(paciente.id);
       }
 
-      // Limpiar también todo localStorage por seguridad
       await this.databaseService.clearAllData();
-
       this.pacientes = [];
-      await loading.dismiss();
 
-      if (eliminadosExitosos > 0) {
-        this.mostrarToast(`${eliminadosExitosos} pacientes eliminados exitosamente`, 'success');
-      } else {
-        this.mostrarToast('Datos limpiados', 'success');
-      }
+      await loading.dismiss();
+      this.mostrarToast('Pacientes eliminados correctamente', 'success');
 
     } catch (error) {
-      console.error('Error en borrado completo:', error);
+      console.error('❌ Error eliminando pacientes:', error);
       await loading.dismiss();
       this.mostrarToast('Error eliminando pacientes', 'danger');
     }
   }
 
-  // ✅ MOSTRAR TOAST
+  // ==============================
+  // TOAST
+  // ==============================
+
   async mostrarToast(mensaje: string, color: string = 'primary') {
     const toast = await this.toastController.create({
       message: mensaje,

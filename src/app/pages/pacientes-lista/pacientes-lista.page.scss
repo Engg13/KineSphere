@@ -2,6 +2,7 @@
 
 .page-wrapper {
   padding: 0 16px 100px 16px;
+  overflow: visible;
 }
 
 /* ===== HEADER ===== */
@@ -283,4 +284,39 @@
     width: 56px;
     height: 56px;
   }
+}
+
+/* ===== SEARCH BAR ===== */
+.search-container {
+  position: relative;
+  z-index: 1000;
+}
+
+.dropdown-pacientes {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+
+  max-height: 320px;
+  overflow-y: auto;
+
+  border-radius: 16px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+
+  background: var(--ion-background-color);
+
+  z-index: 9999;
+}
+
+.mini-avatar {
+  background: var(--ion-color-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-avatar.active {
+  background: var(--ion-color-success);
+  color: white;
 }

@@ -23,15 +23,45 @@
       </ion-refresher-content>
     </ion-refresher>
 
-    <!-- SEARCH -->
-    <div class="search-wrapper animated-item">
-      <ion-icon name="search-outline" class="search-icon"></ion-icon>
-      <ion-searchbar
-        placeholder="Buscar paciente..."
-        animated
-        class="custom-searchbar">
-      </ion-searchbar>
-    </div>
+    <!-- SEARCH PROFESIONAL -->
+<div class="search-wrapper animated-item search-container">
+
+  <ion-icon name="search-outline" class="search-icon"></ion-icon>
+
+  <ion-searchbar
+    placeholder="Buscar por nombre o RUT..."
+    animated
+    class="custom-searchbar"
+    [debounce]="250"
+    (ionFocus)="mostrarResultados.set(true)"
+    (ionInput)="busqueda.set($event.target.value)">
+  </ion-searchbar>
+
+  @if (mostrarResultados() && pacientesFiltrados().length > 0) {
+    <ion-list class="dropdown-pacientes">
+
+      @for (pac of pacientesFiltrados(); track pac.id) {
+        <ion-item button (click)="seleccionarDesdeBusqueda(pac)">
+
+          <ion-avatar slot="start" class="mini-avatar" [class.active]="pac.activo">
+            <ion-icon name="person"></ion-icon>
+          </ion-avatar>
+
+          <ion-label>
+            <h2>{{ pac.nombre || pac.nombre_completo }}</h2>
+            <p>
+              {{ pac.rut }}
+              • {{ pac.num_sesiones || 0 }} sesiones
+            </p>
+          </ion-label>
+
+        </ion-item>
+      }
+
+    </ion-list>
+  }
+
+</div>
 
     <!-- LOADING STATE -->
     @if (estaCargando) {
@@ -53,7 +83,7 @@
     }
 
     <!-- PATIENT LIST -->
-    @if (!estaCargando && pacientes.length > 0) {
+    @if (!estaCargando && pacientes.length > 0 && !busqueda()) {
       <div class="patients-list animated-item">
         @for (paciente of pacientes; track paciente; let i = $index) {
           <div class="patient-card" (click)="verDetallePaciente(paciente)">
