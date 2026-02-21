@@ -171,6 +171,16 @@ export class PacienteDetallePage {
     this.navCtrl.navigateBack('/pacientes-lista');
   }
 
+  irAEjercicios() {
+    if (!this.paciente) return;
+    this.navCtrl.navigateRoot('/ejercicios', {
+      queryParams: {
+        pacienteId: this.paciente.id,
+        pacienteNombre: this.paciente.nombre
+      }
+    });
+  }
+
   irADocumentos() {
     if (!this.paciente) return;
     console.log('📄 Navegando a documentos:', this.paciente.nombre);

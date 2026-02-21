@@ -65,6 +65,68 @@ export interface Evaluacion {
   fecha: string;
 }
 
+// ==================== EJERCICIOS ====================
+
+export interface EjercicioLocal {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  instrucciones?: string;
+  categoria: CategoriaEjercicio;
+  musculoPrincipal: string;
+  equipamiento: string;
+  videoUrl?: string;        // URL de YouTube (lista privada)
+  videoThumbnail?: string;  // Thumbnail del video
+  imagenUrl?: string;
+  dificultad: 'basico' | 'intermedio' | 'avanzado';
+  fechaCreacion: string;
+}
+
+export type CategoriaEjercicio =
+  | 'fuerza'
+  | 'estiramiento'
+  | 'movilidad'
+  | 'equilibrio'
+  | 'cardio'
+  | 'funcional'
+  | 'rehabilitacion';
+
+export interface SerieEjercicio {
+  numero: number;
+  repeticiones: number | null;
+  peso: number | null;
+  completada: boolean;
+  tiempo?: number;  // segundos, para ejercicios isométricos
+}
+
+export interface EjercicioEnRutina {
+  ejercicioId: string;
+  ejercicio: EjercicioLocal;
+  letra: string;             // A, B, C...
+  series: SerieEjercicio[];
+  descansoSegundos: number;
+  notas?: string;
+}
+
+export interface RutinaEjercicios {
+  id: string;
+  pacienteId: string | number;
+  pacienteNombre?: string;
+  nombre: string;
+  descripcion?: string;
+  ejercicios: EjercicioEnRutina[];
+  fecha: string;
+  completada: boolean;
+  fechaCompletada?: string;
+  enviadaWhatsapp: boolean;
+}
+
+export interface HistorialEjercicio {
+  fecha: string;
+  series: SerieEjercicio[];
+  rutinaId: string;
+}
+
 export interface BackupData {
   version: string;
   fecha: string;

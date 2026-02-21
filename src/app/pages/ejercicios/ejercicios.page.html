@@ -1,90 +1,425 @@
 <ion-header>
-  <ion-toolbar >
-    <ion-title>
-      <ion-icon name="barbell-outline" slot="start"></ion-icon>
-      Biblioteca de Ejercicios
-    </ion-title>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="volverAtras()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Ejercicios</ion-title>
+    <ion-buttons slot="end">
+      @if (rutinaActiva && vista === 'rutina') {
+        <ion-button (click)="enviarWhatsappConNumero()">
+          <ion-icon name="logo-whatsapp"></ion-icon>
+        </ion-button>
+      }
+    </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Tabs de navegación -->
+  <ion-toolbar color="primary">
+    <ion-segment [(ngModel)]="vista" (ionChange)="cambiarVista(vista)">
+      <ion-segment-button value="rutina">
+        <ion-label>Rutina</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="biblioteca">
+        <ion-label>Biblioteca</ion-label>
+      </ion-segment-button>
+    </ion-segment>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <!-- BOTÓN DE VOLVER EN LA PARTE SUPERIOR DEL CONTENIDO -->
-  <div class="back-button-container" style="margin-bottom: 20px;">
-    <ion-button (click)="volverAtras()" fill="outline" >
-      <ion-icon name="arrow-back" slot="start"></ion-icon>
-      Volver
-    </ion-button>
-  </div>
+<ion-content>
 
-  <!-- BÚSQUEDA -->
-  <div class="search-section">
-    <ion-searchbar
-      [(ngModel)]="terminoBusqueda"
-      (ionChange)="filtrarEjercicios()"
-      placeholder="Buscar ejercicios..."
-      animated>
-    </ion-searchbar>
-  </div>
+  <!-- ==================== VISTA RUTINA ==================== -->
+  @if (vista === 'rutina') {
+    <div class="rutina-container">
 
-  <!-- ESTADOS -->
-  @if (!loading.ejercicios && !error) {
-    <!-- SIN RESULTADOS -->
-    @if (hayResultadosBusqueda) {
-      <div class="no-results">
-        <ion-icon name="fitness-outline"></ion-icon>
-        <h3>No hay coincidencias</h3>
-        <p>No encontramos ejercicios con "{{terminoBusqueda}}"</p>
-        <ion-button fill="clear" (click)="limpiarBusqueda()">
-          Ver todos
-        </ion-button>
-      </div>
-    }
-    <!-- LISTA - SOLO SI HAY EJERCICIOS -->
-    @if (ejerciciosFiltrados && ejerciciosFiltrados.length > 0) {
-      <ion-list lines="none">
-        @for (ejercicio of ejerciciosFiltrados; track trackById($index, ejercicio)) {
-          <ion-item
-            (click)="seleccionarEjercicio(ejercicio)"
-            button
-            detail>
-            <ion-icon
-              slot="start"
-              [name]="getExerciseIcon(ejercicio.categoria)"
-              color="primary">
-            </ion-icon>
-            <ion-label>
-              <h2>{{ejercicio.nombre}}</h2>
-              <p>{{ejercicio.descripcion | slice:0:100}}...</p>
-              <div>
-                <ion-badge color="light">
-                  {{obtenerNombreCategoria(ejercicio.categoria)}}
-                </ion-badge>
-              </div>
-            </ion-label>
-          </ion-item>
+      <!-- Info paciente -->
+      @if (pacienteNombre) {
+        <div class="paciente-header">
+          <ion-icon name="person-circle-outline"></ion-icon>
+          <span>{{ pacienteNombre }}</span>
+        </div>
+      }
+
+      <!-- Sin rutina activa -->
+      @if (!rutinaActiva) {
+        <div class="empty-state">
+          <ion-icon name="barbell-outline"></ion-icon>
+          <h3>Sin rutina activa</h3>
+          <p>Crea una nueva rutina y agrega ejercicios desde la biblioteca</p>
+          <ion-button (click)="crearNuevaRutina()" expand="block" shape="round">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Nueva Rutina
+          </ion-button>
+        </div>
+      }
+
+      <!-- Rutina activa -->
+      @if (rutinaActiva) {
+        <!-- Header rutina -->
+        <div class="rutina-header">
+          <div class="rutina-titulo">
+            <h2>{{ rutinaActiva.nombre }}</h2>
+            <span class="rutina-fecha">{{ rutinaActiva.fecha | date:'dd/MM/yyyy' }}</span>
+          </div>
+          @if (sesionIniciada) {
+            <div class="progreso-badge" [class.completo]="getProgresoRutina() === 100">
+              {{ getProgresoRutina() }}%
+            </div>
+          }
+        </div>
+
+        <!-- Barra de progreso -->
+        @if (sesionIniciada) {
+          <div class="progreso-bar">
+            <div class="progreso-fill" [style.width.%]="getProgresoRutina()"></div>
+          </div>
         }
-      </ion-list>
-    }
-  } @else {
-    <!-- LOADING STATE -->
-    @if (loading.ejercicios) {
-      <div class="loading-state">
-        <ion-spinner name="crescent"></ion-spinner>
-        <p>Cargando ejercicios...</p>
-      </div>
-    }
-    <!-- ERROR STATE -->
-    @if (error && !loading.ejercicios) {
-      <div class="error-state">
-        <ion-icon name="cloud-offline-outline"></ion-icon>
-        <h3>Error</h3>
-        <p>{{error}}</p>
-        <ion-button (click)="recargarDatos()">
-          Reintentar
-        </ion-button>
-      </div>
-    }
+
+        <!-- Sin ejercicios -->
+        @if (rutinaActiva.ejercicios.length === 0) {
+          <div class="empty-ejercicios">
+            <p>No hay ejercicios en esta rutina</p>
+            <ion-button fill="outline" size="small" (click)="cambiarVista('biblioteca')">
+              <ion-icon name="add-outline" slot="start"></ion-icon>
+              Agregar ejercicios
+            </ion-button>
+          </div>
+        }
+
+        <!-- Lista de ejercicios -->
+        @for (ej of rutinaActiva.ejercicios; track trackByEjercicio($index, ej); let i = $index) {
+          <div class="ejercicio-card" [class.completado]="todasSeriesCompletadas(i)">
+
+            <!-- Header del ejercicio -->
+            <div class="ejercicio-header" (click)="toggleEjercicioExpandido(i)">
+              <div class="letra-badge" [style.background]="getColorCategoria(ej.ejercicio.categoria)">
+                {{ ej.letra }}
+              </div>
+              <div class="ejercicio-info">
+                <h3>{{ ej.ejercicio.nombre }}</h3>
+                <span class="ejercicio-meta">
+                  {{ ej.ejercicio.musculoPrincipal }}
+                  @if (sesionIniciada) {
+                    &middot; {{ getSeriesCompletadas(i) }}/{{ ej.series.length }} series
+                  }
+                </span>
+              </div>
+              <div class="ejercicio-actions">
+                @if (ej.ejercicio.videoUrl) {
+                  <ion-button fill="clear" size="small" (click)="abrirVideo(ej.ejercicio.videoUrl!); $event.stopPropagation()">
+                    <ion-icon name="play-circle-outline" color="danger"></ion-icon>
+                  </ion-button>
+                }
+                <ion-icon [name]="isExpandido(i) ? 'chevron-up-outline' : 'chevron-down-outline'" class="expand-icon"></ion-icon>
+              </div>
+            </div>
+
+            <!-- Contenido expandido -->
+            @if (isExpandido(i)) {
+              <div class="ejercicio-body">
+
+                <!-- Video thumbnail -->
+                @if (ej.ejercicio.videoUrl) {
+                  <div class="video-thumbnail" (click)="abrirVideo(ej.ejercicio.videoUrl!)">
+                    @if (getVideoThumbnail(ej.ejercicio.videoUrl!)) {
+                      <img [src]="getVideoThumbnail(ej.ejercicio.videoUrl!)" [alt]="ej.ejercicio.nombre" />
+                    } @else {
+                      <div class="video-placeholder">
+                        <ion-icon name="play-circle-outline"></ion-icon>
+                      </div>
+                    }
+                    <div class="video-overlay">
+                      <ion-icon name="logo-youtube"></ion-icon>
+                      <span>Ver video</span>
+                    </div>
+                  </div>
+                }
+
+                <!-- Descripción -->
+                <p class="ejercicio-desc">{{ ej.ejercicio.descripcion }}</p>
+                @if (ej.ejercicio.instrucciones) {
+                  <p class="ejercicio-instrucciones">{{ ej.ejercicio.instrucciones }}</p>
+                }
+
+                <!-- Link historial -->
+                <div class="historial-link" (click)="verHistorial(ej.ejercicioId, ej.ejercicio.nombre)">
+                  <ion-icon name="time-outline"></ion-icon>
+                  <span>Ver historial</span>
+                </div>
+
+                <!-- Tabla de series -->
+                <div class="series-container">
+                  <div class="series-header">
+                    <span class="col-serie">Serie</span>
+                    <span class="col-reps">Reps</span>
+                    <span class="col-peso">Peso (kg)</span>
+                    <span class="col-check"></span>
+                  </div>
+
+                  @for (serie of ej.series; track trackBySerie($index, serie); let j = $index) {
+                    <div class="serie-row" [class.serie-completada]="serie.completada">
+                      <span class="col-serie">{{ serie.numero }}</span>
+                      <div class="col-reps">
+                        <input type="number"
+                          [value]="serie.repeticiones"
+                          (change)="onRepChange(i, j, $any($event.target).value)"
+                          placeholder="-"
+                          min="0"
+                          [disabled]="!sesionIniciada" />
+                      </div>
+                      <div class="col-peso">
+                        <input type="number"
+                          [value]="serie.peso"
+                          (change)="onPesoChange(i, j, $any($event.target).value)"
+                          placeholder="-"
+                          min="0"
+                          step="0.5"
+                          [disabled]="!sesionIniciada" />
+                      </div>
+                      <div class="col-check">
+                        <button class="check-btn"
+                          [class.checked]="serie.completada"
+                          (click)="toggleSerie(i, j)"
+                          [disabled]="!sesionIniciada">
+                          <ion-icon [name]="serie.completada ? 'checkmark-circle' : 'ellipse-outline'"></ion-icon>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Acciones del ejercicio -->
+                <div class="ejercicio-footer">
+                  @if (sesionIniciada) {
+                    <ion-button fill="clear" size="small" (click)="agregarSerieAEjercicio(i)">
+                      <ion-icon name="add-outline" slot="start"></ion-icon>
+                      Serie
+                    </ion-button>
+                    <ion-button fill="clear" size="small"
+                      [color]="todasSeriesCompletadas(i) ? 'medium' : 'success'"
+                      (click)="cumplimentarTodas(i)">
+                      <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+                      {{ todasSeriesCompletadas(i) ? 'Desmarcar' : 'Completar todas' }}
+                    </ion-button>
+                  }
+                  <ion-button fill="clear" size="small" color="danger" (click)="eliminarEjercicioDeRutina(i)">
+                    <ion-icon name="trash-outline" slot="start"></ion-icon>
+                    Quitar
+                  </ion-button>
+                </div>
+
+                <!-- Descanso -->
+                @if (ej.descansoSegundos) {
+                  <div class="descanso-info">
+                    <ion-icon name="timer-outline"></ion-icon>
+                    Descanso: {{ ej.descansoSegundos }}s
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Botón agregar más -->
+        @if (rutinaActiva.ejercicios.length > 0) {
+          <ion-button fill="outline" expand="block" class="btn-agregar-mas" (click)="cambiarVista('biblioteca')">
+            <ion-icon name="add-outline" slot="start"></ion-icon>
+            Agregar ejercicio
+          </ion-button>
+        }
+
+        <!-- Botón iniciar/finalizar sesión -->
+        <div class="fab-container">
+          @if (!sesionIniciada && rutinaActiva.ejercicios.length > 0) {
+            <ion-button expand="block" shape="round" color="success" class="btn-iniciar" (click)="iniciarSesionEjercicios()">
+              <ion-icon name="play-outline" slot="start"></ion-icon>
+              Iniciar sesion de ejercicios
+            </ion-button>
+          }
+          @if (sesionIniciada) {
+            <ion-button expand="block" shape="round" color="primary" class="btn-finalizar" (click)="completarRutina()">
+              <ion-icon name="flag-outline" slot="start"></ion-icon>
+              Finalizar rutina ({{ getProgresoRutina() }}%)
+            </ion-button>
+          }
+        </div>
+
+        <!-- Rutinas anteriores -->
+        @if (rutinasAnteriores.length > 0) {
+          <div class="seccion-anteriores">
+            <h4>Rutinas anteriores</h4>
+            @for (rut of rutinasAnteriores; track rut.id) {
+              <div class="rutina-anterior-card">
+                <div class="anterior-info">
+                  <strong>{{ rut.nombre }}</strong>
+                  <span>{{ rut.fechaCompletada | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <span class="anterior-ejercicios">{{ rut.ejercicios.length }} ejercicios</span>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
   }
 
-  <!-- LOADING/ERROR TEMPLATE -->
+  <!-- ==================== VISTA BIBLIOTECA ==================== -->
+  @if (vista === 'biblioteca') {
+    <div class="biblioteca-container">
+
+      <!-- Búsqueda -->
+      <ion-searchbar
+        [(ngModel)]="terminoBusqueda"
+        (ionInput)="filtrarEjercicios()"
+        placeholder="Buscar ejercicio..."
+        animated>
+      </ion-searchbar>
+
+      <!-- Categorías -->
+      <div class="categorias-scroll">
+        @for (cat of categorias; track cat.valor) {
+          <button class="categoria-chip"
+            [class.activa]="categoriaFiltro === cat.valor"
+            [style.--chip-color]="cat.color"
+            (click)="filtrarPorCategoria(cat.valor)">
+            <ion-icon [name]="cat.icono"></ion-icon>
+            {{ cat.nombre }}
+          </button>
+        }
+      </div>
+
+      <!-- Botón nuevo ejercicio -->
+      <ion-button fill="outline" expand="block" size="small" class="btn-nuevo" (click)="toggleFormNuevo()">
+        <ion-icon [name]="mostrarFormNuevo ? 'close-outline' : 'add-outline'" slot="start"></ion-icon>
+        {{ mostrarFormNuevo ? 'Cancelar' : 'Crear ejercicio' }}
+      </ion-button>
+
+      <!-- Formulario nuevo ejercicio -->
+      @if (mostrarFormNuevo) {
+        <div class="form-nuevo">
+          <ion-item>
+            <ion-input label="Nombre *" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.nombre" placeholder="Ej: Sentadilla búlgara"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-textarea label="Descripcion" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.descripcion" placeholder="Descripcion del ejercicio" rows="2"></ion-textarea>
+          </ion-item>
+          <ion-item>
+            <ion-textarea label="Instrucciones" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.instrucciones" placeholder="Pasos para realizarlo" rows="2"></ion-textarea>
+          </ion-item>
+          <ion-item>
+            <ion-select label="Categoria" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.categoria">
+              @for (cat of categorias; track cat.valor) {
+                <ion-select-option [value]="cat.valor">{{ cat.nombre }}</ion-select-option>
+              }
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Musculo principal" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.musculoPrincipal" placeholder="Ej: Cuádriceps"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Equipamiento" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.equipamiento" placeholder="Ej: Mancuernas, Banda"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-input label="Video YouTube (URL)" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.videoUrl" placeholder="https://youtube.com/watch?v=..." type="url"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-select label="Dificultad" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.dificultad">
+              <ion-select-option value="basico">Basico</ion-select-option>
+              <ion-select-option value="intermedio">Intermedio</ion-select-option>
+              <ion-select-option value="avanzado">Avanzado</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-button expand="block" (click)="guardarNuevoEjercicio()" class="btn-guardar-nuevo">
+            <ion-icon name="save-outline" slot="start"></ion-icon>
+            Guardar ejercicio
+          </ion-button>
+        </div>
+      }
+
+      <!-- Lista de ejercicios -->
+      @if (ejerciciosFiltrados.length === 0) {
+        <div class="empty-state small">
+          <ion-icon name="search-outline"></ion-icon>
+          <p>No se encontraron ejercicios</p>
+        </div>
+      }
+
+      @for (ejercicio of ejerciciosFiltrados; track trackByEjercicioLocal($index, ejercicio)) {
+        <div class="biblioteca-card">
+          <div class="biblioteca-card-header">
+            <div class="cat-indicator" [style.background]="getColorCategoria(ejercicio.categoria)">
+              <ion-icon [name]="getIconoCategoria(ejercicio.categoria)"></ion-icon>
+            </div>
+            <div class="biblioteca-card-info">
+              <h3>{{ ejercicio.nombre }}</h3>
+              <span class="biblioteca-meta">
+                {{ ejercicio.musculoPrincipal }} &middot; {{ ejercicio.equipamiento }}
+              </span>
+              <p class="biblioteca-desc">{{ ejercicio.descripcion }}</p>
+            </div>
+          </div>
+
+          <div class="biblioteca-card-footer">
+            <span class="dificultad-badge" [attr.data-dif]="ejercicio.dificultad">
+              {{ ejercicio.dificultad }}
+            </span>
+            @if (ejercicio.videoUrl) {
+              <ion-button fill="clear" size="small" color="danger" (click)="abrirVideo(ejercicio.videoUrl!)">
+                <ion-icon name="logo-youtube" slot="start"></ion-icon>
+                Video
+              </ion-button>
+            }
+            <ion-button fill="clear" size="small" color="danger" (click)="eliminarEjercicioBiblioteca(ejercicio)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
+            @if (pacienteId) {
+              <ion-button fill="solid" size="small" color="primary" (click)="agregarARutina(ejercicio)">
+                <ion-icon name="add-outline" slot="start"></ion-icon>
+                Agregar
+              </ion-button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ==================== VISTA HISTORIAL ==================== -->
+  @if (vista === 'historial') {
+    <div class="historial-container">
+      <div class="historial-header">
+        <ion-button fill="clear" (click)="cambiarVista('rutina')">
+          <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+          Volver
+        </ion-button>
+        <h3>{{ ejercicioHistorialNombre }}</h3>
+      </div>
+
+      @if (historialEjercicio.length === 0) {
+        <div class="empty-state small">
+          <ion-icon name="time-outline"></ion-icon>
+          <p>Sin historial aun</p>
+        </div>
+      }
+
+      @for (entrada of historialEjercicio; track entrada.fecha) {
+        <div class="historial-card">
+          <div class="historial-fecha">{{ entrada.fecha | date:'dd/MM/yyyy HH:mm' }}</div>
+          <div class="historial-series">
+            @for (serie of entrada.series; track serie.numero) {
+              <div class="historial-serie-row">
+                <span>Serie {{ serie.numero }}</span>
+                <span>{{ serie.repeticiones || '-' }} reps</span>
+                <span>{{ serie.peso || '-' }} kg</span>
+                <ion-icon [name]="serie.completada ? 'checkmark-circle' : 'close-circle'" [color]="serie.completada ? 'success' : 'medium'"></ion-icon>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
 </ion-content>
