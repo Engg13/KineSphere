@@ -163,7 +163,8 @@ export class SesionPage {
     const el = event.target as HTMLElement;
     const isInput = el.closest('ion-input') || el.closest('ion-textarea') ||
                     el.closest('ion-range') || el.closest('ion-checkbox') ||
-                    el.closest('ion-select') || el.closest('ion-toggle');
+                    el.closest('ion-select') || el.closest('ion-toggle') ||
+                    el.closest('input') || el.closest('textarea');
     if (!isInput) this.cerrarTeclado();
   }
 
@@ -264,6 +265,16 @@ export class SesionPage {
       return;
     }
     this.rutinaSeleccionada = this.rutinasDisponibles.find(r => r.id === rutinaId) || null;
+  }
+
+  irACrearRutina() {
+    if (!this.pacienteId) return;
+    this.navCtrl.navigateRoot('/ejercicios', {
+      queryParams: {
+        pacienteId: this.pacienteId,
+        pacienteNombre: this.pacienteNombre
+      }
+    });
   }
 
   // Tests

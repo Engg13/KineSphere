@@ -156,7 +156,7 @@
     </div>
 
     <!-- RUTINA ASOCIADA -->
-    <div class="section-card" *ngIf="rutinasDisponibles.length > 0">
+    <div class="section-card">
       <div class="section-header">
         <ion-icon name="barbell-outline" class="section-icon"></ion-icon>
         <h3>Rutina Realizada</h3>
@@ -164,26 +164,38 @@
       </div>
       <p class="section-desc">Asociar una rutina de ejercicios a esta sesion</p>
 
-      <ion-item lines="none" class="select-item">
-        <ion-select
-          placeholder="Seleccionar rutina..."
-          interface="action-sheet"
-          (ionChange)="seleccionarRutina($event)">
-          <ion-select-option [value]="null">Ninguna</ion-select-option>
-          <ion-select-option *ngFor="let r of rutinasDisponibles" [value]="r.id">
-            {{ r.nombre }} ({{ r.ejercicios.length }} ej.){{ r.completada ? ' - Completada' : '' }}
-          </ion-select-option>
-        </ion-select>
-      </ion-item>
+      <div *ngIf="rutinasDisponibles.length > 0">
+        <ion-item lines="none" class="select-item">
+          <ion-select
+            placeholder="Seleccionar rutina..."
+            interface="action-sheet"
+            (ionChange)="seleccionarRutina($event)">
+            <ion-select-option [value]="null">Ninguna</ion-select-option>
+            <ion-select-option *ngFor="let r of rutinasDisponibles" [value]="r.id">
+              {{ r.nombre }} ({{ r.ejercicios.length }} ej.){{ r.completada ? ' - Completada' : '' }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
 
-      <!-- Preview de la rutina seleccionada -->
-      <div *ngIf="rutinaSeleccionada" class="rutina-preview">
-        <div *ngFor="let ej of rutinaSeleccionada.ejercicios" class="rutina-preview-item">
-          <span class="preview-letra">{{ ej.letra }}</span>
-          <span class="preview-nombre">{{ ej.ejercicio.nombre }}</span>
-          <span class="preview-series">{{ ej.series.length }}x{{ ej.series[0]?.repeticiones || '-' }}</span>
+        <!-- Preview de la rutina seleccionada -->
+        <div *ngIf="rutinaSeleccionada" class="rutina-preview">
+          <div *ngFor="let ej of rutinaSeleccionada.ejercicios" class="rutina-preview-item">
+            <span class="preview-letra">{{ ej.letra }}</span>
+            <span class="preview-nombre">{{ ej.ejercicio.nombre }}</span>
+            <span class="preview-series">{{ ej.series.length }}x{{ ej.series[0]?.repeticiones || '-' }}</span>
+          </div>
         </div>
       </div>
+
+      <div *ngIf="rutinasDisponibles.length === 0" class="rutina-empty-hint">
+        <p>No hay rutinas creadas para este paciente</p>
+      </div>
+
+      <!-- Atajo: crear rutina para hoy -->
+      <button class="btn-crear-rutina" (click)="irACrearRutina()">
+        <ion-icon name="add-circle-outline"></ion-icon>
+        <span>Crear rutina para hoy</span>
+      </button>
     </div>
 
     <!-- OBSERVACIONES -->

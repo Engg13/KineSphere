@@ -402,6 +402,40 @@
   }
 }
 
+/* ===== RUTINA SECTION ===== */
+.rutina-empty-hint {
+  p {
+    color: #9ca3af;
+    font-size: 0.82rem;
+    margin: 0 0 8px;
+  }
+}
+
+.btn-crear-rutina {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1.5px dashed #0d9488;
+  border-radius: 10px;
+  background: #f0fdfa;
+  color: #0d9488;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 1.1rem;
+  }
+
+  &:active {
+    background: #ccfbf1;
+  }
+}
+
 /* ===== RUTINA PREVIEW ===== */
 .rutina-preview {
   margin-top: 12px;
