@@ -12,6 +12,10 @@
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
+ion-content {
+  --padding-bottom: 80px;
+}
+
 // ==================== PACIENTE HEADER ====================
 .paciente-header {
   display: flex;
@@ -29,6 +33,52 @@
   ion-icon {
     font-size: 1.5rem;
     color: var(--pri);
+  }
+}
+
+// ==================== SELECTOR PACIENTE ====================
+.selector-paciente {
+  margin: 8px 16px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+
+  .selector-titulo {
+    font-size: 0.9rem;
+    color: var(--medium);
+    margin: 0 0 10px;
+    text-align: center;
+  }
+
+  .pacientes-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .paciente-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1.5px solid var(--pri);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--pri);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:active {
+      background: var(--pri);
+      color: #fff;
+    }
+
+    ion-icon {
+      font-size: 1.1rem;
+    }
   }
 }
 
@@ -78,7 +128,7 @@
 
 // ==================== RUTINA ====================
 .rutina-container {
-  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 16px;
 }
 
 .rutina-header {
@@ -575,7 +625,7 @@
 
 // ==================== BIBLIOTECA ====================
 .biblioteca-container {
-  padding: 0 0 calc(40px + env(safe-area-inset-bottom, 0px));
+  padding: 0;
 }
 
 ion-searchbar {

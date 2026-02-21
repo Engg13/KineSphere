@@ -39,6 +39,24 @@
         <div class="paciente-header">
           <ion-icon name="person-circle-outline"></ion-icon>
           <span>{{ pacienteNombre }}</span>
+          <ion-button fill="clear" size="small" (click)="pacienteId = ''; pacienteNombre = ''; cargarDatos()">
+            <ion-icon name="close-circle-outline"></ion-icon>
+          </ion-button>
+        </div>
+      }
+
+      <!-- Selector de paciente cuando no hay uno seleccionado -->
+      @if (!pacienteId && listaPacientes.length > 0) {
+        <div class="selector-paciente">
+          <p class="selector-titulo">Selecciona un paciente para ver sus rutinas</p>
+          <div class="pacientes-lista">
+            @for (pac of listaPacientes; track pac.id) {
+              <button class="paciente-chip" (click)="seleccionarPaciente(pac)">
+                <ion-icon name="person-outline"></ion-icon>
+                <span>{{ pac.nombre || pac.nombre_completo }}</span>
+              </button>
+            }
+          </div>
         </div>
       }
 
@@ -47,7 +65,7 @@
         <div class="empty-state">
           <ion-icon name="barbell-outline"></ion-icon>
           <h3>Sin rutina activa</h3>
-          <p>Crea una nueva rutina y agrega ejercicios desde la biblioteca</p>
+          <p>{{ pacienteNombre ? 'Crea una nueva rutina y agrega ejercicios desde la biblioteca' : 'Selecciona un paciente arriba o crea una rutina general' }}</p>
           <ion-button (click)="crearNuevaRutina()" expand="block" shape="round" class="btn-nueva-rutina">
             <ion-icon name="add-outline" slot="start"></ion-icon>
             Nueva Rutina

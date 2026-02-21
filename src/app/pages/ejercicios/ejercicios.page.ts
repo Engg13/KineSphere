@@ -46,6 +46,9 @@ export class EjerciciosPage implements OnInit {
   historialEjercicio: HistorialEjercicio[] = [];
   ejercicioHistorialNombre: string = '';
 
+  // Selector de pacientes
+  listaPacientes: any[] = [];
+
   // Nuevo/editar ejercicio
   mostrarFormNuevo: boolean = false;
   nuevoEjercicio = this.getEjercicioVacio();
@@ -70,18 +73,27 @@ export class EjerciciosPage implements OnInit {
 
   ionViewDidEnter() {
     this.cargarDatos();
-    this.cargarTelefonoPaciente();
+    this.cargarPacientes();
   }
 
-  private async cargarTelefonoPaciente() {
-    if (!this.pacienteId || this.pacienteId === 'general') return;
+  private async cargarPacientes() {
     try {
-      const pacientes = await this.databaseService.getPacientes();
-      const p = pacientes.find((pac: any) => String(pac.id) === String(this.pacienteId));
-      if (p?.telefono) {
-        this.pacienteTelefono = p.telefono;
+      this.listaPacientes = await this.databaseService.getPacientes();
+      // Si ya tenemos pacienteId, cargar su teléfono
+      if (this.pacienteId && this.pacienteId !== 'general') {
+        const p = this.listaPacientes.find((pac: any) => String(pac.id) === String(this.pacienteId));
+        if (p?.telefono) {
+          this.pacienteTelefono = p.telefono;
+        }
       }
     } catch {}
+  }
+
+  seleccionarPaciente(paciente: any) {
+    this.pacienteId = String(paciente.id);
+    this.pacienteNombre = paciente.nombre || `${paciente.nombre_completo || ''}`.trim();
+    this.pacienteTelefono = paciente.telefono || '';
+    this.cargarDatos();
   }
 
   cargarDatos() {
