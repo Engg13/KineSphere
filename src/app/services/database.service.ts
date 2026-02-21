@@ -3,7 +3,7 @@ import { Platform } from '@ionic/angular';
 import { SQLite, SQLiteObject } from '@awesome-cordova-plugins/sqlite/ngx';
 import { PlatformService } from './platform.service';
 import { FirestoreService } from './firestore.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +11,6 @@ import { firstValueFrom } from 'rxjs';
 export class DatabaseService {
   private db: SQLiteObject | null = null;
   private isInitialized = false;
-  private hasDemoData = false;
   private useFirestore = true; // Flag para activar/desactivar Firestore
 
   constructor(
@@ -94,62 +93,14 @@ export class DatabaseService {
       `, []);
       console.log('✅ Tabla sesiones lista');
       
-      // Verificar si hay datos REALES
-      const result = await this.db.executeSql(
-        'SELECT COUNT(*) as count FROM pacientes WHERE es_demo = 0', []
-      );
-      const count = result.rows.item(0).count;
-      
-      // Solo agregar demo si no hay datos del usuario
-      if (count === 0) {
-        await this.addDemoData();
-        this.hasDemoData = true;
-      }
+      // Limpiar datos demo que pudieran existir de versiones anteriores
+      await this.db.executeSql('DELETE FROM pacientes WHERE es_demo = 1', []);
       
     } catch (error) {
       console.error('Error creando tablas:', error);
     }
   }
 
-  // DATOS DEMO 
-  private async addDemoData() {
-    // Solo agregar datos demo en entorno nativo
-    if (!this.platformService.shouldUseSQLite()) return;
-
-    const demoPacientes = [
-      { 
-        nombre: 'Ana González', 
-        email: 'ana@email.com', 
-        telefono: '+56912345678', 
-        diagnostico: 'Lumbalgia',
-        es_demo: 1  
-      },
-      { 
-        nombre: 'Carlos Méndez', 
-        email: 'carlos@email.com', 
-        telefono: '+56923456789', 
-        diagnostico: 'Artrosis',
-        es_demo: 1  
-      },
-      { 
-        nombre: 'María Silva', 
-        email: 'maria@email.com', 
-        telefono: '+56934567890', 
-        diagnostico: 'Tendinitis',
-        es_demo: 1  
-      }
-    ];
-
-    for (const paciente of demoPacientes) {
-      if (this.db) {
-        await this.db.executeSql(
-          'INSERT INTO pacientes (nombre, email, telefono, diagnostico, es_demo) VALUES (?, ?, ?, ?, ?)',
-          [paciente.nombre, paciente.email, paciente.telefono, paciente.diagnostico, paciente.es_demo]
-        );
-      }
-    }
-    console.log('✅ Datos DEMO agregados (marcados como demo)');
-  }
 
   // ESPERAR INICIALIZACIÓN MEJORADA
   private async waitForInit(): Promise<boolean> {
@@ -181,11 +132,9 @@ export class DatabaseService {
   /**
    * Obtiene el número de sesiones de un paciente
    */
-  async getNumeroSesionesByPaciente(pacienteId: number): Promise<number> {
+  async getNumeroSesionesByPaciente(pacienteId: number | string): Promise<number> {
     // EN WEB - contamos desde localStorage
     if (!this.platformService.shouldUseSQLite()) {
-      console.log('🌐 Modo web - contando sesiones para paciente:', pacienteId);
-      
       try {
         const storedSesiones = localStorage.getItem(`sesiones_${pacienteId}`);
         if (storedSesiones) {
@@ -195,14 +144,8 @@ export class DatabaseService {
       } catch (error) {
         console.log('No hay sesiones en localStorage para paciente:', pacienteId);
       }
-      
-      // Datos demo para desarrollo
-      const demoCounts: { [key: number]: number } = {
-        1: 5,
-        2: 3,
-        3: 7
-      };
-      return demoCounts[pacienteId] || 0;
+
+      return 0;
     }
 
     // EN MÓVIL
@@ -230,14 +173,16 @@ export class DatabaseService {
    */
   async getPacientesConConteoSesiones(): Promise<any[]> {
     const pacientes = await this.getPacientes();
-
-    const pacientesConSesiones = await Promise.all(
-      pacientes.map(async (paciente) => {
-        const numSesiones = await this.getNumeroSesionesByPaciente(paciente.id);
-        return { ...paciente, num_sesiones: numSesiones };
-      })
-    );
-
+    const pacientesConSesiones = [];
+    
+    for (const paciente of pacientes) {
+      const numSesiones = await this.getNumeroSesionesByPaciente(paciente.id);
+      pacientesConSesiones.push({
+        ...paciente,
+        num_sesiones: numSesiones
+      });
+    }
+    
     console.log(`✅ ${pacientesConSesiones.length} pacientes cargados con conteo de sesiones`);
     return pacientesConSesiones;
   }
@@ -249,50 +194,40 @@ export class DatabaseService {
     if (!this.platformService.shouldUseSQLite()) {
       if (this.useFirestore) {
         try {
-          const pacientes = await firstValueFrom(this.firestoreService.getPacientes());
+          const pacientes = await firstValueFrom(
+            this.firestoreService.getPacientes().pipe(timeout(5000))
+          );
           if (pacientes && pacientes.length > 0) {
             return pacientes;
           }
         } catch (err) {
-          console.warn('⚠️ Firestore no disponible, usando localStorage como fuente de datos');
+          console.log('Firestore no disponible o timeout, usando localStorage');
         }
       }
       const userPacientes = this.getUserPacientesFromStorage();
-      return userPacientes.length > 0 ? userPacientes : this.getDemoPacientes();
+      return userPacientes;
     }
 
     const ready = await this.waitForInit();
     if (!ready || !this.db) {
       console.log('📱 SQLite no disponible');
-      return this.getDemoPacientes();
+      return [];
     }
 
     try {
-      // Priorizar pacientes del usuario, demo solo si no hay datos reales
       const result = await this.db.executeSql(
-        'SELECT * FROM pacientes WHERE activo = 1 AND es_demo = 0 ORDER BY id DESC', []
+        'SELECT * FROM pacientes WHERE activo = 1 ORDER BY id DESC', []
       );
-      
+
       const userPacientes = [];
       for (let i = 0; i < result.rows.length; i++) {
         userPacientes.push(result.rows.item(i));
       }
-      
-      // Si no hay pacientes del usuario, incluir demo
-      if (userPacientes.length === 0 && this.hasDemoData) {
-        const demoResult = await this.db.executeSql(
-          'SELECT * FROM pacientes WHERE activo = 1 AND es_demo = 1', []
-        );
-        
-        for (let i = 0; i < demoResult.rows.length; i++) {
-          userPacientes.push(demoResult.rows.item(i));
-        }
-      }
-      
+
       return userPacientes;
     } catch (error) {
       console.error('Error obteniendo pacientes:', error);
-      return this.getDemoPacientes();
+      return [];
     }
   }
 
@@ -300,14 +235,14 @@ export class DatabaseService {
     // EN WEB 
     if (!this.platformService.shouldUseSQLite()) {
       const userPacientes = this.getUserPacientesFromStorage();
-      const userPaciente = userPacientes.find(p => p.id === id);
-      return userPaciente || this.getDemoPacientes().find(p => p.id === id) || null;
+      const userPaciente = userPacientes.find(p => p.id === id || String(p.id) === String(id));
+      return userPaciente || null;
     }
 
     const ready = await this.waitForInit();
     if (!ready || !this.db) {
-      console.log('📱 DB no disponible, paciente demo');
-      return this.getDemoPacientes().find(p => p.id === id) || null;
+      console.log('📱 DB no disponible');
+      return null;
     }
 
     try {
@@ -330,11 +265,15 @@ export class DatabaseService {
 
       if (this.useFirestore) {
         try {
-          const result = await this.firestoreService.addPaciente(paciente);
+          const firestorePromise = this.firestoreService.addPaciente(paciente);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+          );
+          const result: any = await Promise.race([firestorePromise, timeoutPromise]);
           firestoreId = result.id;
           console.log('✅ Paciente guardado en Firestore:', paciente.nombre);
         } catch (err) {
-          console.log('Firestore no disponible, guardando solo en localStorage');
+          console.log('Firestore no disponible o timeout, guardando solo en localStorage');
         }
       }
 
@@ -379,7 +318,11 @@ export class DatabaseService {
     if (!this.platformService.shouldUseSQLite()) {
       if (this.useFirestore) {
         try {
-          await this.firestoreService.deletePaciente(String(id));
+          const deletePromise = this.firestoreService.deletePaciente(String(id));
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+          );
+          await Promise.race([deletePromise, timeoutPromise]);
         } catch (err) {
           console.log('No se pudo eliminar de Firestore:', err);
         }
@@ -445,24 +388,21 @@ export class DatabaseService {
     }
   }
 
-  async getSesionesByPaciente(pacienteId: number): Promise<any[]> {
+  async getSesionesByPaciente(pacienteId: number | string): Promise<any[]> {
     // EN WEB - obtener de localStorage
     if (!this.platformService.shouldUseSQLite()) {
-      console.log('🌐 Modo web - obteniendo sesiones desde localStorage para:', pacienteId);
-      
       try {
         const storedSesiones = localStorage.getItem(`sesiones_${pacienteId}`);
         if (storedSesiones) {
           const sesiones = JSON.parse(storedSesiones);
-          console.log(`✅ ${sesiones.length} sesiones encontradas en localStorage`);
-          return sesiones.sort((a: any, b: any) => 
+          return sesiones.sort((a: any, b: any) =>
             new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime()
           );
         }
       } catch (error) {
         console.log('No hay sesiones en localStorage');
       }
-      
+
       return [];
     }
 
@@ -507,10 +447,14 @@ export class DatabaseService {
 
       if (this.useFirestore) {
         try {
-          await this.firestoreService.addSesion(sesionConId);
+          const sesionPromise = this.firestoreService.addSesion(sesionConId);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+          );
+          await Promise.race([sesionPromise, timeoutPromise]);
           console.log('✅ Sesion guardada en Firestore');
         } catch (err) {
-          console.warn('⚠️ Firestore no disponible para sesión, guardando solo localmente');
+          console.log('Firestore no disponible o timeout para sesion');
         }
       }
 
@@ -571,33 +515,22 @@ export class DatabaseService {
     }
   }
 
-  // DATOS DEMO DE FALLBACK 
-  private getDemoPacientes(): any[] {
-    return [
-      { id: 1, nombre: 'Ana González', email: 'ana@email.com', telefono: '+56912345678', diagnostico: 'Lumbalgia', activo: 1, es_demo: true },
-      { id: 2, nombre: 'Carlos Méndez', email: 'carlos@email.com', telefono: '+56923456789', diagnostico: 'Artrosis', activo: 1, es_demo: true },
-      { id: 3, nombre: 'María Silva', email: 'maria@email.com', telefono: '+56934567890', diagnostico: 'Tendinitis', activo: 1, es_demo: true }
-    ];
-  }
 
   // ESTADÍSTICAS SIMPLES
   async getEstadisticas(): Promise<any> {
     const pacientes = await this.getPacientes();
-    
+
     return {
       totalPacientes: pacientes.length,
       pacientesActivos: pacientes.filter(p => p.activo).length,
-      pacientesReales: pacientes.filter(p => !p.es_demo).length,
-      pacientesDemo: pacientes.filter(p => p.es_demo).length,
       ultimaActualizacion: new Date().toISOString()
     };
   }
 
-  // Método para limpiar datos demo 
-  async clearDemoData(): Promise<void> {
+  // Método para limpiar todos los datos
+  async clearAllData(): Promise<void> {
     if (!this.platformService.shouldUseSQLite()) {
       localStorage.removeItem('user_pacientes');
-      // Limpiar todas las sesiones demo
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('sesiones_')) {
           localStorage.removeItem(key);
@@ -610,74 +543,31 @@ export class DatabaseService {
     if (!ready || !this.db) return;
 
     try {
-      await this.db.executeSql('DELETE FROM pacientes WHERE es_demo = 1', []);
-      this.hasDemoData = false;
-      console.log('✅ Datos demo eliminados');
+      await this.db.executeSql('DELETE FROM sesiones', []);
+      await this.db.executeSql('DELETE FROM pacientes', []);
+      console.log('✅ Todos los datos eliminados');
     } catch (error) {
-      console.error('Error eliminando datos demo:', error);
+      console.error('Error eliminando datos:', error);
     }
   }
 
-  // ==================== MÉTODOS DEMO (MANTENER) ====================
+  // ==================== MÉTODOS AUXILIARES ====================
 
-  /**
-   * Guarda una evaluación final (demo)
-   */
   async guardarEvaluacion(evaluacion: any): Promise<any> {
-    console.log('📄 [DEMO] Evaluación guardada simulada:', {
-      id: evaluacion.id,
-      paciente: evaluacion.pacienteNombre,
-      fecha: new Date().toLocaleString()
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return { 
-      success: true, 
+    console.log('📄 Evaluación guardada:', evaluacion.id);
+    return {
+      success: true,
       message: 'Evaluación guardada exitosamente',
       id: evaluacion.id,
       timestamp: new Date().toISOString()
     };
   }
 
-  /**
-   * Actualiza estado del paciente (demo)
-   */
   async actualizarEstadoPaciente(pacienteId: number, estado: string): Promise<any> {
-    console.log('🔄 [DEMO] Estado actualizado simuladamente:', {
-      pacienteId,
-      nuevoEstado: estado,
-      fecha: new Date().toLocaleString()
-    });
-    
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return { 
-      success: true, 
-      message: `Paciente marcado como: ${estado}`,
-      timestamp: new Date().toISOString()
-    };
+    return this.updatePaciente(pacienteId, { activo: estado === 'activo' });
   }
 
-  /**
-   * Obtener evaluaciones (demo)
-   */
   async getEvaluacionesPorPaciente(pacienteId: number): Promise<any[]> {
-    return [
-      {
-        id: 'eval_001',
-        fecha: '2024-01-15',
-        eva: 3,
-        recomendacion: 'Continuar tratamiento',
-        observaciones: 'Buen progreso en movilidad'
-      },
-      {
-        id: 'eval_002', 
-        fecha: '2024-02-01',
-        eva: 2,
-        recomendacion: 'Alta programada',
-        observaciones: 'Paciente listo para alta'
-      }
-    ];
+    return [];
   }
 }

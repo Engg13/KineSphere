@@ -44,11 +44,6 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: 'visita-domiciliaria',
-    loadChildren: () => import('./pages/visita-domiciliaria/visita-domiciliaria.module').then( m => m.VisitaDomiciliariaPageModule),
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'test-pacientes',
     loadChildren: () => import('./pages/test-pacientes/test-pacientes.module').then( m => m.TestPacientesPageModule),
     canActivate: [AuthGuard]
@@ -66,6 +61,16 @@ const routes: Routes = [
   {
     path: 'config-test',
     loadChildren: () => import('./pages/config-test/config-test.module').then(m => m.ConfigTestPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'tests-config',
+    loadChildren: () => import('./pages/tests-config/tests-config.module').then(m => m.TestsConfigPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'perfil-profesional',
+    loadChildren: () => import('./pages/perfil-profesional/perfil-profesional.module').then(m => m.PerfilProfesionalPageModule),
     canActivate: [AuthGuard]
   },
   

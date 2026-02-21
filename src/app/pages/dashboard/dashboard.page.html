@@ -17,12 +17,9 @@
           <small class="greeting-label">Bienvenido de vuelta</small>
           <h1 class="user-name">{{ usuarioNombre }}</h1>
         </div>
-        @if (plataformaUsada) {
-          <ion-chip class="platform-chip" color="light">
-            <ion-icon name="cloud-outline"></ion-icon>
-            <ion-label>{{ plataformaUsada }}</ion-label>
-          </ion-chip>
-        }
+        <button class="profile-btn" (click)="irAPerfil()">
+          <ion-icon name="person-circle-outline"></ion-icon>
+        </button>
       </div>
     </div>
 
@@ -89,6 +86,14 @@
         <button class="action-btn action-exercise" (click)="irAEjercicios()">
           <ion-icon name="barbell-outline"></ion-icon>
           <span>Ejercicios</span>
+        </button>
+        <button class="action-btn action-tests" (click)="irATests()">
+          <ion-icon name="clipboard-outline"></ion-icon>
+          <span>Tests</span>
+        </button>
+        <button class="action-btn action-example" (click)="cargarPacienteEjemplo()">
+          <ion-icon name="person-add-outline"></ion-icon>
+          <span>Paciente Ejemplo</span>
         </button>
       </div>
 

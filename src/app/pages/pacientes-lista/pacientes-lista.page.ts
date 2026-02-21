@@ -1,9 +1,7 @@
 import { Component } from '@angular/core';
 import { NavController, LoadingController, ToastController, AlertController } from '@ionic/angular';
-import { JsonServerService } from '../../services/json-server.service';
 import { DatabaseService } from '../../services/database.service';
 import { PlatformService } from '../../services/platform.service';
-import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-pacientes-lista',
@@ -21,7 +19,6 @@ export class PacientesListaPage {
 
   constructor(
     private navCtrl: NavController,
-    private jsonServerService: JsonServerService,
     private databaseService: DatabaseService,
     private platformService: PlatformService,
     private loadingController: LoadingController,
@@ -92,171 +89,17 @@ export class PacientesListaPage {
     console.log('👤 Ver detalle del paciente:', paciente);
     console.log('🆔 ID del paciente:', paciente.id);
     console.log('📊 Número de sesiones:', paciente.num_sesiones || 0);
-    
-    this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: { 
-        id: paciente.id,
-        numSesiones: paciente.num_sesiones || 0
-      }
-    });
+
+    // Pasar ID por localStorage (Ionic cachea páginas y query params pueden ser stale)
+    localStorage.setItem('ver_paciente_id', String(paciente.id));
+    this.navCtrl.navigateRoot('/paciente-detalle');
   }
 
   volverAlDashboard() {
     this.navCtrl.navigateRoot('/dashboard');
   }
 
-  // CARGAR PACIENTES DE EJEMPLO - FUNCIONA EN AMBOS ENTORNOS
-  async cargarPacientesEjemplo() {
-    const pacientesEjemplo = [
-      {
-        nombre: "Ana González López",
-        rut: "12.345.678-9",
-        edad: 39,
-        email: "ana.gonzalez@email.com",
-        telefono: "+56 9 8765 4321",
-        diagnostico: "Lumbalgia aguda",
-        sesionesPlanificadas: 8,
-        sesionesCompletadas: 3,
-        num_sesiones: 6,
-        activo: true,
-        fechaCreacion: new Date().toISOString()
-      },
-      {
-        nombre: "Carlos Méndez Rojas", 
-        rut: "23.456.789-0",
-        edad: 46,
-        email: "carlos.mendez@email.com",
-        telefono: "+56 9 7654 3210",
-        diagnostico: "Artrosis de rodilla derecha",
-        sesionesPlanificadas: 10,
-        sesionesCompletadas: 6,
-        num_sesiones: 6,
-        activo: true,
-        fechaCreacion: new Date().toISOString()
-      },
-      {
-        nombre: "María Silva Pérez",
-        rut: "34.567.890-1",
-        edad: 32,
-        email: "maria.silva@email.com",
-        telefono: "+56 9 6543 2109",
-        diagnostico: "Esguince de tobillo izquierdo",
-        sesionesPlanificadas: 6,
-        sesionesCompletadas: 2,
-        num_sesiones: 6,
-        activo: true,
-        fechaCreacion: new Date().toISOString()
-      }
-    ];
-
-    const loading = await this.loadingController.create({
-      message: 'Cargando pacientes de ejemplo...'
-    });
-    
-    await loading.present();
-
-    try {
-      let cargadosExitosos = 0;
-      let errores: string[] = [];
-      
-      console.log('🎯 INICIANDO CARGA DE EJEMPLO...');
-      console.log('📱 Entorno:', this.platformService.getDebugInfo().descripcion);
-      
-      for (const paciente of pacientesEjemplo) {
-        try {
-          console.log(`🔄 Procesando: ${paciente.nombre}`);
-          await this.databaseService.addPaciente(paciente);
-          console.log(`✅ Guardado: ${paciente.nombre}`);
-          cargadosExitosos++;
-          
-        } catch (error) {
-          const errorMsg = `Error con ${paciente.nombre}: ${error}`;
-          console.error(`❌ ${errorMsg}`);
-          errores.push(errorMsg);
-        }
-      }
-
-      await loading.dismiss();
-      
-      if (cargadosExitosos > 0) {
-        this.mostrarToast(`${cargadosExitosos} pacientes cargados`, 'success');
-        await this.cargarPacientes(); // Recargar la lista
-      } else {
-        let mensajeError = 'No se pudieron cargar los pacientes. ';
-        if (errores.length > 0) {
-          mensajeError += 'Errores: ' + errores.join('; ');
-        }
-        this.mostrarToast(mensajeError, 'warning');
-      }
-      
-    } catch (error) {
-      await loading.dismiss();
-      console.error('❌ Error general en carga de ejemplo:', error);
-      this.mostrarToast('Error cargando pacientes de ejemplo: ' + error, 'danger');
-    }
-  }
-
-  // ✅ GUARDAR EN SQLite (PARA NATIVO)
-  private async guardarPacienteEnSQLite(paciente: any): Promise<string> {
-    console.log('📱 Guardando en SQLite:', paciente.nombre);
-    
-    const pacienteSQLite = {
-      nombre: paciente.nombre,
-      rut: paciente.rut,
-      edad: paciente.edad,
-      email: paciente.email,
-      telefono: paciente.telefono,
-      diagnostico: paciente.diagnostico,
-      sesionesPlanificadas: paciente.sesionesPlanificadas || 0,
-      sesionesCompletadas: paciente.sesionesCompletadas || 0,
-      num_sesiones: paciente.sesionesCompletadas || 0,
-      activo: paciente.activo !== undefined ? paciente.activo : true,
-      fechaCreacion: paciente.fechaCreacion || new Date().toISOString(),
-      observaciones: paciente.observaciones || null
-    };
-
-    try {
-      await this.databaseService.addPaciente(pacienteSQLite);
-      console.log('✅ Éxito en SQLite:', paciente.nombre);
-      return 'SQLite';
-      
-    } catch (error) {
-      console.error('❌ Error en SQLite:', error);
-      throw new Error('No se pudo guardar en SQLite: ' + error);
-    }
-  }
-
-  // ✅ GUARDAR EN JSON SERVER (PARA WEB)
-  private async guardarPacienteEnJsonServer(paciente: any): Promise<string> {
-    console.log('🌐 Guardando en JSON Server:', paciente.nombre);
-    
-    const pacienteJson = {
-      nombre: paciente.nombre,
-      rut: paciente.rut,
-      edad: paciente.edad,
-      email: paciente.email,
-      telefono: paciente.telefono,
-      diagnostico: paciente.diagnostico,
-      sesionesPlanificadas: paciente.sesionesPlanificadas || 0,
-      sesionesCompletadas: paciente.sesionesCompletadas || 0,
-      num_sesiones: paciente.sesionesCompletadas || 0,
-      activo: paciente.activo !== undefined ? paciente.activo : true,
-      fechaCreacion: paciente.fechaCreacion || new Date().toISOString(),
-      observaciones: paciente.observaciones || null
-    };
-
-    try {
-      await firstValueFrom(this.jsonServerService.createPaciente(pacienteJson));
-      console.log('✅ Éxito en JSON Server:', paciente.nombre);
-      return 'JSON Server';
-      
-    } catch (error) {
-      console.error('❌ Error en JSON Server:', error);
-      throw new Error('No se pudo guardar en JSON Server: ' + error);
-    }
-  }
-
-  // ✅ BORRAR TODOS LOS PACIENTES
+  // BORRAR TODOS LOS PACIENTES
   async borrarTodosLosPacientes() {
     const alert = await this.alertController.create({
       header: '⚠️ Confirmar Eliminación',
@@ -280,37 +123,42 @@ export class PacientesListaPage {
     await alert.present();
   }
 
-  // ✅ CONFIRMAR Y EJECUTAR BORRADO
+  // CONFIRMAR Y EJECUTAR BORRADO
   private async confirmarBorradoCompleto() {
     const loading = await this.loadingController.create({
       message: 'Eliminando todos los pacientes...'
     });
-    
+
     await loading.present();
 
     try {
+      const todosLosPacientes = [...this.pacientes];
       let eliminadosExitosos = 0;
 
-      const todosLosPacientes = await this.databaseService.getPacientes();
+      // Eliminar uno por uno de Firestore/localStorage
       for (const paciente of todosLosPacientes) {
         try {
           await this.databaseService.deletePaciente(paciente.id);
           eliminadosExitosos++;
         } catch (error) {
-          console.error(`❌ Error eliminando paciente ${paciente.id}:`, error);
+          console.error(`Error eliminando paciente ${paciente.id}:`, error);
         }
       }
 
+      // Limpiar también todo localStorage por seguridad
+      await this.databaseService.clearAllData();
+
+      this.pacientes = [];
       await loading.dismiss();
-      
+
       if (eliminadosExitosos > 0) {
         this.mostrarToast(`${eliminadosExitosos} pacientes eliminados exitosamente`, 'success');
-        await this.cargarPacientes();
       } else {
-        this.mostrarToast('No había pacientes para eliminar', 'warning');
+        this.mostrarToast('Datos limpiados', 'success');
       }
-      
+
     } catch (error) {
+      console.error('Error en borrado completo:', error);
       await loading.dismiss();
       this.mostrarToast('Error eliminando pacientes', 'danger');
     }
@@ -325,33 +173,5 @@ export class PacientesListaPage {
       position: 'bottom'
     });
     await toast.present();
-  }
-
-  // ✅ MÉTODO PARA DEBUG
-  async probarEntorno() {
-    console.log('🐛 === DEBUG ENTORNO ===');
-    const platformInfo = this.platformService.getDebugInfo();
-    console.log('Plataforma:', platformInfo);
-    
-    try {
-      const pacientesSqlite = await this.databaseService.getPacientes();
-      console.log('✅ SQLite funciona:', pacientesSqlite.length, 'pacientes');
-      
-      // Probar también el método con conteo de sesiones
-      const pacientesConSesiones = await this.databaseService.getPacientesConConteoSesiones();
-      console.log('✅ Método con sesiones:', pacientesConSesiones.length, 'pacientes con sesiones');
-      
-    } catch (error) {
-      console.log('❌ SQLite no funciona:', error);
-    }
-    
-    if (!this.platformService.shouldUseSQLite()) {
-      try {
-        const pacientesJson = await firstValueFrom(this.jsonServerService.getPacientes());
-        console.log('✅ JSON Server funciona:', pacientesJson.length, 'pacientes');
-      } catch (error) {
-        console.log('❌ JSON Server no funciona:', error);
-      }
-    }
   }
 }

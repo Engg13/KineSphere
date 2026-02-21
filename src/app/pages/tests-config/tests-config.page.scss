@@ -1,0 +1,443 @@
+.page-container {
+  padding: 0 16px 24px;
+}
+
+// HERO
+.hero-header {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  border-radius: 0 0 24px 24px;
+  padding: 32px 20px 28px;
+  text-align: center;
+  margin: 0 -16px 20px;
+  color: white;
+
+  .hero-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+
+    ion-icon { font-size: 28px; color: white; }
+  }
+
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  p { font-size: 14px; opacity: 0.85; margin: 0; }
+}
+
+// CATALOGO PREDETERMINADOS
+.catalog-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 16px;
+
+  .catalog-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-icon { color: #0d9488; font-size: 20px; }
+  }
+
+  .catalog-desc {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 14px;
+  }
+}
+
+.catalog-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.catalog-item {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 12px;
+  border-left: 3px solid #0d9488;
+  transition: opacity 0.3s;
+
+  &.agregado {
+    opacity: 0.6;
+    border-left-color: #9ca3af;
+  }
+
+  .catalog-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+
+    .catalog-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1f2937;
+      flex: 1;
+      margin-right: 8px;
+    }
+
+    .catalog-item-count {
+      font-size: 11px;
+      color: #6b7280;
+      background: #e5e7eb;
+      padding: 2px 8px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+  }
+
+  .catalog-item-desc {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0 0 8px;
+    line-height: 1.4;
+  }
+
+  .catalog-item-rangos {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+
+    .mini-rango {
+      width: 20px;
+      height: 6px;
+      border-radius: 3px;
+    }
+  }
+
+  .btn-agregar-pred {
+    --color: #0d9488;
+    --border-color: #0d9488;
+    font-size: 13px;
+    height: 34px;
+  }
+
+  .agregado-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #9ca3af;
+    font-weight: 500;
+    padding: 6px 0;
+
+    ion-icon { font-size: 18px; }
+  }
+}
+
+.btn-agregar-todos {
+  --background: linear-gradient(135deg, #0d9488, #14b8a6);
+  --border-radius: 12px;
+  margin-top: 12px;
+  height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+// SEPARADOR
+.separator {
+  display: flex;
+  align-items: center;
+  margin: 20px 0 16px;
+  gap: 12px;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+// BOTON CREAR
+.btn-crear {
+  --background: linear-gradient(135deg, #0d9488, #14b8a6);
+  --border-radius: 14px;
+  margin-bottom: 16px;
+  height: 50px;
+  font-weight: 600;
+}
+
+// EMPTY STATE
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+
+  ion-icon { font-size: 56px; color: #d1d5db; margin-bottom: 12px; }
+  h3 { font-size: 17px; color: #4b5563; margin: 0 0 4px; }
+  p { font-size: 14px; color: #9ca3af; margin: 0; }
+}
+
+// TEST CARD
+.test-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 12px;
+
+  .test-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+
+    .test-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      ion-icon { font-size: 20px; color: white; }
+    }
+
+    .test-info {
+      h3 { font-size: 16px; font-weight: 600; color: #1f2937; margin: 0 0 2px; }
+      p { font-size: 13px; color: #6b7280; margin: 0; }
+    }
+  }
+
+  .test-meta {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: #6b7280;
+
+      ion-icon { font-size: 16px; }
+    }
+  }
+
+  .rangos-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+
+    .rango-chip {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 10px;
+    }
+  }
+
+  .test-actions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #f3f4f6;
+    padding-top: 10px;
+    margin-top: 4px;
+
+    ion-button {
+      font-size: 13px;
+      --padding-start: 8px;
+      --padding-end: 8px;
+    }
+  }
+}
+
+// FORM CARD
+.form-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  margin-bottom: 16px;
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-icon { color: #0d9488; font-size: 20px; }
+  }
+
+  .section-desc {
+    font-size: 13px;
+    color: #6b7280;
+    margin: -8px 0 12px;
+  }
+}
+
+.form-item {
+  --background: #f9fafb;
+  --border-radius: 12px;
+  margin-bottom: 10px;
+  --padding-start: 12px;
+
+  ion-label { font-size: 13px; color: #374151; font-weight: 500; }
+}
+
+// PREGUNTAS
+.pregunta-item {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+
+  .pregunta-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+
+    .pregunta-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0d9488, #14b8a6);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .puntaje-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+
+    .puntaje-field {
+      flex: 1;
+
+      label {
+        font-size: 12px;
+        color: #6b7280;
+        margin-bottom: 4px;
+        display: block;
+      }
+
+      ion-input {
+        --background: white;
+        --padding-start: 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+.btn-agregar {
+  margin-top: 8px;
+  --color: #0d9488;
+  --border-color: #0d9488;
+  font-size: 13px;
+}
+
+.puntaje-total {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #374151;
+  background: rgba(13, 148, 136, 0.08);
+  padding: 8px;
+  border-radius: 8px;
+
+  strong { color: #0d9488; font-size: 18px; }
+}
+
+// RANGOS
+.rango-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 10px;
+
+  .rango-color {
+    width: 16px;
+    height: 40px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .rango-fields {
+    flex: 1;
+    min-width: 0;
+
+    .rango-nombre {
+      --background: white;
+      --padding-start: 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .rango-numeros {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      span { font-size: 13px; color: #6b7280; }
+
+      .rango-num {
+        --background: white;
+        --padding-start: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        width: 60px;
+      }
+    }
+  }
+}
+
+// BOTONES ACCION
+.action-buttons {
+  margin-top: 8px;
+
+  .btn-guardar {
+    --background: linear-gradient(135deg, #0d9488, #14b8a6);
+    --border-radius: 14px;
+    height: 50px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  ion-button[fill="outline"] {
+    --border-color: #d1d5db;
+    --color: #6b7280;
+    --border-radius: 14px;
+  }
+}

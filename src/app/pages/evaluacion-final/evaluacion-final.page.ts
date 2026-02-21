@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { NavController, AlertController, Platform } from '@ionic/angular';
+import { Component } from '@angular/core';
+import { NavController, ViewWillEnter, ToastController } from '@ionic/angular';
+import { DatabaseService } from '../../services/database.service';
+import { PdfService } from '../../services/pdf.services';
 
 @Component({
   selector: 'app-evaluacion-final',
@@ -9,559 +9,287 @@ import { NavController, AlertController, Platform } from '@ionic/angular';
   styleUrls: ['./evaluacion-final.page.scss'],
   standalone: false
 })
-export class EvaluacionFinalPage implements OnInit {
-  paciente: any = null;
-  private pdfUrl: string = '';
-  mostrarConfirmacion: boolean = false;
-  fechaActual = new Date();
-  
-  evaluacionForm: FormGroup = this.fb.group({
-    eva: [null, [Validators.required, Validators.min(0), Validators.max(10)]],
-    movilidad: ['', Validators.required],
-    actividadesDiarias: ['', Validators.required],
-    fortaleza: [null, [Validators.required, Validators.min(0), Validators.max(5)]],
-    sueño: [5, [Validators.min(1), Validators.max(10)]],
-    observaciones: [''],
-    recomendacion: ['', Validators.required]
-  });
+export class EvaluacionFinalPage implements ViewWillEnter {
+  pacientes: any[] = [];
+  pacienteSeleccionado: any = null;
+  sesiones: any[] = [];
+  cargando = false;
+  resumen: any = null;
+  testResults: any[] = [];
+
+  // Clinical narrative fields for PDF
+  evaluacionInicial = '';
+  respuestaTratamiento = '';
+  planTratamiento = '';
 
   constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
     private navCtrl: NavController,
-    private alertController: AlertController,
-    private platform: Platform
+    private databaseService: DatabaseService,
+    private pdfService: PdfService,
+    private toastCtrl: ToastController
   ) {}
 
-  ngOnInit() {
-    this.route.queryParams.subscribe(params => {
-      if (params['pacienteId']) {
-        this.crearPacienteDemo(params['pacienteId']);
-      }
-    });
-    
-    // Inicializar con valores por defecto
-    this.rellenarDemo();
+  async ionViewWillEnter() {
+    this.pacienteSeleccionado = null;
+    this.sesiones = [];
+    this.resumen = null;
+    this.testResults = [];
+    this.evaluacionInicial = '';
+    this.respuestaTratamiento = '';
+    this.planTratamiento = '';
+    await this.cargarPacientes();
   }
 
-  // MÉTODOS PARA PDF
-  descargarPDF() {
-    if (!this.evaluacionForm.valid) {
-      const camposFaltantes = this.obtenerCamposFaltantes();
-      this.mostrarError(`Complete estos campos antes de descargar:\n${camposFaltantes}`);
-      return;
-    }
-
-    const evaluacionData = this.prepararDatosPDF();
-    
-    // Generar contenido HTML para el PDF
-    const contenidoHTML = this.generarContenidoHTML(evaluacionData);
-    
-    // Liberar blob URL anterior si existe
-    if (this.pdfUrl) {
-      URL.revokeObjectURL(this.pdfUrl);
-    }
-
-    // Crear el Blob y descargar
-    const blob = new Blob([contenidoHTML], { type: 'text/html' });
-    this.pdfUrl = URL.createObjectURL(blob);
-
-    // Crear enlace de descarga
-    const link = document.createElement('a');
-    link.href = this.pdfUrl;
-    link.download = `Evaluacion_${this.paciente.nombre.replace(/\s+/g, '_')}_${this.fechaActual.toISOString().split('T')[0]}.html`;
-
-    // Simular clic para descargar
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // Liberar blob URL después de descarga
-    URL.revokeObjectURL(this.pdfUrl);
-    this.pdfUrl = '';
-    
-    this.mostrarExito('✅ PDF descargado correctamente');
-  }
-
-  async compartirPDF() {
-    if (!this.evaluacionForm.valid) {
-      const camposFaltantes = this.obtenerCamposFaltantes();
-      await this.mostrarError(`Complete estos campos antes de compartir:\n${camposFaltantes}`);
-      return;
-    }
-
-    const evaluacionData = this.prepararDatosPDF();
-    const contenidoHTML = this.generarContenidoHTML(evaluacionData);
-    
-    // Para dispositivos móviles
-    if (this.platform.is('cordova') || this.platform.is('capacitor')) {
-      await this.compartirEnMovil(contenidoHTML);
-    } else {
-      // Para navegadores web
-      await this.compartirEnNavegador(contenidoHTML);
-    }
-  }
-
-  private escapeHtml(text: string | undefined | null): string {
-    if (!text) return '';
-    return String(text)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
-  private prepararDatosPDF() {
-    return {
-      paciente: this.paciente,
-      evaluacion: this.evaluacionForm.value,
-      fecha: this.fechaActual.toLocaleDateString('es-CL'),
-      hora: this.fechaActual.toLocaleTimeString('es-CL'),
-      kinesiologo: 'Lic. KineSphere App',
-      progreso: this.calcularProgreso()
-    };
-  }
-
-  private generarContenidoHTML(data: any): string {
-    return `
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Evaluación Final - ${this.escapeHtml(data.paciente.nombre)}</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            line-height: 1.6;
-            color: #333;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-          }
-          .logo {
-            color: #2dd36f;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-          }
-          .titulo {
-            color: #3880ff;
-            border-bottom: 2px solid #3880ff;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-          }
-          .seccion {
-            margin-bottom: 25px;
-          }
-          .datos-paciente {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-          }
-          .datos-paciente h3 {
-            margin-top: 0;
-            color: #555;
-          }
-          .campo {
-            margin-bottom: 10px;
-          }
-          .etiqueta {
-            font-weight: bold;
-            color: #666;
-          }
-          .valor {
-            color: #333;
-          }
-          .resultado {
-            background-color: #e8f5e9;
-            padding: 15px;
-            border-left: 4px solid #2dd36f;
-            margin: 15px 0;
-          }
-          .recomendacion {
-            background-color: #e3f2fd;
-            padding: 15px;
-            border-left: 4px solid #3880ff;
-            margin: 15px 0;
-          }
-          .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #666;
-            font-size: 14px;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-          }
-          th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-          }
-          th {
-            background-color: #f2f2f2;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="logo">KINESPHERE</div>
-          <h1 class="titulo">Evaluación Final de Kinesiología</h1>
-          <p>Documento generado automáticamente - ${data.fecha} ${data.hora}</p>
-        </div>
-
-        <div class="datos-paciente">
-          <h3>📋 Datos del Paciente</h3>
-          <div class="campo">
-            <span class="etiqueta">Nombre:</span>
-            <span class="valor">${this.escapeHtml(data.paciente.nombre)}</span>
-          </div>
-          <div class="campo">
-            <span class="etiqueta">RUT:</span>
-            <span class="valor">${this.escapeHtml(data.paciente.rut)}</span>
-          </div>
-          <div class="campo">
-            <span class="etiqueta">Diagnóstico:</span>
-            <span class="valor">${this.escapeHtml(data.paciente.diagnostico)}</span>
-          </div>
-          <div class="campo">
-            <span class="etiqueta">Fecha de ingreso:</span>
-            <span class="valor">${this.escapeHtml(data.paciente.fechaIngreso)}</span>
-          </div>
-          <div class="campo">
-            <span class="etiqueta">Contacto:</span>
-            <span class="valor">${data.paciente.telefono} | ${data.paciente.email}</span>
-          </div>
-        </div>
-
-        <div class="seccion">
-          <h3>📊 Resultados de la Evaluación</h3>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Parámetro</th>
-                <th>Valor</th>
-                <th>Comentarios</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Escala de dolor (EVA)</strong></td>
-                <td>${data.evaluacion.eva}/10</td>
-                <td>${this.interpretarEVA(data.evaluacion.eva)}</td>
-              </tr>
-              <tr>
-                <td><strong>Movilidad articular</strong></td>
-                <td>${data.evaluacion.movilidad}</td>
-                <td>${this.interpretarMovilidad(data.evaluacion.movilidad)}</td>
-              </tr>
-              <tr>
-                <td><strong>Actividades diarias</strong></td>
-                <td>${data.evaluacion.actividadesDiarias}</td>
-                <td>${this.interpretarActividades(data.evaluacion.actividadesDiarias)}</td>
-              </tr>
-              <tr>
-                <td><strong>Fortaleza muscular</strong></td>
-                <td>${data.evaluacion.fortaleza}/5</td>
-                <td>${this.interpretarFortaleza(data.evaluacion.fortaleza)}</td>
-              </tr>
-              <tr>
-                <td><strong>Calidad del sueño</strong></td>
-                <td>${data.evaluacion.sueño}/10</td>
-                <td>${this.interpretarSueño(data.evaluacion.sueño)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="seccion">
-          <h3>💡 Observaciones</h3>
-          <div class="resultado">
-            <p>${data.evaluacion.observaciones || 'No se registraron observaciones adicionales.'}</p>
-          </div>
-        </div>
-
-        <div class="seccion">
-          <h3>✅ Recomendación Final</h3>
-          <div class="recomendacion">
-            <h4>${this.getRecomendacionTexto()}</h4>
-            <p><strong>Detalles:</strong> ${this.getDetallesRecomendacion(data.evaluacion.recomendacion)}</p>
-          </div>
-        </div>
-
-        <div class="footer">
-          <p>Evaluación realizada por: <strong>${data.kinesiologo}</strong></p>
-          <p>Completitud del formulario: <strong>${data.progreso}%</strong></p>
-          <p>© ${new Date().getFullYear()} KineSphere - Sistema de gestión kinesiológica</p>
-        </div>
-      </body>
-      </html>
-    `;
-  }
-
-  private interpretarEVA(valor: number): string {
-    if (valor <= 3) return 'Dolor leve';
-    if (valor <= 6) return 'Dolor moderado';
-    return 'Dolor intenso';
-  }
-
-  private interpretarMovilidad(valor: string): string {
-    const map: any = {
-      'excelente': 'Amplitud completa sin dolor',
-      'buena': 'Amplitud casi completa, mínima molestia',
-      'regular': 'Amplitud limitada con dolor',
-      'mala': 'Amplitud severamente limitada'
-    };
-    return map[valor] || 'No especificado';
-  }
-
-  private interpretarActividades(valor: string): string {
-    const map: any = {
-      'independiente': 'Realiza todas las actividades sin ayuda',
-      'con_ayuda': 'Requiere asistencia para algunas actividades',
-      'dependiente': 'Requiere ayuda para la mayoría de actividades'
-    };
-    return map[valor] || 'No especificado';
-  }
-
-  private interpretarFortaleza(valor: number): string {
-    if (valor >= 4) return 'Fuerza adecuada';
-    if (valor >= 2) return 'Fuerza moderada';
-    return 'Fuerza deficiente';
-  }
-
-  private interpretarSueño(valor: number): string {
-    if (valor >= 8) return 'Sueño reparador';
-    if (valor >= 5) return 'Sueño interrumpido';
-    return 'Sueño no reparador';
-  }
-
-  getRecomendacionTexto(): string {
-    const map: any = {
-      'alta': '🏥 Alta del tratamiento',
-      'continuar': '🔄 Continuar tratamiento actual',
-      'derivar': '👨‍⚕️ Derivar a especialista',
-      'revision': '📅 Revisión en 1 mes'
-    };
-    return map[this.evaluacionForm.get('recomendacion')?.value] || 'No especificada';
-  }
-
-  private getDetallesRecomendacion(recomendacion: string): string {
-    const detalles: any = {
-      'alta': 'Paciente ha alcanzado los objetivos terapéuticos. Continuar con ejercicios domiciliarios.',
-      'continuar': 'Mantener frecuencia actual de sesiones. Re-evaluar en 4 semanas.',
-      'derivar': 'Se sugiere evaluación por traumatología/neurología según corresponda.',
-      'revision': 'Programar control para evaluar progreso y ajustar tratamiento.'
-    };
-    return detalles[recomendacion] || 'Seguir indicaciones del kinesiólogo tratante.';
-  }
-
-  private async compartirEnNavegador(contenidoHTML: string) {
-    const blob = new Blob([contenidoHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Evaluacion_${this.paciente.nombre.replace(/\s+/g, '_')}_${this.fechaActual.toISOString().split('T')[0]}.html`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
-
-    await this.mostrarExito('Archivo guardado para compartir');
-  }
-
-  private async compartirEnMovil(contenidoHTML: string) {
-    // Para dispositivos móviles
+  async cargarPacientes() {
     try {
-      // Convertir a PDF si es posible, o compartir como texto
-      const textoParaCompartir = `
-        📋 Evaluación Final - ${this.paciente.nombre}
-        
-        Paciente: ${this.paciente.nombre}
-        Fecha: ${this.fechaActual.toLocaleDateString('es-CL')}
-        EVA: ${this.evaluacionForm.get('eva')?.value}/10
-        Recomendación: ${this.getRecomendacionTexto()}
-        
-        Observaciones: ${this.evaluacionForm.get('observaciones')?.value}
-        
-        Documento completo disponible en la aplicación.
-      `;
-      
-      if ((navigator as any).share) {
-        await (navigator as any).share({
-          title: `Evaluación ${this.paciente.nombre}`,
-          text: textoParaCompartir,
-        });
-      } else {
-        await this.mostrarExito('Copie el texto para compartir: ' + textoParaCompartir);
-      }
+      this.pacientes = await this.databaseService.getPacientes();
     } catch (error) {
-      console.error('Error al compartir:', error);
-      await this.mostrarError('No se pudo compartir el documento');
+      console.error('Error cargando pacientes:', error);
+      this.pacientes = [];
     }
   }
 
-  // ... (el resto de tus métodos existentes se mantienen igual)
-  // MÉTODOS DE VALIDACIÓN VISUAL
-  actualizarEstado() {
-    // Este método se llama cada vez que cambia un campo
-    console.log('Estado del formulario:', this.evaluacionForm.valid);
+  async seleccionarPaciente(event: any) {
+    const pacienteId = event?.detail?.value;
+    if (!pacienteId) {
+      this.pacienteSeleccionado = null;
+      this.sesiones = [];
+      this.resumen = null;
+      return;
+    }
+
+    this.cargando = true;
+    try {
+      this.pacienteSeleccionado = this.pacientes.find(
+        p => String(p.id) === String(pacienteId)
+      );
+
+      const sesiones = await this.databaseService.getSesionesByPaciente(pacienteId);
+      this.sesiones = sesiones.sort((a: any, b: any) =>
+        (a.numero_sesion || 0) - (b.numero_sesion || 0)
+      );
+
+      this.calcularResumen();
+      this.extraerTestResults();
+      this.autoRellenarNarrativas();
+    } catch (error) {
+      console.error('Error cargando sesiones:', error);
+      this.sesiones = [];
+      this.resumen = null;
+      this.testResults = [];
+    } finally {
+      this.cargando = false;
+    }
   }
 
-  formularioCompleto(): boolean {
-    return this.evaluacionForm.valid;
-  }
+  private calcularResumen() {
+    if (!this.sesiones.length) {
+      this.resumen = null;
+      return;
+    }
 
-  camposFaltantes(): number {
-    let faltantes = 0;
-    const controles = this.evaluacionForm.controls;
-    
-    // Solo contar campos requeridos
-    if (!controles['eva'].valid) faltantes++;
-    if (!controles['movilidad'].valid) faltantes++;
-    if (!controles['actividadesDiarias'].valid) faltantes++;
-    if (!controles['fortaleza'].valid) faltantes++;
-    if (!controles['recomendacion'].valid) faltantes++;
-    
-    return faltantes;
-  }
+    const primera = this.sesiones[0];
+    const ultima = this.sesiones[this.sesiones.length - 1];
 
-  calcularProgreso(): number {
-    const totalCampos = 5; // Campos requeridos
-    const completados = totalCampos - this.camposFaltantes();
-    return Math.round((completados / totalCampos) * 100);
-  }
+    const evaPrimera = primera.eva ?? primera.nivelDolor ?? null;
+    const evaUltima = ultima.eva ?? ultima.nivelDolor ?? null;
+    const cambioEva = (evaPrimera !== null && evaUltima !== null) ? evaPrimera - evaUltima : null;
 
-  // MÉTODO PARA VERIFICAR ANTES DE GENERAR
-  async verificarYGenerarPDF() {
-  if (!this.evaluacionForm.valid) {
-    const camposFaltantes = this.obtenerCamposFaltantes();
-    await this.mostrarError(`Complete estos campos:\n${camposFaltantes}`);
-    return;
-  }
-  
-  // Mostrar modal de confirmación
-  this.mostrarConfirmacion = true;
-}
+    const suenoPrimero = primera['sue\u00f1o'] ?? primera.calidadSueno ?? primera.sueno ?? null;
+    const suenoUltimo = ultima['sue\u00f1o'] ?? ultima.calidadSueno ?? ultima.sueno ?? null;
+    const cambioSueno = (suenoPrimero !== null && suenoUltimo !== null) ? suenoUltimo - suenoPrimero : null;
 
-cerrarConfirmacion() {
-  this.mostrarConfirmacion = false;
-}
+    const totalEjercicios = this.sesiones.filter(s =>
+      s.ejercicios === 'Realizados' || s.ejerciciosRealizados === true
+    ).length;
 
-  obtenerCamposFaltantes(): string {
-    const faltantes: string[] = [];
-    const controles = this.evaluacionForm.controls;
-    
-    if (!controles['eva'].valid) faltantes.push('• Escala de dolor (EVA)');
-    if (!controles['movilidad'].valid) faltantes.push('• Movilidad articular');
-    if (!controles['actividadesDiarias'].valid) faltantes.push('• Actividades diarias');
-    if (!controles['fortaleza'].valid) faltantes.push('• Fortaleza muscular');
-    if (!controles['recomendacion'].valid) faltantes.push('• Recomendación final');
-    
-    return faltantes.join('\n');
-  }
-
-  // GENERAR PDF 
-
-  async generarPDFDirecto() {
-  console.log('Botón presionado - generarPDFDirecto');
-  
-  // Validación rápida
-  if (this.camposFaltantes() > 0) {
-    await this.mostrarError(`Faltan ${this.camposFaltantes()} campos requeridos`);
-    return;
-  }
-  
-  // Generar PDF
-  this.descargarPDF();
-}
-
-  async generarPDFConfirmado() {
-  // Cerrar el modal
-  this.mostrarConfirmacion = false;
-  
-  // Pequeña pausa para que se cierre el modal
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  try {
-    // Lógica de generación de PDF
-    this.descargarPDF();
-    
-  } catch (error) {
-    console.error('Error generando PDF:', error);
-    await this.mostrarError('❌ Error generando el PDF');
-  }
-}
-
-  // MÉTODOS AUXILIARES
-  rellenarDemo() {
-    this.evaluacionForm.patchValue({
-      eva: 3,
-      movilidad: 'buena',
-      actividadesDiarias: 'independiente',
-      fortaleza: 4,
-      sueño: 7,
-      observaciones: 'Paciente con buena evolución. Se recomienda continuar con ejercicios de fortalecimiento.',
-      recomendacion: 'continuar'
-    });
-  }
-
-  limpiarFormulario() {
-    this.evaluacionForm.reset({
-      eva: null,
-      movilidad: '',
-      actividadesDiarias: '',
-      fortaleza: null,
-      sueño: 5,
-      observaciones: '',
-      recomendacion: ''
-    });
-  }
-
-  private crearPacienteDemo(id: string) {
-    this.paciente = {
-      id: id,
-      nombre: 'Ana González',
-      rut: '12.345.678-9',
-      diagnostico: 'Lumbalgia crónica',
-      fechaIngreso: '15/01/2024',
-      telefono: '+56 9 1234 5678',
-      email: 'ana.gonzalez@email.com'
+    this.resumen = {
+      totalSesiones: this.sesiones.length,
+      fechaInicio: primera.fecha || primera.fecha_creacion,
+      fechaFin: ultima.fecha || ultima.fecha_creacion,
+      evaPrimera,
+      evaUltima,
+      cambioEva,
+      suenoPrimero,
+      suenoUltimo,
+      cambioSueno,
+      totalEjercicios,
+      porcentajeEjercicios: Math.round((totalEjercicios / this.sesiones.length) * 100),
+      planificadas: this.pacienteSeleccionado?.sesionesPlanificadas || 10
     };
   }
 
-  private async mostrarExito(mensaje: string) {
-    const alert = await this.alertController.create({
-      header: 'Éxito',
-      message: mensaje,
-      buttons: ['OK']
-    });
-    await alert.present();
+  private extraerTestResults() {
+    this.testResults = this.sesiones
+      .filter(s => s.test && s.test.testNombre)
+      .map(s => ({
+        sesionNumero: s.numero_sesion,
+        fecha: s.fecha || s.fecha_creacion,
+        testNombre: s.test.testNombre,
+        puntajeTotal: s.test.puntajeTotal,
+        resultado: s.test.resultado,
+        respuestas: s.test.respuestas || []
+      }));
   }
 
-  private async mostrarError(mensaje: string) {
-    const alert = await this.alertController.create({
-      header: 'Atención',
-      message: mensaje,
-      buttons: ['OK']
+  private autoRellenarNarrativas() {
+    if (!this.resumen || !this.pacienteSeleccionado) return;
+    const p = this.pacienteSeleccionado;
+    const r = this.resumen;
+
+    // Auto-populate evaluacion inicial with available data
+    const evaInicial = r.evaPrimera !== null ? `EVA inicial: ${r.evaPrimera}/10.` : '';
+    this.evaluacionInicial = `Paciente ingresa con diagnostico de ${p.diagnostico || '...'}.${evaInicial ? ' ' + evaInicial : ''} `;
+
+    // Auto-populate respuesta al tratamiento
+    const numSesiones = r.totalSesiones;
+    let evolucion = '';
+    if (r.cambioEva !== null) {
+      if (r.cambioEva > 0) evolucion = `EVA disminuye de ${r.evaPrimera} a ${r.evaUltima}.`;
+      else if (r.cambioEva < 0) evolucion = `EVA aumenta de ${r.evaPrimera} a ${r.evaUltima}.`;
+      else evolucion = `EVA se mantiene en ${r.evaUltima}.`;
+    }
+    this.respuestaTratamiento = `Se realizan ${numSesiones} sesiones de KNT. ${evolucion} Ejercicios domiciliarios: ${r.porcentajeEjercicios}% cumplimiento. `;
+
+    this.planTratamiento = '';
+  }
+
+  getTestResultColor(resultado: string): string {
+    // Try to find matching rango color from stored templates
+    try {
+      const templates = JSON.parse(localStorage.getItem('test_templates') || '[]');
+      for (const t of templates) {
+        const rango = (t.rangos || []).find((r: any) => r.nombre === resultado);
+        if (rango && rango.color) return rango.color;
+      }
+    } catch {}
+    // Default colors based on common result patterns
+    if (resultado.toLowerCase().includes('normal') || resultado.toLowerCase().includes('leve')) return '#10b981';
+    if (resultado.toLowerCase().includes('moderado') || resultado.toLowerCase().includes('medio')) return '#f59e0b';
+    if (resultado.toLowerCase().includes('severo') || resultado.toLowerCase().includes('grave')) return '#ef4444';
+    return '#0d9488';
+  }
+
+  // SVG chart helpers
+  getEvaCircles(): { cx: number; cy: number; value: number }[] {
+    if (!this.sesiones.length) return [];
+    const w = 280, h = 140, pad = 20;
+    return this.sesiones.map((s, i) => {
+      const cx = this.sesiones.length === 1 ? w / 2 : pad + (i / (this.sesiones.length - 1)) * (w - 2 * pad);
+      const eva = s.eva ?? s.nivelDolor ?? 0;
+      const cy = pad + ((10 - eva) / 10) * (h - 2 * pad);
+      return { cx, cy, value: eva };
     });
-    await alert.present();
+  }
+
+  getEvaPolyline(): string {
+    return this.getEvaCircles().map(p => `${p.cx},${p.cy}`).join(' ');
+  }
+
+  getSuenoCircles(): { cx: number; cy: number; value: number }[] {
+    if (!this.sesiones.length) return [];
+    const w = 280, h = 140, pad = 20;
+    return this.sesiones.map((s, i) => {
+      const cx = this.sesiones.length === 1 ? w / 2 : pad + (i / (this.sesiones.length - 1)) * (w - 2 * pad);
+      const val = s['sue\u00f1o'] ?? s.calidadSueno ?? s.sueno ?? 0;
+      const cy = pad + ((10 - val) / 10) * (h - 2 * pad);
+      return { cx, cy, value: val };
+    });
+  }
+
+  getSuenoPolyline(): string {
+    return this.getSuenoCircles().map(p => `${p.cx},${p.cy}`).join(' ');
+  }
+
+  formatearFecha(fechaString: string): string {
+    if (!fechaString) return '-';
+    try {
+      if (fechaString.includes('/')) return fechaString;
+      const fecha = new Date(fechaString);
+      if (isNaN(fecha.getTime())) return fechaString;
+      return fecha.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch {
+      return fechaString;
+    }
+  }
+
+  getEvaColor(valor: number): string {
+    if (valor <= 3) return '#10b981';
+    if (valor <= 6) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  getSuenoColor(valor: number): string {
+    if (valor >= 7) return '#10b981';
+    if (valor >= 4) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  // Helper to access sueño without ñ in templates (Angular lexer doesn't support ñ)
+  getSuenoValue(s: any): number | null {
+    return s['sue\u00f1o'] ?? s.calidadSueno ?? s.sueno ?? null;
+  }
+
+  async generarPDF() {
+    if (!this.pacienteSeleccionado || !this.resumen) return;
+    try {
+      this.pdfService.generarInformePaciente({
+        paciente: this.pacienteSeleccionado,
+        sesiones: this.sesiones,
+        resumen: this.resumen,
+        testResults: this.testResults,
+        evaluacionInicial: this.evaluacionInicial,
+        respuestaTratamiento: this.respuestaTratamiento,
+        planTratamiento: this.planTratamiento
+      });
+      const toast = await this.toastCtrl.create({
+        message: 'PDF generado correctamente',
+        duration: 2000,
+        color: 'success',
+        position: 'bottom'
+      });
+      await toast.present();
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      const toast = await this.toastCtrl.create({
+        message: 'Error al generar el PDF',
+        duration: 2000,
+        color: 'danger',
+        position: 'bottom'
+      });
+      await toast.present();
+    }
+  }
+
+  async generarDetalleSesionesPDF() {
+    if (!this.pacienteSeleccionado || !this.sesiones.length) return;
+    try {
+      await this.pdfService.generarDetalleSesiones({
+        paciente: this.pacienteSeleccionado,
+        sesiones: this.sesiones,
+        resumen: this.resumen,
+        testResults: this.testResults
+      });
+      const toast = await this.toastCtrl.create({
+        message: 'Carta ISAPRE generada (.docx)',
+        duration: 2000,
+        color: 'success',
+        position: 'bottom'
+      });
+      await toast.present();
+    } catch (error) {
+      console.error('Error generando carta ISAPRE:', error);
+      const toast = await this.toastCtrl.create({
+        message: 'Error al generar la carta ISAPRE',
+        duration: 2000,
+        color: 'danger',
+        position: 'bottom'
+      });
+      await toast.present();
+    }
   }
 
   volverAtras() {
-  this.navCtrl.back();
-}
+    this.navCtrl.navigateRoot('/dashboard');
+  }
 }

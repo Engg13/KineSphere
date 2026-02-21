@@ -106,16 +106,14 @@
     }
 
     <!-- ACTION BUTTONS -->
-    <div class="bottom-actions animated-item">
-      <button class="util-btn util-load" (click)="cargarPacientesEjemplo()" [disabled]="estaCargando">
-        <ion-icon name="cloud-download-outline"></ion-icon>
-        <span>Cargar Ejemplo (3)</span>
-      </button>
-      <button class="util-btn util-delete" (click)="borrarTodosLosPacientes()" [disabled]="estaCargando || pacientes.length === 0">
-        <ion-icon name="trash-outline"></ion-icon>
-        <span>Borrar Todos</span>
-      </button>
-    </div>
+    @if (pacientes.length > 0) {
+      <div class="bottom-actions animated-item">
+        <button class="util-btn util-delete" (click)="borrarTodosLosPacientes()" [disabled]="estaCargando">
+          <ion-icon name="trash-outline"></ion-icon>
+          <span>Borrar Todos</span>
+        </button>
+      </div>
+    }
   </div>
 
   <!-- FAB BUTTON -->

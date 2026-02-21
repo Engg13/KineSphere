@@ -1,6 +1,6 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>KineSphere - Nuevo Paciente</ion-title>
+    <ion-title>KineSphere - {{ modoEdicion ? 'Editar Paciente' : 'Nuevo Paciente' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -9,10 +9,10 @@
     <!-- HEADER PERSONALIZADO -->
     <div class="custom-header">
       <div class="main-title">
-        <h1>Nuevo Paciente</h1>
+        <h1>{{ modoEdicion ? 'Editar Paciente' : 'Nuevo Paciente' }}</h1>
       </div>
       <div class="subtitle">
-        <p>Completa la información del paciente</p>
+        <p>{{ modoEdicion ? 'Modifica la información del paciente' : 'Completa la información del paciente' }}</p>
       </div>
     </div>
 
@@ -145,7 +145,7 @@
         [disabled]="!formularioValido()"
         class="animated-item">
         <ion-icon slot="start" name="save"></ion-icon>
-        Guardar Paciente
+        {{ modoEdicion ? 'Actualizar Paciente' : 'Guardar Paciente' }}
       </ion-button>
 
       <ion-button

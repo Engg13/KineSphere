@@ -4,17 +4,17 @@ import { FormsModule } from '@angular/forms';
 
 import { IonicModule } from '@ionic/angular';
 
-import { EvaluacionFinalPageRoutingModule } from './evaluacion-final-routing.module';
+import { TestsConfigPageRoutingModule } from './tests-config-routing.module';
 
-import { EvaluacionFinalPage } from './evaluacion-final.page';
+import { TestsConfigPage } from './tests-config.page';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    EvaluacionFinalPageRoutingModule
+    TestsConfigPageRoutingModule
   ],
-  declarations: [EvaluacionFinalPage]
+  declarations: [TestsConfigPage]
 })
-export class EvaluacionFinalPageModule {}
+export class TestsConfigPageModule {}
