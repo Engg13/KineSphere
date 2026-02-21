@@ -78,7 +78,7 @@
 
 // ==================== RUTINA ====================
 .rutina-container {
-  padding-bottom: 100px;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
 }
 
 .rutina-header {
@@ -575,7 +575,7 @@
 
 // ==================== BIBLIOTECA ====================
 .biblioteca-container {
-  padding: 0 0 100px;
+  padding: 0 0 calc(40px + env(safe-area-inset-bottom, 0px));
 }
 
 ion-searchbar {
