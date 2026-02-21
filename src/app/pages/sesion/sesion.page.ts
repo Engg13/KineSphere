@@ -2,6 +2,8 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
 import { NavController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { DatabaseService } from 'src/app/services/database.service';
+import { EjerciciosService } from 'src/app/services/ejercicios.service';
+import { RutinaEjercicios } from 'src/app/models/interfaces';
 
 @Component({
   selector: 'app-sesion',
@@ -66,13 +68,18 @@ export class SesionPage {
   puntajeTotal = 0;
   resultadoTest = '';
 
+  // Rutinas disponibles para asociar
+  rutinasDisponibles: RutinaEjercicios[] = [];
+  rutinaSeleccionada: RutinaEjercicios | null = null;
+
   @ViewChild('observacionesTextarea') observacionesTextarea!: ElementRef;
 
   constructor(
     private navCtrl: NavController,
     private router: Router,
     private databaseService: DatabaseService,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private ejerciciosService: EjerciciosService
   ) {}
 
   ionViewDidEnter() {
@@ -102,9 +109,13 @@ export class SesionPage {
     this.puntajeTotal = 0;
     this.resultadoTest = '';
 
+    this.rutinaSeleccionada = null;
+    this.rutinasDisponibles = [];
+
     this.cargarTestsDisponibles();
     this.calcularNumeroSesion();
     this.cargarDatosPaciente();
+    this.cargarRutinasDisponibles();
   }
 
   async cargarDatosPaciente() {
@@ -201,6 +212,19 @@ export class SesionPage {
         enviado_whatsapp: false
       };
 
+      // Include linked routine if selected
+      if (this.rutinaSeleccionada) {
+        datosSesion.rutina = {
+          rutinaId: this.rutinaSeleccionada.id,
+          rutinaNombre: this.rutinaSeleccionada.nombre,
+          ejercicios: this.rutinaSeleccionada.ejercicios.map(ej => ({
+            nombre: ej.ejercicio.nombre,
+            series: ej.series.length,
+            seriesCompletadas: ej.series.filter(s => s.completada).length
+          }))
+        };
+      }
+
       // Include test results if applied
       if (this.testSeleccionado) {
         datosSesion.test = {
@@ -224,6 +248,22 @@ export class SesionPage {
       console.error('Error al guardar sesion:', error);
       this.mostrarToast('Error al guardar la sesion. Intente nuevamente.', 'danger');
     }
+  }
+
+  // Rutinas
+  cargarRutinasDisponibles() {
+    if (!this.pacienteId) return;
+    const rutinas = this.ejerciciosService.getRutinasPorPaciente(this.pacienteId);
+    this.rutinasDisponibles = rutinas;
+  }
+
+  seleccionarRutina(event: any) {
+    const rutinaId = event?.detail?.value;
+    if (!rutinaId) {
+      this.rutinaSeleccionada = null;
+      return;
+    }
+    this.rutinaSeleccionada = this.rutinasDisponibles.find(r => r.id === rutinaId) || null;
   }
 
   // Tests

@@ -223,16 +223,129 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
-.session-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 0;
+.session-item-wrapper {
   border-bottom: 1px solid #f3f4f6;
 
   &:last-child {
     border-bottom: none;
   }
+}
+
+.session-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+
+  &.clickable {
+    cursor: pointer;
+  }
+}
+
+.session-expand-icon {
+  color: #9ca3af;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* ===== SESSION DETAIL (EXPANDED) ===== */
+.session-detail {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0 0 12px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+
+  ion-icon {
+    font-size: 1rem;
+    color: #0d9488;
+    flex-shrink: 0;
+  }
+
+  &.detail-row-wrap {
+    flex-wrap: wrap;
+  }
+
+  &.detail-row-block {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .detail-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.detail-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.detail-chip {
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  color: #0d9488;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.detail-text {
+  font-size: 0.82rem;
+  color: #374151;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+.detail-rutina-list {
+  margin-left: 44px;
+  margin-top: 4px;
+}
+
+.detail-rutina-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.8rem;
+  color: #374151;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.detail-rutina-series {
+  color: #0d9488;
+  font-weight: 600;
+  font-size: 0.75rem;
 }
 
 .session-number {

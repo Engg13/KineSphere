@@ -16,6 +16,7 @@ export class PacienteDetallePage {
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
   rutinasCompletadas: RutinaEjercicios[] = [];
+  sesionesExpandidas: Set<string | number> = new Set();
   pacienteId: string = '';
   fechaActual = new Date().toISOString();
 
@@ -168,7 +169,20 @@ export class PacienteDetallePage {
     }
   }
 
-  // ✅ MÉTODOS DE NAVEGACIÓN (MANTENER TUS MÉTODOS ORIGINALES)
+  // Sesiones expandidas
+  toggleSesionExpandida(sesionId: string | number) {
+    if (this.sesionesExpandidas.has(sesionId)) {
+      this.sesionesExpandidas.delete(sesionId);
+    } else {
+      this.sesionesExpandidas.add(sesionId);
+    }
+  }
+
+  isSesionExpandida(sesionId: string | number): boolean {
+    return this.sesionesExpandidas.has(sesionId);
+  }
+
+  // MÉTODOS DE NAVEGACIÓN
   nuevaSesion() {
     if (!this.paciente) return;
     

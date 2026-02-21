@@ -146,15 +146,101 @@
 
         @if (historialSesiones.length > 0) {
           @for (sesion of historialSesiones; track sesion.id || $index; let i = $index) {
-            <div class="session-item">
-              <div class="session-number">{{ sesion.numero_sesion || (historialSesiones.length - i) }}</div>
-              <div class="session-info">
-                <span class="session-date">{{ sesion.fecha || 'Sin fecha' }}</span>
-                <span class="session-eva">EVA: {{ sesion.eva ?? sesion.nivel_dolor ?? '-' }}/10</span>
-                @if (sesion.observaciones) {
-                  <span class="session-obs">{{ sesion.observaciones }}</span>
-                }
+            <div class="session-item-wrapper">
+              <div class="session-item clickable" (click)="toggleSesionExpandida(sesion.id)">
+                <div class="session-number">{{ sesion.numero_sesion || (historialSesiones.length - i) }}</div>
+                <div class="session-info">
+                  <span class="session-date">{{ sesion.fecha || 'Sin fecha' }}</span>
+                  <span class="session-eva">EVA: {{ sesion.eva ?? sesion.nivel_dolor ?? '-' }}/10</span>
+                  @if (sesion.observaciones && !isSesionExpandida(sesion.id)) {
+                    <span class="session-obs">{{ sesion.observaciones }}</span>
+                  }
+                </div>
+                <ion-icon [name]="isSesionExpandida(sesion.id) ? 'chevron-up-outline' : 'chevron-down-outline'" class="session-expand-icon"></ion-icon>
               </div>
+
+              <!-- DETALLE EXPANDIDO -->
+              @if (isSesionExpandida(sesion.id)) {
+                <div class="session-detail">
+                  @if (sesion.zona_tratamiento) {
+                    <div class="detail-row">
+                      <ion-icon name="body-outline"></ion-icon>
+                      <span class="detail-label">Zona:</span>
+                      <span class="detail-value">{{ sesion.zona_tratamiento }}</span>
+                    </div>
+                  }
+                  @if (sesion.sueno || sesion.calidad_sueno) {
+                    <div class="detail-row">
+                      <ion-icon name="moon-outline"></ion-icon>
+                      <span class="detail-label">Sueno:</span>
+                      <span class="detail-value">{{ sesion.sueno ?? sesion.calidad_sueno }}/5</span>
+                    </div>
+                  }
+                  @if (sesion.tecnicas_aplicadas?.length > 0) {
+                    <div class="detail-row detail-row-wrap">
+                      <ion-icon name="hand-left-outline"></ion-icon>
+                      <span class="detail-label">Tecnicas:</span>
+                      <div class="detail-chips">
+                        @for (tec of sesion.tecnicas_aplicadas; track tec) {
+                          <span class="detail-chip">{{ tec }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                  @if (sesion.rom) {
+                    <div class="detail-row">
+                      <ion-icon name="resize-outline"></ion-icon>
+                      <span class="detail-label">ROM:</span>
+                      <span class="detail-value">{{ sesion.rom }}</span>
+                    </div>
+                  }
+                  @if (sesion.ejercicios) {
+                    <div class="detail-row">
+                      <ion-icon name="fitness-outline"></ion-icon>
+                      <span class="detail-label">Ejercicios:</span>
+                      <span class="detail-value">{{ sesion.ejercicios }}</span>
+                    </div>
+                  }
+                  @if (sesion.rutina) {
+                    <div class="detail-row detail-row-wrap">
+                      <ion-icon name="barbell-outline"></ion-icon>
+                      <span class="detail-label">Rutina:</span>
+                      <span class="detail-value">{{ sesion.rutina.rutinaNombre }}</span>
+                    </div>
+                    @if (sesion.rutina.ejercicios?.length > 0) {
+                      <div class="detail-rutina-list">
+                        @for (ej of sesion.rutina.ejercicios; track ej.nombre) {
+                          <div class="detail-rutina-item">
+                            <span>{{ ej.nombre }}</span>
+                            <span class="detail-rutina-series">{{ ej.seriesCompletadas }}/{{ ej.series }} series</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  }
+                  @if (sesion.observaciones) {
+                    <div class="detail-row detail-row-block">
+                      <ion-icon name="document-text-outline"></ion-icon>
+                      <span class="detail-label">Observaciones:</span>
+                      <p class="detail-text">{{ sesion.observaciones }}</p>
+                    </div>
+                  }
+                  @if (sesion.objetivo_proxima) {
+                    <div class="detail-row detail-row-block">
+                      <ion-icon name="flag-outline"></ion-icon>
+                      <span class="detail-label">Objetivo proxima:</span>
+                      <p class="detail-text">{{ sesion.objetivo_proxima }}</p>
+                    </div>
+                  }
+                  @if (sesion.test) {
+                    <div class="detail-row">
+                      <ion-icon name="clipboard-outline"></ion-icon>
+                      <span class="detail-label">Test:</span>
+                      <span class="detail-value">{{ sesion.test.testNombre }} - {{ sesion.test.resultado }} ({{ sesion.test.puntajeTotal }}pts)</span>
+                    </div>
+                  }
+                </div>
+              }
             </div>
           }
         } @else {

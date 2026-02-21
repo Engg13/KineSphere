@@ -233,13 +233,13 @@
         <!-- Botón iniciar/finalizar sesión -->
         <div class="fab-container">
           @if (!sesionIniciada && rutinaActiva.ejercicios.length > 0) {
-            <ion-button expand="block" shape="round" color="success" class="btn-iniciar" (click)="iniciarSesionEjercicios()">
+            <ion-button expand="block" shape="round" class="btn-iniciar" (click)="iniciarSesionEjercicios()">
               <ion-icon name="play-outline" slot="start"></ion-icon>
               Iniciar sesion de ejercicios
             </ion-button>
           }
           @if (sesionIniciada) {
-            <ion-button expand="block" shape="round" color="primary" class="btn-finalizar" (click)="completarRutina()">
+            <ion-button expand="block" shape="round" class="btn-finalizar" (click)="completarRutina()">
               <ion-icon name="flag-outline" slot="start"></ion-icon>
               Finalizar rutina ({{ getProgresoRutina() }}%)
             </ion-button>
