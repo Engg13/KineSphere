@@ -1,0 +1,161 @@
+<ion-content [fullscreen]="true">
+  <div class="perfil-wrapper">
+    <!-- HEADER -->
+    <div class="perfil-header">
+      <div class="header-top">
+        <button class="back-btn" (click)="volver()">
+          <ion-icon name="arrow-back"></ion-icon>
+        </button>
+        <h1 class="header-title">Mi Perfil</h1>
+        <div class="header-spacer"></div>
+      </div>
+      <div class="avatar-section">
+        <div class="avatar-circle">
+          <ion-icon name="person"></ion-icon>
+        </div>
+        <p class="avatar-username">{{ username }}</p>
+      </div>
+    </div>
+
+    <!-- DATOS PROFESIONALES SECTION -->
+    <div class="section-card">
+      <div class="section-title-row">
+        <ion-icon name="create-outline" class="section-icon"></ion-icon>
+        <h3>Datos Profesionales</h3>
+      </div>
+      <p class="section-description">Estos datos aparecen en los informes PDF y en la carta ISAPRE</p>
+
+      <div class="input-group">
+        <label class="input-label">Nombre completo</label>
+        <input
+          type="text"
+          class="perfil-input"
+          [(ngModel)]="nombreCompleto"
+          placeholder="Ej: Klgo. Juan Perez"
+          maxlength="50"
+        />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">RUT</label>
+        <input
+          type="text"
+          class="perfil-input"
+          [(ngModel)]="rutProfesional"
+          placeholder="Ej: 12.345.678-9"
+          maxlength="15"
+        />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Telefono</label>
+        <input
+          type="tel"
+          class="perfil-input"
+          [(ngModel)]="telefonoProfesional"
+          placeholder="Ej: +56 9 1234 5678"
+          maxlength="20"
+        />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Email</label>
+        <input
+          type="email"
+          class="perfil-input"
+          [(ngModel)]="emailProfesional"
+          placeholder="Ej: contacto@kinesiologia.cl"
+          maxlength="50"
+        />
+      </div>
+
+      <button class="btn-primary" (click)="guardarDatosProfesionales()">
+        <ion-icon name="checkmark-outline"></ion-icon>
+        <span>Guardar Datos</span>
+      </button>
+    </div>
+
+    <!-- PASSWORD SECTION -->
+    <div class="section-card">
+      <div class="section-title-row">
+        <ion-icon name="lock-closed-outline" class="section-icon"></ion-icon>
+        <h3>Cambiar Contrasena</h3>
+      </div>
+      <p class="section-description">La contrasena debe ser 4 digitos numericos</p>
+
+      <div class="input-group">
+        <label class="input-label">Contrasena actual</label>
+        <input
+          type="password"
+          class="perfil-input"
+          [(ngModel)]="passwordActual"
+          placeholder="****"
+          maxlength="4"
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Nueva contrasena</label>
+        <input
+          type="password"
+          class="perfil-input"
+          [(ngModel)]="passwordNueva"
+          placeholder="****"
+          maxlength="4"
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Confirmar nueva contrasena</label>
+        <input
+          type="password"
+          class="perfil-input"
+          [(ngModel)]="passwordConfirmar"
+          placeholder="****"
+          maxlength="4"
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
+      </div>
+
+      <button class="btn-primary" (click)="cambiarPassword()">
+        <ion-icon name="key-outline"></ion-icon>
+        <span>Cambiar Contrasena</span>
+      </button>
+    </div>
+
+    <!-- SESSION INFO -->
+    <div class="section-card session-info">
+      <div class="info-row">
+        <span class="info-label">Usuario</span>
+        <span class="info-value">{{ username }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Nombre</span>
+        <span class="info-value">{{ nombreCompleto }}</span>
+      </div>
+      <div class="info-row" *ngIf="rutProfesional">
+        <span class="info-label">RUT</span>
+        <span class="info-value">{{ rutProfesional }}</span>
+      </div>
+      <div class="info-row" *ngIf="telefonoProfesional">
+        <span class="info-label">Telefono</span>
+        <span class="info-value">{{ telefonoProfesional }}</span>
+      </div>
+      <div class="info-row" *ngIf="emailProfesional">
+        <span class="info-label">Email</span>
+        <span class="info-value">{{ emailProfesional }}</span>
+      </div>
+    </div>
+
+    <!-- LOGOUT BUTTON -->
+    <button class="btn-logout" (click)="cerrarSesion()">
+      <ion-icon name="log-out-outline"></ion-icon>
+      <span>Cerrar Sesion</span>
+    </button>
+  </div>
+</ion-content>

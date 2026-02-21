@@ -44,21 +44,29 @@ export class PlatformService {
     return this.platformInfo;
   }
 
-  // ✅ VERIFICAR SI ES CAPACITOR REAL (no falso positivo)
+  // Verificar si estamos en un dispositivo nativo REAL (no Capacitor en modo web)
   private isRealCapacitor(): boolean {
     const capacitor = (window as any).Capacitor;
-    
+
     if (!capacitor) {
       return false;
     }
-    
-    // ✅ Verificaciones adicionales para evitar falsos positivos
-    const hasPlatform = typeof capacitor.getPlatform === 'function';
-    const hasPlugins = capacitor.Plugins && typeof capacitor.Plugins === 'object';
-    const isInWeb = capacitor.isNative === false; // Si existe isNative y es false, estamos en web
-    
-    // Solo es Capacitor real si tiene la plataforma y plugins
-    return hasPlatform && hasPlugins;
+
+    // Si Capacitor dice explicitamente que NO es nativo, estamos en web
+    if (capacitor.isNativePlatform && typeof capacitor.isNativePlatform === 'function') {
+      return capacitor.isNativePlatform();
+    }
+
+    // Fallback: si getPlatform devuelve 'web', no es nativo
+    if (typeof capacitor.getPlatform === 'function') {
+      const plat = capacitor.getPlatform();
+      if (plat === 'web') {
+        return false;
+      }
+      return true;
+    }
+
+    return false;
   }
 
   private getPlatformName(): string {

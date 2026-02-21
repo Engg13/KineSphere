@@ -1,235 +1,353 @@
-/* ===== HEADER FIJADO ===== */
-.custom-header-container {
-  height: 120px; 
-  padding-top: 40px; 
-  position: relative; /* AÑADIDO: Cambia de fixed a relative */
-  z-index: 10; /* AÑADIDO: Mantiene sobre contenido */
+/* ===== Paciente Detalle - Professional Teal Theme ===== */
+
+.page-wrapper {
+  padding: 0 0 100px 0;
 }
 
-.custom-header {
-  padding: 12px 16px; 
+/* ===== HEADER ===== */
+.detail-header {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%);
+  padding: 20px 20px 36px;
+  border-radius: 0 0 28px 28px;
+  position: relative;
 }
 
-.custom-header .main-title {
-  background: #2dd36f;
-  padding: 14px 16px;
-  text-align: center;
-}
-
-.custom-header .main-title h1 {
-  margin: 0;
-  color: black;
-  font-size: 1.8rem;
-  font-weight: bold;
-  line-height: 1.2;
-}
-
-.custom-header .subtitle {
-  background: rgba(45, 211, 111, 0.6);
-  padding: 8px 16px;
-  text-align: center;
+.back-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-bottom: 12px;
 }
 
-.custom-header .subtitle span {
-  margin: 0;
-  color: black;
-  font-size: 0.9rem;
+.patient-hero {
+  text-align: center;
 }
 
-/* ===== CONTENIDO DESPLAZABLE ===== */
-.scrollable-content {
-  --padding-top: 140px;
-  --padding-bottom: 20px;
-  --overflow: auto; /* AÑADIDO: Permite scroll */
-  position: relative; /* AÑADIDO: Contexto de posición */
-}
-
-.content-wrapper {
-  padding: 0 16px;
-  min-height: calc(100vh - 140px); /* AÑADIDO: Altura mínima */
-}
-
-/* ===== SESIONES SIMPLIFICADAS ===== */
-.sesiones-simple {
+.patient-avatar-large {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin: 8px 0;
+  justify-content: center;
+  margin: 0 auto 12px;
+
+  ion-icon {
+    font-size: 32px;
+    color: #fff;
+  }
 }
 
-.sesiones-simple strong {
-  margin-right: 6px;
+.patient-name {
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 4px;
 }
 
-.sesiones-simple ion-badge {
-  font-weight: bold;
-  min-width: 24px;
-  text-align: center;
+.patient-diagnosis {
+  color: rgba(255, 255, 255, 0.8);
   font-size: 0.9rem;
+  margin: 0 0 10px;
 }
 
-.sesiones-simple span {
-  font-size: 0.9rem;
-  color: var(--ion-color-medium);
+.status-badge-large {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 20px;
 }
 
-/* ===== TARJETA DE PACIENTE ===== */
-.paciente-card {
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-  margin-top: -105px;
+/* ===== STATS ROW ===== */
+.stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  margin: -20px 20px 16px;
+  padding: 16px 8px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
-.avatar-large {
-  width: 60px;
-  height: 60px;
-  margin-right: 15px;
-  
-  ion-icon {
-    font-size: 60px;
-    color: var(--ion-color-medium);
-  }
-}
-
-/* ===== BOTONES ===== */
-.botones-rapidos {
-  margin-top: 15px;
-  
-  ion-button {
-    --padding-top: 8px;
-    --padding-bottom: 8px;
-    font-size: 0.85rem;
-  }
-}
-
-.botones-principales {
-  margin: 20px 0;
-  
-  ion-row {
-    margin-bottom: 10px;
-  }
-}
-
-/* ===== HISTORIAL DE SESIONES ===== */
-.observaciones {
-  font-style: italic;
-  color: var(--ion-color-medium);
-  font-size: 0.9rem;
-  margin-top: 5px;
-  padding-left: 10px;
-  border-left: 2px solid var(--ion-color-light);
-}
-
-.empty-state {
+.stat-item {
+  flex: 1;
   text-align: center;
-  padding: 30px 20px;
-  color: var(--ion-color-medium);
-  
-  p {
-    margin-bottom: 20px;
-  }
 }
 
-/* ===== ESTADOS ===== */
-.error-state {
-  padding-top: 50px;
-  
-  ion-icon {
-    font-size: 64px;
-    margin-bottom: 20px;
-  }
-  
-  h3 {
-    margin: 10px 0;
-    color: var(--ion-color-danger);
-  }
-}
-
-.loading-container {
-  padding-top: 50px;
-  
-  ion-spinner {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 20px;
-  }
-  
-  p {
-    color: var(--ion-color-medium);
-  }
-}
-
-/* ===== NUEVO: CONTENEDOR DE SESIONES CON SCROLL INTERNO ===== */
-/* Agrega esto al final */
-.sesiones-container {
-  max-height: 300px; /* Altura máxima antes de scroll interno */
-  overflow-y: auto; /* Scroll vertical */
-  border: 1px solid var(--ion-color-light-shade);
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 10px;
-}
-
-/* ===== NUEVO: ESPACIO PARA SCROLL SUAVE ===== */
-.scroll-spacer {
-  height: 100px; /* Espacio extra al final */
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-height: 700px) {
-  .scrollable-content {
-    --padding-top: 130px;
-  }
-  
-  .custom-header .main-title h1 {
-    font-size: 1.5rem;
-  }
-  
-  .custom-header .main-title {
-    padding: 10px 16px;
-  }
-  
-  .sesiones-container {
-    max-height: 200px; /* Menos altura en pantallas pequeñas */
-  }
-}
-
-/* ===== PLATAFORMA ESPECÍFICA ===== */
-.ios .custom-header-container {
-  padding-top: calc(var(--ion-safe-area-top, 25px) + 5px);
-}
-
-.md .custom-header {
-  border-radius: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-
-:host {
+.stat-value {
   display: block;
-  height: 100vh;
-  position: relative;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0d9488;
 }
 
-ion-content.scrollable-content {
-  height: calc(100vh - 120px) !important;
-  overflow-y: scroll !important;
-  --overflow: scroll !important;
-  position: relative;
-  top: 120px;
+.stat-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
 }
 
-.content-wrapper {
-  min-height: calc(100vh - 140px);
-  padding-top: 0; 
-  margin-top: -100px; 
-  padding-bottom: 200px;
+.stat-divider {
+  width: 1px;
+  height: 32px;
+  background: #e5e7eb;
+}
+
+/* ===== INFO CARD ===== */
+.info-card {
+  background: #fff;
+  margin: 0 16px 16px;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 16px;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &.clickable {
+    cursor: pointer;
+  }
+}
+
+.info-icon {
+  font-size: 1.2rem;
+  color: #0d9488;
+  min-width: 24px;
+}
+
+.info-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  display: block;
+  font-size: 0.9rem;
+  color: #1f2937;
+  font-weight: 500;
+
+  &.link {
+    color: #0d9488;
+  }
+}
+
+/* ===== ACTIONS GRID ===== */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0 16px 16px;
+}
+
+.action-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  ion-icon {
+    font-size: 1.5rem;
+    color: #0d9488;
+  }
+
+  span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  &.primary {
+    background: linear-gradient(135deg, #0d9488, #0f766e);
+    border-color: transparent;
+
+    ion-icon {
+      color: #fff;
+    }
+
+    span {
+      color: #fff;
+    }
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* ===== SESSIONS CARD ===== */
+.sessions-card {
+  background: #fff;
+  margin: 0 16px 16px;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.session-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.session-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.session-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.session-eva {
+  font-size: 0.8rem;
+  color: #0d9488;
+  font-weight: 500;
+}
+
+.session-obs {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* ===== EMPTY SESSIONS ===== */
+.empty-sessions {
+  text-align: center;
+  padding: 24px 0;
+
+  ion-icon {
+    font-size: 2.5rem;
+    color: #d1d5db;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin: 0 0 12px;
+  }
+}
+
+.empty-action {
+  background: none;
+  border: 1.5px solid #0d9488;
+  color: #0d9488;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ===== LOADING ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 12px;
+
+  p {
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+}
+
+/* ===== ERROR STATE ===== */
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+
+  ion-icon {
+    font-size: 3rem;
+    color: #ef4444;
+    margin-bottom: 12px;
+  }
+
+  h3 {
+    color: #1f2937;
+    margin: 0 0 8px;
+  }
+
+  p {
+    color: #6b7280;
+    margin: 0 0 20px;
+  }
+}
+
+.back-link {
+  background: none;
+  border: 1.5px solid #0d9488;
+  color: #0d9488;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
 }

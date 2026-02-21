@@ -1,197 +1,155 @@
-<ion-header [translucent]="true" class="ion-no-border custom-header-container">
-  <!-- HEADER PERSONALIZADO DENTRO DE ION-HEADER -->
-  <div class="custom-header">
-    <div class="main-title">
-      <h1>Detalle del Paciente</h1>
-    </div>
-    <div class="subtitle">
-      <ion-icon name="person" slot="start"></ion-icon>
-      <span>Gestión y seguimiento</span>
-    </div>
-  </div>
-</ion-header>
+<ion-content [fullscreen]="true">
+  <div class="page-wrapper">
 
-<ion-content [fullscreen]="true" class="scrollable-content">
-  <!-- ESTADO DE CARGA -->
-  @if (estaCargando) {
-    <div class="loading-container ion-text-center ion-padding">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p>Cargando datos del paciente...</p>
-    </div>
-  }
+    <!-- LOADING -->
+    @if (estaCargando) {
+      <div class="loading-container">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <p>Cargando paciente...</p>
+      </div>
+    }
 
-  <!-- CONTENIDO PRINCIPAL -->
-  @if (!estaCargando && paciente) {
-    <div class="content-wrapper">
-      <!-- TARJETA DE INFORMACIÓN DEL PACIENTE -->
-      <ion-card class="paciente-card">
-        <ion-card-header>
-          <ion-card-title>
-            <ion-avatar slot="start" class="avatar-large">
-              <ion-icon name="person-circle" size="large"></ion-icon>
-            </ion-avatar>
-            {{ paciente.nombre }}
-          </ion-card-title>
-          <ion-card-subtitle>
-            <ion-badge [color]="paciente.activo ? 'success' : 'medium'">
-              {{ paciente.activo ? 'Activo' : 'Finalizado' }}
-            </ion-badge>
-            • {{ paciente.diagnostico }}
-          </ion-card-subtitle>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col size="6">
-                <!-- EDAD - solo una vez -->
-                <p><strong>Edad:</strong> 
-                  @if (paciente.edad && paciente.edad > 0) {
-                    {{ paciente.edad }} años
-                  } @else {
-                    No registrada
-                  }
-                </p>
-                <p><strong>RUT:</strong> {{ paciente.rut }}</p>
-                <p><strong>Teléfono:</strong> {{ paciente.telefono }}</p>
-              </ion-col>
-              <ion-col size="6">
-                <p><strong>Email:</strong> {{ paciente.email }}</p>
-                
-                <!-- FECHA INGRESO -->
-                <p><strong>Fecha Ingreso:</strong> 
-                  @if (paciente.fechaIngreso) {
-                    {{ formatearFecha(paciente.fechaIngreso) }}
-                  } @else if (paciente.fechaCreacion) {
-                    {{ formatearFecha(paciente.fechaCreacion) }}
-                  } @else {
-                    {{ formatearFecha(fechaActual) }}
-                  }
-                </p>
-                
-                <!-- SESIONES SIMPLIFICADAS -->
-                <div class="sesiones-simple">
-                  <strong>Sesiones:</strong>
-                  <ion-badge color="primary">{{ paciente.sesionesCompletadas || 0 }}</ion-badge>
-                  <span>de</span>
-                  <ion-badge color="secondary">{{ paciente.sesionesPlanificadas || 10 }}</ion-badge>
-                  <span>completadas</span>
-                </div>
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="12">
-                <p><strong>Dirección:</strong> {{ paciente.direccion }}</p>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-          <!-- BOTONES DE ACCIÓN RÁPIDA -->
-          <ion-grid class="botones-rapidos">
-            <ion-row>
-              <ion-col size="4">
-                <ion-button expand="block" fill="clear"  (click)="llamarPaciente()">
-                  <ion-icon name="call"></ion-icon>
-                  Llamar
-                </ion-button>
-              </ion-col>
-              <ion-col size="4">
-                <ion-button expand="block" fill="clear"  (click)="enviarEmail()">
-                  <ion-icon name="mail"></ion-icon>
-                  Email
-                </ion-button>
-              </ion-col>
-              <ion-col size="4">
-                <ion-button expand="block" fill="clear"  (click)="editarPaciente()">
-                  <ion-icon name="create"></ion-icon>
-                  Editar
-                </ion-button>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
-      <!-- BOTONES PRINCIPALES DE ACCIÓN -->
-      <ion-grid class="botones-principales">
-        <ion-row>
-          <ion-col size="6">
-            <ion-button expand="block" (click)="nuevaSesion()">
-              <ion-icon slot="start" name="add-circle"></ion-icon>
-              Nueva Sesión
-            </ion-button>
-          </ion-col>
-          <ion-col size="6">
-            <ion-button expand="block"  (click)="irADocumentos()">
-              <ion-icon slot="start" name="document-attach"></ion-icon>
-              📄 Documentos
-            </ion-button>
-          </ion-col>
-        </ion-row>
-        <!--  BOTÓN VISITA DOMICILIARIA -->
-        <ion-row>
-          <ion-col size="6">
-            <ion-button expand="block"  (click)="irAVisitaDomiciliaria()">
-              <ion-icon slot="start" name="navigate"></ion-icon>
-              🏠 Visita Domicilio
-            </ion-button>
-          </ion-col>
-          <ion-col size="6">
-            <ion-button expand="block" fill="outline" (click)="volverALista()">
-              <ion-icon slot="start" name="arrow-back"></ion-icon>
-              Volver a Lista
-            </ion-button>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-      <!-- HISTORIAL DE SESIONES -->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>
-            <ion-icon name="time" slot="start"></ion-icon>
-            Historial de Sesiones
-          </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          @if (historialSesiones.length > 0) {
+    <!-- CONTENIDO PRINCIPAL -->
+    @if (!estaCargando && paciente) {
+      <!-- HEADER GRADIENT -->
+      <div class="detail-header">
+        <button class="back-btn" (click)="volverALista()">
+          <ion-icon name="arrow-back"></ion-icon>
+        </button>
+        <div class="patient-hero">
+          <div class="patient-avatar-large">
+            <ion-icon name="person"></ion-icon>
+          </div>
+          <h1 class="patient-name">{{ paciente.nombre }}</h1>
+          <p class="patient-diagnosis">{{ paciente.diagnostico }}</p>
+          <ion-badge [color]="paciente.activo ? 'success' : 'medium'" class="status-badge-large">
+            {{ paciente.activo ? 'Activo' : 'Finalizado' }}
+          </ion-badge>
+        </div>
+      </div>
+
+      <!-- STATS ROW -->
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-value">{{ paciente.sesionesCompletadas || 0 }}</span>
+          <span class="stat-label">Sesiones</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ paciente.sesionesPlanificadas || 10 }}</span>
+          <span class="stat-label">Planificadas</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          @if (paciente.edad && paciente.edad > 0) {
+            <span class="stat-value">{{ paciente.edad }}</span>
+          } @else {
+            <span class="stat-value">-</span>
+          }
+          <span class="stat-label">Edad</span>
+        </div>
+      </div>
+
+      <!-- INFO CARD -->
+      <div class="info-card animated-item">
+        <h3 class="section-title">Informacion Personal</h3>
+        <div class="info-grid">
+          @if (paciente.rut) {
+            <div class="info-row">
+              <ion-icon name="card-outline" class="info-icon"></ion-icon>
+              <div>
+                <span class="info-label">RUT</span>
+                <span class="info-value">{{ paciente.rut }}</span>
+              </div>
+            </div>
+          }
+          @if (paciente.telefono) {
+            <div class="info-row clickable" (click)="llamarPaciente()">
+              <ion-icon name="call-outline" class="info-icon"></ion-icon>
+              <div>
+                <span class="info-label">Telefono</span>
+                <span class="info-value link">{{ paciente.telefono }}</span>
+              </div>
+            </div>
+          }
+          @if (paciente.email) {
+            <div class="info-row clickable" (click)="enviarEmail()">
+              <ion-icon name="mail-outline" class="info-icon"></ion-icon>
+              <div>
+                <span class="info-label">Email</span>
+                <span class="info-value link">{{ paciente.email }}</span>
+              </div>
+            </div>
+          }
+          <div class="info-row">
+            <ion-icon name="calendar-outline" class="info-icon"></ion-icon>
             <div>
-              <ion-list>
-                @for (sesion of historialSesiones; track sesion.id || $index) {
-                  <ion-item>
-                    <ion-label>
-                      <h3>📅 {{ sesion.fecha_registro || sesion.fecha | date:'dd/MM/yyyy' }}</h3>
-                      <p>EVA: {{ (sesion.nivel_dolor !== null && sesion.nivel_dolor !== undefined) ? sesion.nivel_dolor : sesion.eva || '0' }}/10</p>
-                      @if (sesion.observaciones) {
-                        <p class="observaciones">{{ sesion.observaciones }}</p>
-                      }
-                    </ion-label>
-                    <ion-badge slot="end" color="primary">
-                      Sesión {{ sesion.numero_sesion || 'N/A' }}
-                    </ion-badge>
-                  </ion-item>
+              <span class="info-label">Fecha Ingreso</span>
+              <span class="info-value">
+                @if (paciente.fechaIngreso) {
+                  {{ formatearFecha(paciente.fechaIngreso) }}
+                } @else if (paciente.fechaCreacion) {
+                  {{ formatearFecha(paciente.fechaCreacion) }}
+                } @else {
+                  {{ formatearFecha(fechaActual) }}
                 }
-              </ion-list>
+              </span>
             </div>
-          }
-          @if (historialSesiones.length === 0) {
-            <div class="empty-state">
-              <p>No hay sesiones registradas</p>
-              <ion-button (click)="nuevaSesion()" fill="outline">
-                Agregar Primera Sesión
-              </ion-button>
-            </div>
-          }
-        </ion-card-content>
-      </ion-card>
-    </div>
-  }
+          </div>
+        </div>
+      </div>
 
-  <!-- ESTADO DE ERROR -->
-  @if (!estaCargando && !paciente) {
-    <div class="error-state ion-text-center ion-padding">
-      <ion-icon name="warning-outline" size="large" color="danger"></ion-icon>
-      <h3>No se pudo cargar el paciente</h3>
-      <p>El paciente solicitado no existe o no se pudo cargar</p>
-      <ion-button (click)="volverALista()" color="primary">
-        Volver a la lista
-      </ion-button>
-    </div>
-  }
+      <!-- QUICK ACTIONS -->
+      <div class="actions-grid animated-item">
+        <button class="action-card primary" (click)="nuevaSesion()">
+          <ion-icon name="add-circle-outline"></ion-icon>
+          <span>Nueva Sesion</span>
+        </button>
+        <button class="action-card" (click)="editarPaciente()">
+          <ion-icon name="create-outline"></ion-icon>
+          <span>Editar</span>
+        </button>
+        <button class="action-card" (click)="irADocumentos()">
+          <ion-icon name="document-text-outline"></ion-icon>
+          <span>Documentos</span>
+        </button>
+      </div>
+
+      <!-- HISTORIAL DE SESIONES -->
+      <div class="sessions-card animated-item">
+        <h3 class="section-title">Historial de Sesiones</h3>
+
+        @if (historialSesiones.length > 0) {
+          @for (sesion of historialSesiones; track sesion.id || $index; let i = $index) {
+            <div class="session-item">
+              <div class="session-number">{{ sesion.numero_sesion || (historialSesiones.length - i) }}</div>
+              <div class="session-info">
+                <span class="session-date">{{ sesion.fecha || 'Sin fecha' }}</span>
+                <span class="session-eva">EVA: {{ sesion.eva ?? sesion.nivel_dolor ?? '-' }}/10</span>
+                @if (sesion.observaciones) {
+                  <span class="session-obs">{{ sesion.observaciones }}</span>
+                }
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="empty-sessions">
+            <ion-icon name="clipboard-outline"></ion-icon>
+            <p>Sin sesiones registradas</p>
+            <button class="empty-action" (click)="nuevaSesion()">Agregar primera sesion</button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ERROR STATE -->
+    @if (!estaCargando && !paciente) {
+      <div class="error-state">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <h3>Paciente no encontrado</h3>
+        <p>No se pudo cargar la informacion</p>
+        <button class="back-link" (click)="volverALista()">Volver a la lista</button>
+      </div>
+    }
+  </div>
 </ion-content>

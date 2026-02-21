@@ -1,136 +1,252 @@
-<ion-header [translucent]="true" class="ion-no-border custom-header-container">
-  <div class="custom-header">
-    <div class="main-title">
-      <h1>Registro de Sesión</h1>
-    </div>
-    <div class="subtitle">
-      <!-- Mostrar nombre dinámico -->
-      @if (pacienteNombre && pacienteNombre !== 'Paciente') {
-        <p>Sesión {{ numeroSesion }} - {{ pacienteNombre }}</p>
-      } @else {
-        <p>Sesión {{ numeroSesion }}</p>
-        <ion-note color="warning">Paciente no especificado</ion-note>
-      }
-    </div>
-  </div>
-</ion-header>
-
 <ion-content [fullscreen]="true" (click)="onContentClick($event)">
-  <div class="ion-padding">
-    <!-- FORMULARIO DE SESIÓN -->
-    <ion-card class="animated-item">
-      <!-- ENCABEZADO DEL CARD -->
-      <ion-card-header>
-        <ion-card-title>📝 Evaluación</ion-card-title>
-        <!-- Mostrar nombre del paciente si está disponible -->
-        @if (pacienteNombre && pacienteNombre !== 'Paciente') {
-          <ion-card-subtitle>
-            <ion-icon name="person" slot="start"></ion-icon>
-            {{ pacienteNombre }}
-          </ion-card-subtitle>
-        }
-      </ion-card-header>
-      
-      <!-- CONTENIDO DEL CARD -->
-      <ion-card-content>
-        <!-- ESCALA EVA CON BARRA DE RANGO -->
-        <div class="seccion-formulario">
-          <ion-item>
-            <ion-label position="stacked">
-              <strong>Nivel de Dolor (EVA)</strong>
-              <p class="descripcion">Selecciona tu nivel de dolor actual (0-10)</p>
-            </ion-label>
+  <div class="sesion-wrapper">
+
+    <!-- HERO HEADER -->
+    <div class="hero-header">
+      <button class="back-btn" (click)="volverAPaciente()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </button>
+      <div class="hero-info">
+        <h1 class="hero-title">Sesion {{ numeroSesion }}</h1>
+        <p class="hero-patient">{{ pacienteNombre }}</p>
+        <p class="hero-diagnosis" *ngIf="pacienteDiagnostico">{{ pacienteDiagnostico }}</p>
+      </div>
+      <div class="session-progress">
+        <div class="progress-circle">
+          <span class="progress-num">{{ numeroSesion }}</span>
+          <span class="progress-total">/{{ sesionesPlanificadas }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FECHA DE SESION -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="calendar-outline" class="section-icon"></ion-icon>
+        <h3>Fecha de Sesion</h3>
+      </div>
+      <input
+        type="date"
+        class="date-input"
+        [(ngModel)]="sesionData.fechaSesion"
+      />
+    </div>
+
+    <!-- ESCALA EVA -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="pulse-outline" class="section-icon"></ion-icon>
+        <h3>Nivel de Dolor (EVA)</h3>
+      </div>
+      <p class="section-desc">Selecciona el nivel de dolor actual (0-10)</p>
+
+      <div class="eva-container">
+        <ion-range
+          [(ngModel)]="sesionData.nivelDolor"
+          min="0"
+          max="10"
+          step="1"
+          snaps="true"
+          ticks="true"
+          class="eva-range">
+          <ion-label slot="start">0</ion-label>
+          <ion-label slot="end">10</ion-label>
+        </ion-range>
+
+        <div class="eva-value-display" *ngIf="sesionData.nivelDolor !== null">
+          <span class="eva-number"
+            [class.eva-low]="sesionData.nivelDolor <= 3"
+            [class.eva-mid]="sesionData.nivelDolor > 3 && sesionData.nivelDolor <= 6"
+            [class.eva-high]="sesionData.nivelDolor > 6">
+            {{ sesionData.nivelDolor }}
+          </span>
+          <span class="eva-label">/ 10</span>
+        </div>
+
+        <div class="eva-indicators">
+          <span class="ind-low">Sin dolor</span>
+          <span class="ind-mid">Moderado</span>
+          <span class="ind-high">Maximo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALIDAD DE SUENO -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="moon-outline" class="section-icon"></ion-icon>
+        <h3>Calidad del Sueno</h3>
+      </div>
+      <app-sleep-quality
+        [(valor)]="sesionData.calidadSueno"
+        [titulo]="''"
+        [descripcion]="'Como fue la calidad de sueno durante la ultima noche?'">
+      </app-sleep-quality>
+    </div>
+
+    <!-- ZONA DE TRATAMIENTO -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="body-outline" class="section-icon"></ion-icon>
+        <h3>Zona de Tratamiento</h3>
+      </div>
+      <ion-item lines="none" class="select-item">
+        <ion-select
+          [(ngModel)]="sesionData.zonaTratamiento"
+          placeholder="Seleccionar zona..."
+          interface="action-sheet">
+          <ion-select-option *ngFor="let zona of zonasTratamiento" [value]="zona">
+            {{ zona }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+    </div>
+
+    <!-- TECNICAS APLICADAS -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="hand-left-outline" class="section-icon"></ion-icon>
+        <h3>Tecnicas Aplicadas</h3>
+      </div>
+      <p class="section-desc">Selecciona las tecnicas utilizadas en esta sesion</p>
+
+      <div class="tecnicas-grid">
+        <button
+          *ngFor="let tecnica of tecnicasDisponibles"
+          class="tecnica-chip"
+          [class.tecnica-activa]="tecnica.seleccionada"
+          (click)="toggleTecnica(tecnica)">
+          <ion-icon [name]="tecnica.seleccionada ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
+          <span>{{ tecnica.nombre }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ROM -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="resize-outline" class="section-icon"></ion-icon>
+        <h3>ROM (Rango de Movimiento)</h3>
+      </div>
+      <p class="section-desc">Opcional: registra el rango de movimiento relevante</p>
+      <input
+        type="text"
+        class="text-input"
+        [(ngModel)]="sesionData.rom"
+        placeholder="Ej: Flexion rodilla 0-120, Extension -5"
+        maxlength="100"
+      />
+    </div>
+
+    <!-- EJERCICIOS EN CASA -->
+    <div class="section-card ejercicio-card">
+      <div class="ejercicio-row">
+        <div class="ejercicio-info">
+          <ion-icon name="fitness-outline" class="section-icon"></ion-icon>
+          <div>
+            <h3>Ejercicios en Casa</h3>
+            <p class="section-desc">Realizo los ejercicios indicados?</p>
+          </div>
+        </div>
+        <ion-toggle
+          [(ngModel)]="sesionData.ejerciciosRealizados"
+          color="success">
+        </ion-toggle>
+      </div>
+    </div>
+
+    <!-- OBSERVACIONES -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="document-text-outline" class="section-icon"></ion-icon>
+        <h3>Observaciones</h3>
+      </div>
+      <textarea
+        #observacionesTextarea
+        class="obs-textarea"
+        [(ngModel)]="sesionData.observaciones"
+        placeholder="Registre observaciones relevantes, progresos, tecnicas especificas, respuesta del paciente..."
+        rows="3"
+        (keydown.enter)="onEnterObservaciones($event)">
+      </textarea>
+    </div>
+
+    <!-- OBJETIVO PROXIMA SESION -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="flag-outline" class="section-icon"></ion-icon>
+        <h3>Objetivo Proxima Sesion</h3>
+      </div>
+      <textarea
+        class="obs-textarea"
+        [(ngModel)]="sesionData.objetivoProxima"
+        placeholder="Ej: Progresar ejercicios de fortalecimiento, trabajo propioceptivo..."
+        rows="2">
+      </textarea>
+    </div>
+
+    <!-- TEST PREDETERMINADO (OPCIONAL) -->
+    <div class="section-card" *ngIf="testsDisponibles.length > 0">
+      <div class="section-header">
+        <ion-icon name="clipboard-outline" class="section-icon"></ion-icon>
+        <h3>Test de Evaluacion</h3>
+        <span class="optional-badge">Opcional</span>
+      </div>
+
+      <ion-item lines="none" class="select-item">
+        <ion-select placeholder="Seleccionar test..." interface="action-sheet" (ionChange)="seleccionarTest($event)">
+          <ion-select-option [value]="null">Ninguno</ion-select-option>
+          <ion-select-option *ngFor="let t of testsDisponibles" [value]="t.id">
+            {{ t.nombre }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Preguntas del test -->
+      <div *ngIf="testSeleccionado" class="test-preguntas">
+        <div *ngFor="let pregunta of testSeleccionado.preguntas; let i = index" class="test-pregunta-item">
+          <span class="pregunta-texto">{{ i + 1 }}. {{ pregunta.texto }}</span>
+          <div class="pregunta-range-row">
             <ion-range
-              [(ngModel)]="sesionData.nivelDolor"
-              min="0"
-              max="10"
+              [(ngModel)]="respuestasTest[i]"
+              [min]="pregunta.puntajeMin"
+              [max]="pregunta.puntajeMax"
               step="1"
               snaps="true"
               ticks="true"
-              class="eva-range">
-              <ion-label slot="start">0</ion-label>
-              <ion-label slot="end">10</ion-label>
+              (ionChange)="calcularPuntajeTest()">
+              <ion-label slot="start">{{ pregunta.puntajeMin }}</ion-label>
+              <ion-label slot="end">{{ pregunta.puntajeMax }}</ion-label>
             </ion-range>
-            @if (sesionData.nivelDolor !== null) {
-              <ion-badge slot="end" color="primary">
-                {{sesionData.nivelDolor}}/10
-              </ion-badge>
-            }
-          </ion-item>
-
-          <!-- INDICADORES DE DOLOR -->
-          <div class="indicadores-dolor">
-            <span class="indicador">0: Sin dolor</span>
-            <span class="indicador">5: Dolor moderado</span>
-            <span class="indicador">10: Máximo dolor</span>
+            <span class="pregunta-badge">{{ respuestasTest[i] || 0 }}</span>
           </div>
         </div>
 
-        <!-- CALIDAD DE SUEÑO COMPACTA -->
-        <div class="componente-sesion">
-          <app-sleep-quality
-            [(valor)]="sesionData.calidadSueno"
-            [titulo]="'Calidad del Sueño'"
-            [descripcion]="'¿Cómo califica la calidad de su sueño durante la última noche?'">
-          </app-sleep-quality>
+        <!-- Resultado -->
+        <div class="test-resultado">
+          <div class="resultado-puntaje">
+            <span class="resultado-label">Puntaje Total:</span>
+            <span class="resultado-valor" [style.color]="getResultadoColor()">{{ puntajeTotal }}</span>
+          </div>
+          <div class="resultado-clasificacion" [style.color]="getResultadoColor()">
+            {{ resultadoTest }}
+          </div>
         </div>
+      </div>
+    </div>
 
-        <!-- EJERCICIOS EN CASA -->
-        <div class="seccion-formulario">
-          <ion-item>
-            <ion-label>¿Realizó los ejercicios en casa?</ion-label>
-            <ion-checkbox slot="start" [(ngModel)]="sesionData.ejerciciosRealizados"></ion-checkbox>
-          </ion-item>
-        </div>
-
-        <!-- OBSERVACIONES -->
-        <div class="seccion-formulario">
-          <ion-item>
-            <ion-label position="stacked">Observaciones de la sesión</ion-label>
-            <ion-textarea
-              #observacionesTextarea
-              [(ngModel)]="sesionData.observaciones"
-              placeholder="Registre observaciones relevantes, progresos, dificultades..."
-              rows="3"
-              autoGrow="true"
-              enterkeyhint="done"
-              (keydown.enter)="onEnterObservaciones($event)">
-            </ion-textarea>
-            
-            <!-- Nota de ayuda -->
-            <ion-note slot="helper" color="medium" style="font-size: 0.8rem;">
-              Presiona "Listo" para cerrar teclado
-            </ion-note>
-          </ion-item>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- ESPACIO PARA LOS BOTONES FIJOS -->
+    <!-- SPACER FOR FIXED BUTTONS -->
     <div class="botones-spacer"></div>
   </div>
 
-  <!-- BOTONES FIJOS -->
+  <!-- FIXED BOTTOM BUTTONS -->
   <div class="botones-fijos">
-    <ion-grid>
-      <ion-row>
-        <ion-col size="6">
-          <ion-button
-            expand="block"
-            (click)="guardarSesion()"
-            [disabled]="!esFormularioValido()">
-            💾 Guardar Sesión
-          </ion-button>
-        </ion-col>
-        <ion-col size="6">
-          <ion-button
-            expand="block"
-            fill="outline"
-            (click)="volverAPaciente()">
-            ← Volver
-          </ion-button>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+    <button
+      class="btn-guardar"
+      [disabled]="!esFormularioValido()"
+      (click)="guardarSesion()">
+      <ion-icon name="checkmark-circle-outline"></ion-icon>
+      <span>Guardar Sesion</span>
+    </button>
   </div>
 </ion-content>

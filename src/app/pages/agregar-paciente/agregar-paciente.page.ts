@@ -1,8 +1,7 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { NavController, ToastController, Platform } from '@ionic/angular';
-import { JsonServerService } from '../../services/json-server.service';
+import { NavController, ToastController, Platform, ViewWillEnter } from '@ionic/angular';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
-import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-agregar-paciente',
@@ -10,7 +9,7 @@ import { firstValueFrom } from 'rxjs';
   styleUrls: ['./agregar-paciente.page.scss'],
   standalone: false
 })
-export class AgregarPacientePage {
+export class AgregarPacientePage implements ViewWillEnter {
   paciente: any = {
     nombre: '',
     rut: '',
@@ -25,6 +24,9 @@ export class AgregarPacientePage {
     fechaCreacion: new Date().toISOString()
   };
 
+  modoEdicion = false;
+  pacienteIdOriginal: string = '';
+
   // Propiedades para control del teclado
   tecladoVisible = false;
   @ViewChild('diagnosticoTextarea') diagnosticoTextarea!: ElementRef;
@@ -33,29 +35,103 @@ export class AgregarPacientePage {
     private navCtrl: NavController,
     private toastController: ToastController,
     private platform: Platform,
-    private jsonServerService: JsonServerService,
+    private route: ActivatedRoute,
+    private router: Router,
     private databaseService: DatabaseService
   ) {}
 
-  // === MÉTODOS PARA MANEJAR EL TECLADO ===
+  // === LIFECYCLE ===
 
-  ionViewDidEnter() {
+  async ionViewWillEnter() {
+    // 1) Intentar leer ID de edición desde localStorage
+    const editId = localStorage.getItem('editar_paciente_id');
+    localStorage.removeItem('editar_paciente_id');
+
+    // 2) Fallback: leer desde query params actuales del Router
+    const urlTree = this.router.parseUrl(this.router.url);
+    const urlId = urlTree.queryParams['id'];
+    const urlModo = urlTree.queryParams['modoEdicion'];
+
+    // 3) Fallback: leer desde snapshot de ActivatedRoute
+    const snapId = this.route.snapshot.queryParams['id'];
+    const snapModo = this.route.snapshot.queryParams['modoEdicion'];
+
+    // Usar el primer valor disponible
+    const id = editId || (urlModo === 'true' ? urlId : null) || (snapModo === 'true' ? snapId : null);
+
+    console.log('=== agregar-paciente ionViewWillEnter ===');
+    console.log('localStorage editId:', editId);
+    console.log('router.url:', this.router.url);
+    console.log('urlParams:', { urlId, urlModo });
+    console.log('snapParams:', { snapId, snapModo });
+    console.log('ID final usado:', id);
+
+    if (id) {
+      this.modoEdicion = true;
+      this.pacienteIdOriginal = String(id);
+      await this.cargarPacienteParaEditar(String(id));
+    } else {
+      this.modoEdicion = false;
+      this.pacienteIdOriginal = '';
+      this.resetFormulario();
+    }
+
     this.configurarEventosTeclado();
   }
 
-  configurarEventosTeclado() {
-    if (typeof (window as any).Keyboard !== 'undefined') {
-      (window as any).Keyboard.addListener('keyboardWillShow', () => {
-        this.tecladoVisible = true;
-      });
-      
-      (window as any).Keyboard.addListener('keyboardWillHide', () => {
-        this.tecladoVisible = false;
-      });
+  private async cargarPacienteParaEditar(id: string) {
+    try {
+      const todosPacientes = await this.databaseService.getPacientes();
+      const paciente = todosPacientes.find(p =>
+        String(p.id) === String(id) || p.pacienteId === id
+      );
+
+      if (paciente) {
+        this.paciente = { ...paciente };
+        console.log('Paciente cargado para editar:', paciente.nombre);
+      } else {
+        this.mostrarToast('Paciente no encontrado', 'warning');
+        this.modoEdicion = false;
+      }
+    } catch (error) {
+      console.error('Error cargando paciente:', error);
+      this.mostrarToast('Error cargando datos del paciente', 'danger');
     }
-    
-    else if ((window as any).cordova?.plugins?.Keyboard) {
-      (window as any).cordova.plugins.Keyboard.showFormAccessoryBar(false);
+  }
+
+  private resetFormulario() {
+    this.paciente = {
+      nombre: '',
+      rut: '',
+      fechaNacimiento: '',
+      edad: 0,
+      email: '',
+      telefono: '',
+      diagnostico: '',
+      sesionesPlanificadas: 10,
+      sesionesCompletadas: 0,
+      activo: true,
+      fechaCreacion: new Date().toISOString()
+    };
+  }
+
+  configurarEventosTeclado() {
+    try {
+      if (typeof (window as any).Keyboard !== 'undefined' && typeof (window as any).Keyboard.addListener === 'function') {
+        (window as any).Keyboard.addListener('keyboardWillShow', () => {
+          this.tecladoVisible = true;
+        });
+
+        (window as any).Keyboard.addListener('keyboardWillHide', () => {
+          this.tecladoVisible = false;
+        });
+      }
+
+      else if ((window as any).cordova?.plugins?.Keyboard) {
+        (window as any).cordova.plugins.Keyboard.showFormAccessoryBar(false);
+      }
+    } catch (error) {
+      console.log('Keyboard plugin no disponible:', error);
     }
   }
 
@@ -152,7 +228,6 @@ export class AgregarPacientePage {
     return edad;
   }
 
-  // === MÉTODO PRINCIPAL - SIMPLIFICADO Y FUNCIONAL ===
   async guardarPaciente() {
     if (!this.formularioValido()) {
       this.mostrarToast('Por favor completa los campos obligatorios', 'warning');
@@ -160,57 +235,60 @@ export class AgregarPacientePage {
     }
 
     try {
-      // 1. CALCULAR EDAD (CRÍTICO)
       const edadCalculada = this.calcularEdad();
-      console.log(`📅 Edad calculada para guardar: ${edadCalculada} años`);
-      
-      // 2. GENERAR ID ÚNICO
-      const idPaciente = this.generarIdPaciente();
-      
-      // 3. CREAR OBJETO COMPLETO DEL PACIENTE CON EDAD INCLUIDA
-      const pacienteCompleto = {
-        ...this.paciente,
-        id: idPaciente,
-        edad: edadCalculada, // ← ¡ESTA ES LA CLAVE! La edad calculada se guarda aquí
-        fechaCreacion: new Date().toISOString(),
-        // Campos adicionales para compatibilidad
-        pacienteId: idPaciente,
-        fechaIngreso: new Date().toLocaleDateString('es-CL')
-      };
+      this.paciente.edad = edadCalculada;
 
-      console.log('💾 Paciente completo para guardar:', pacienteCompleto);
-      console.log('🔍 Verificando campo "edad":', pacienteCompleto.edad, 'tipo:', typeof pacienteCompleto.edad);
-
-      // 4. GUARDAR PACIENTE (DatabaseService maneja localStorage en web y SQLite en nativo)
-      let guardadoExitoso = false;
-      let mensajeFinal = '';
-
-      try {
-        await this.databaseService.addPaciente(pacienteCompleto);
-        guardadoExitoso = true;
-        mensajeFinal = 'Paciente guardado exitosamente';
-        console.log('✅ Paciente guardado');
-      } catch (error) {
-        console.error('❌ Error guardando paciente:', error);
-        mensajeFinal = 'Error: No se pudo guardar el paciente';
-      }
-
-      // 5. MOSTRAR RESULTADO
-      if (guardadoExitoso) {
-        this.mostrarToast(mensajeFinal, 'success');
-        
-        // 6. NAVEGACIÓN DESPUÉS DE ÉXITO
-        setTimeout(() => {
-          this.navCtrl.navigateRoot('/pacientes-lista');
-        }, 1200);
-        
+      if (this.modoEdicion) {
+        // MODO EDICION: actualizar paciente existente en localStorage
+        await this.actualizarPacienteEnStorage();
+        this.mostrarToast('Paciente actualizado exitosamente', 'success');
       } else {
-        this.mostrarToast(mensajeFinal, 'danger');
+        // MODO NUEVO: crear paciente
+        const pacienteCompleto = {
+          ...this.paciente,
+          fechaCreacion: new Date().toISOString(),
+          fechaIngreso: new Date().toLocaleDateString('es-CL')
+        };
+
+        await this.databaseService.addPaciente(pacienteCompleto);
+        this.mostrarToast('Paciente guardado exitosamente', 'success');
       }
-      
+
+      setTimeout(() => {
+        if (this.modoEdicion) {
+          localStorage.setItem('ver_paciente_id', String(this.pacienteIdOriginal));
+          this.navCtrl.navigateRoot('/paciente-detalle');
+        } else {
+          this.navCtrl.navigateRoot('/pacientes-lista');
+        }
+      }, 800);
+
     } catch (error) {
-      console.error('❌ Error crítico en guardarPaciente:', error);
-      this.mostrarToast('Error crítico al procesar el paciente', 'danger');
+      console.error('Error guardando paciente:', error);
+      this.mostrarToast('Error al guardar el paciente', 'danger');
+    }
+  }
+
+  private async actualizarPacienteEnStorage() {
+    // Actualizar en localStorage
+    const userPacientes = JSON.parse(localStorage.getItem('user_pacientes') || '[]');
+    const index = userPacientes.findIndex((p: any) =>
+      String(p.id) === String(this.pacienteIdOriginal)
+    );
+
+    if (index !== -1) {
+      userPacientes[index] = {
+        ...userPacientes[index],
+        nombre: this.paciente.nombre,
+        rut: this.paciente.rut,
+        fechaNacimiento: this.paciente.fechaNacimiento,
+        edad: this.paciente.edad,
+        email: this.paciente.email,
+        telefono: this.paciente.telefono,
+        diagnostico: this.paciente.diagnostico,
+        sesionesPlanificadas: this.paciente.sesionesPlanificadas
+      };
+      localStorage.setItem('user_pacientes', JSON.stringify(userPacientes));
     }
   }
 
