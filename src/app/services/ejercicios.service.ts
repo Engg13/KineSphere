@@ -272,8 +272,8 @@ export class EjerciciosService {
 
     rutina.ejercicios.forEach(ej => {
       msg += `*${ej.letra}) ${ej.ejercicio.nombre}*\n`;
-      if (ej.ejercicio.descripcion) {
-        msg += `${ej.ejercicio.descripcion}\n`;
+      if (ej.ejercicio.instrucciones) {
+        msg += `${ej.ejercicio.instrucciones}\n`;
       }
       msg += `\n`;
 
