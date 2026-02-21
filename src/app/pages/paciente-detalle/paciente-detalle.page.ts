@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
+import { EjerciciosService } from '../../services/ejercicios.service';
+import { RutinaEjercicios } from '../../models/interfaces';
 
 @Component({
   selector: 'app-paciente-detalle',
@@ -13,6 +15,7 @@ export class PacienteDetallePage {
   paciente: any = null;
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
+  rutinasCompletadas: RutinaEjercicios[] = [];
   pacienteId: string = '';
   fechaActual = new Date().toISOString();
 
@@ -20,7 +23,8 @@ export class PacienteDetallePage {
     private navCtrl: NavController,
     private route: ActivatedRoute,
     private router: Router,
-    private databaseService: DatabaseService
+    private databaseService: DatabaseService,
+    private ejerciciosService: EjerciciosService
   ) { }
 
   async ionViewDidEnter() {
@@ -59,6 +63,7 @@ export class PacienteDetallePage {
         this.paciente = paciente;
         this.verificarYCorregirEdad();
         await this.cargarHistorialSesiones(id);
+        this.cargarRutinasCompletadas(id);
       } else {
         console.log('Paciente no encontrado con ID:', id);
         this.paciente = null;
@@ -117,7 +122,17 @@ export class PacienteDetallePage {
     }
   }
 
-  //  MÉTODO PARA FORMATEAR FECHA 
+  private cargarRutinasCompletadas(pacienteId: string) {
+    try {
+      const rutinas = this.ejerciciosService.getRutinasPorPaciente(pacienteId);
+      this.rutinasCompletadas = rutinas.filter(r => r.completada);
+    } catch (error) {
+      console.error('Error cargando rutinas:', error);
+      this.rutinasCompletadas = [];
+    }
+  }
+
+  //  MÉTODO PARA FORMATEAR FECHA
   formatearFecha(fechaString: string): string {
     if (!fechaString) return 'No registrada';
     

@@ -275,6 +275,15 @@
   margin-top: 2px;
 }
 
+.rutina-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+
+  ion-icon {
+    font-size: 1rem;
+    color: #fff;
+  }
+}
+
 /* ===== EMPTY SESSIONS ===== */
 .empty-sessions {
   text-align: center;

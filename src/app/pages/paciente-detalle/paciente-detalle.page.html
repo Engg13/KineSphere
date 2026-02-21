@@ -119,6 +119,27 @@
         </button>
       </div>
 
+      <!-- HISTORIAL DE RUTINAS -->
+      @if (rutinasCompletadas.length > 0) {
+        <div class="sessions-card animated-item">
+          <h3 class="section-title">Rutinas Completadas</h3>
+          @for (rutina of rutinasCompletadas; track rutina.id) {
+            <div class="session-item">
+              <div class="session-number rutina-icon">
+                <ion-icon name="barbell-outline"></ion-icon>
+              </div>
+              <div class="session-info">
+                <span class="session-date">{{ rutina.nombre }}</span>
+                <span class="session-eva">{{ rutina.ejercicios.length }} ejercicios</span>
+                <span class="session-obs">
+                  Completada: {{ formatearFecha(rutina.fechaCompletada || rutina.fecha) }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <!-- HISTORIAL DE SESIONES -->
       <div class="sessions-card animated-item">
         <h3 class="section-title">Historial de Sesiones</h3>

@@ -435,8 +435,20 @@
   padding: 16px;
 }
 
-.btn-iniciar, .btn-finalizar {
+.btn-iniciar {
   --border-radius: 14px;
+  --background: #10b981;
+  --color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  height: 52px;
+  margin: 0;
+}
+
+.btn-finalizar {
+  --border-radius: 14px;
+  --background: #0d9488;
+  --color: #ffffff;
   font-weight: 700;
   font-size: 0.95rem;
   height: 52px;
@@ -446,7 +458,19 @@
 .btn-agregar-mas {
   margin: 8px 16px;
   --border-radius: 10px;
+  --border-color: #0d9488;
+  --color: #0d9488;
+  --background: transparent;
   font-size: 0.85rem;
+}
+
+.btn-nueva-rutina {
+  --background: #0d9488;
+  --color: #ffffff;
+  --border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  height: 48px;
 }
 
 // ==================== RUTINAS ANTERIORES ====================
