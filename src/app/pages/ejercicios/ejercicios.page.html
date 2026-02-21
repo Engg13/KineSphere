@@ -307,9 +307,12 @@
         {{ mostrarFormNuevo ? 'Cancelar' : 'Crear ejercicio' }}
       </ion-button>
 
-      <!-- Formulario nuevo ejercicio -->
+      <!-- Formulario nuevo/editar ejercicio -->
       @if (mostrarFormNuevo) {
         <div class="form-nuevo">
+          <div class="form-titulo">
+            {{ editandoEjercicioId ? 'Editar ejercicio' : 'Nuevo ejercicio' }}
+          </div>
           <ion-item>
             <ion-input label="Nombre *" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.nombre" placeholder="Ej: Sentadilla búlgara"></ion-input>
           </ion-item>
@@ -317,7 +320,7 @@
             <ion-textarea label="Descripcion" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.descripcion" placeholder="Descripcion del ejercicio" rows="2"></ion-textarea>
           </ion-item>
           <ion-item>
-            <ion-textarea label="Instrucciones" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.instrucciones" placeholder="Pasos para realizarlo" rows="2"></ion-textarea>
+            <ion-textarea label="Instrucciones" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.instrucciones" placeholder="Pasos para realizarlo" rows="3"></ion-textarea>
           </ion-item>
           <ion-item>
             <ion-select label="Categoria" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.categoria">
@@ -344,7 +347,7 @@
           </ion-item>
           <ion-button expand="block" (click)="guardarNuevoEjercicio()" class="btn-guardar-nuevo">
             <ion-icon name="save-outline" slot="start"></ion-icon>
-            Guardar ejercicio
+            {{ editandoEjercicioId ? 'Guardar cambios' : 'Guardar ejercicio' }}
           </ion-button>
         </div>
       }
@@ -392,6 +395,9 @@
                 Video
               </ion-button>
             }
+            <ion-button fill="clear" size="small" color="primary" (click)="editarEjercicio(ejercicio)">
+              <ion-icon name="create-outline"></ion-icon>
+            </ion-button>
             <ion-button fill="clear" size="small" color="danger" (click)="eliminarEjercicioBiblioteca(ejercicio)">
               <ion-icon name="trash-outline"></ion-icon>
             </ion-button>

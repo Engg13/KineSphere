@@ -632,6 +632,13 @@ ion-searchbar {
   padding: 12px;
   box-shadow: var(--shadow);
 
+  .form-titulo {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: var(--pri);
+  }
+
   ion-item {
     --padding-start: 0;
     --inner-padding-end: 0;

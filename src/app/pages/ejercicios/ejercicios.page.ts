@@ -46,9 +46,10 @@ export class EjerciciosPage implements OnInit {
   historialEjercicio: HistorialEjercicio[] = [];
   ejercicioHistorialNombre: string = '';
 
-  // Nuevo ejercicio
+  // Nuevo/editar ejercicio
   mostrarFormNuevo: boolean = false;
   nuevoEjercicio = this.getEjercicioVacio();
+  editandoEjercicioId: string | null = null;
 
   constructor(
     private ejerciciosService: EjerciciosService,
@@ -387,8 +388,24 @@ export class EjerciciosPage implements OnInit {
   toggleFormNuevo() {
     this.mostrarFormNuevo = !this.mostrarFormNuevo;
     if (this.mostrarFormNuevo) {
+      this.editandoEjercicioId = null;
       this.nuevoEjercicio = this.getEjercicioVacio();
     }
+  }
+
+  editarEjercicio(ejercicio: EjercicioLocal) {
+    this.editandoEjercicioId = ejercicio.id;
+    this.nuevoEjercicio = {
+      nombre: ejercicio.nombre,
+      descripcion: ejercicio.descripcion,
+      instrucciones: ejercicio.instrucciones || '',
+      categoria: ejercicio.categoria,
+      musculoPrincipal: ejercicio.musculoPrincipal,
+      equipamiento: ejercicio.equipamiento,
+      videoUrl: ejercicio.videoUrl || '',
+      dificultad: ejercicio.dificultad
+    };
+    this.mostrarFormNuevo = true;
   }
 
   guardarNuevoEjercicio() {
@@ -397,8 +414,14 @@ export class EjerciciosPage implements OnInit {
       return;
     }
 
-    this.ejerciciosService.agregarEjercicio(this.nuevoEjercicio);
-    this.mostrarToast('Ejercicio creado', 'success');
+    if (this.editandoEjercicioId) {
+      this.ejerciciosService.actualizarEjercicio(this.editandoEjercicioId, this.nuevoEjercicio);
+      this.mostrarToast('Ejercicio actualizado', 'success');
+      this.editandoEjercicioId = null;
+    } else {
+      this.ejerciciosService.agregarEjercicio(this.nuevoEjercicio);
+      this.mostrarToast('Ejercicio creado', 'success');
+    }
     this.mostrarFormNuevo = false;
     this.cargarDatos();
     this.filtrarEjercicios();
@@ -434,7 +457,7 @@ export class EjerciciosPage implements OnInit {
       musculoPrincipal: '',
       equipamiento: 'Ninguno',
       videoUrl: '',
-      dificultad: 'basico' as const
+      dificultad: 'basico' as 'basico' | 'intermedio' | 'avanzado'
     };
   }
 
