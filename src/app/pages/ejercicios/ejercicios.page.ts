@@ -13,7 +13,7 @@ import {
 } from '../../models/interfaces';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+
 
 @Component({
     selector: 'app-ejercicios',
@@ -434,7 +434,6 @@ export class EjerciciosPage implements OnInit {
       musculoPrincipal: ejercicio.musculoPrincipal,
       equipamiento: ejercicio.equipamiento,
       videoUrl: ejercicio.videoUrl || '',
-      imagenUrl: ejercicio.imagenUrl || '',
       dificultad: ejercicio.dificultad
     };
     this.mostrarFormNuevo = true;
@@ -489,36 +488,8 @@ export class EjerciciosPage implements OnInit {
       musculoPrincipal: '',
       equipamiento: 'Ninguno',
       videoUrl: '',
-      imagenUrl: '',
       dificultad: 'basico' as 'basico' | 'intermedio' | 'avanzado'
     };
-  }
-
-  // ==================== IMAGEN EJERCICIO ====================
-
-  async capturarImagenEjercicio(source: 'camera' | 'gallery') {
-    try {
-      const imagen = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: source === 'camera' ? CameraSource.Camera : CameraSource.Photos,
-        width: 800,
-        height: 600
-      });
-      if (imagen.dataUrl) {
-        this.nuevoEjercicio.imagenUrl = imagen.dataUrl;
-        this.mostrarToast('Imagen agregada', 'success');
-      }
-    } catch (e: any) {
-      if (e?.message !== 'User cancelled photos app') {
-        this.mostrarToast('No se pudo capturar la imagen', 'warning');
-      }
-    }
-  }
-
-  eliminarImagenEjercicio() {
-    this.nuevoEjercicio.imagenUrl = '';
   }
 
   // ==================== HISTORIAL ====================

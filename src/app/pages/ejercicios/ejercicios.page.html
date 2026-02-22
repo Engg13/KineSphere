@@ -145,13 +145,6 @@
             @if (isExpandido(i)) {
               <div class="ejercicio-body">
 
-                <!-- Imagen del ejercicio -->
-                @if (ej.ejercicio.imagenUrl) {
-                  <div class="ejercicio-imagen">
-                    <img [src]="ej.ejercicio.imagenUrl" [alt]="ej.ejercicio.nombre" />
-                  </div>
-                }
-
                 <!-- Video thumbnail -->
                 @if (ej.ejercicio.videoUrl) {
                   <div class="video-thumbnail" (click)="abrirVideo(ej.ejercicio.videoUrl!)">
@@ -371,33 +364,6 @@
             <ion-input label="Video YouTube (URL)" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.videoUrl" placeholder="https://youtube.com/watch?v=..." type="url"></ion-input>
           </ion-item>
 
-          <!-- Imagen del ejercicio -->
-          <div class="form-imagen-section">
-            <label class="form-label">Imagen del ejercicio</label>
-            @if (nuevoEjercicio.imagenUrl) {
-              <div class="imagen-preview">
-                <img [src]="nuevoEjercicio.imagenUrl" alt="Imagen ejercicio" />
-                <button class="btn-eliminar-imagen" (click)="eliminarImagenEjercicio()">
-                  <ion-icon name="close-circle"></ion-icon>
-                </button>
-              </div>
-            } @else {
-              <div class="imagen-actions">
-                <button class="btn-imagen" (click)="capturarImagenEjercicio('camera')">
-                  <ion-icon name="camera-outline"></ion-icon>
-                  <span>Camara</span>
-                </button>
-                <button class="btn-imagen" (click)="capturarImagenEjercicio('gallery')">
-                  <ion-icon name="image-outline"></ion-icon>
-                  <span>Galeria</span>
-                </button>
-              </div>
-              <ion-item>
-                <ion-input label="O pegar URL de imagen" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.imagenUrl" placeholder="https://ejemplo.com/imagen.jpg" type="url"></ion-input>
-              </ion-item>
-            }
-          </div>
-
           <ion-item>
             <ion-select label="Dificultad" labelPlacement="stacked" [(ngModel)]="nuevoEjercicio.dificultad">
               <ion-select-option value="basico">Basico</ion-select-option>
@@ -422,12 +388,6 @@
 
       @for (ejercicio of ejerciciosFiltrados; track trackByEjercicioLocal($index, ejercicio)) {
         <div class="biblioteca-card" [class.en-rutina]="estaEnRutina(ejercicio.id)">
-          <!-- Imagen del ejercicio en biblioteca -->
-          @if (ejercicio.imagenUrl) {
-            <div class="biblioteca-card-imagen">
-              <img [src]="ejercicio.imagenUrl" [alt]="ejercicio.nombre" />
-            </div>
-          }
           <div class="biblioteca-card-header">
             <div class="cat-indicator" [style.background]="getColorCategoria(ejercicio.categoria)">
               <ion-icon [name]="getIconoCategoria(ejercicio.categoria)"></ion-icon>
