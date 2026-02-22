@@ -51,6 +51,8 @@ export class EjerciciosPage implements OnInit {
 
   // Selector de pacientes
   listaPacientes: any[] = [];
+  pacientesFiltrados: any[] = [];
+  busquedaPaciente: string = '';
 
   // Nuevo/editar ejercicio
   mostrarFormNuevo: boolean = false;
@@ -82,7 +84,7 @@ export class EjerciciosPage implements OnInit {
   private async cargarPacientes() {
     try {
       this.listaPacientes = await this.databaseService.getPacientes();
-      // Si ya tenemos pacienteId, cargar su teléfono
+      this.pacientesFiltrados = [...this.listaPacientes];
       if (this.pacienteId && this.pacienteId !== 'general') {
         const p = this.listaPacientes.find((pac: any) => String(pac.id) === String(this.pacienteId));
         if (p?.telefono) {
@@ -92,10 +94,23 @@ export class EjerciciosPage implements OnInit {
     } catch {}
   }
 
+  filtrarPacientes() {
+    const t = this.busquedaPaciente.toLowerCase().trim();
+    if (!t) {
+      this.pacientesFiltrados = [...this.listaPacientes];
+      return;
+    }
+    this.pacientesFiltrados = this.listaPacientes.filter(p => {
+      const nombre = (p.nombre || p.nombre_completo || '').toLowerCase();
+      return nombre.includes(t);
+    });
+  }
+
   seleccionarPaciente(paciente: any) {
     this.pacienteId = String(paciente.id);
     this.pacienteNombre = paciente.nombre || `${paciente.nombre_completo || ''}`.trim();
     this.pacienteTelefono = paciente.telefono || '';
+    this.busquedaPaciente = '';
     this.cargarDatos();
   }
 

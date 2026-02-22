@@ -48,15 +48,22 @@
       <!-- Selector de paciente cuando no hay uno seleccionado -->
       @if (!pacienteId && listaPacientes.length > 0) {
         <div class="selector-paciente">
-          <p class="selector-titulo">Selecciona un paciente para ver sus rutinas</p>
-          <div class="pacientes-lista">
-            @for (pac of listaPacientes; track pac.id) {
-              <button class="paciente-chip" (click)="seleccionarPaciente(pac)">
-                <ion-icon name="person-outline"></ion-icon>
-                <span>{{ pac.nombre || pac.nombre_completo }}</span>
-              </button>
-            }
-          </div>
+          <ion-searchbar
+            [(ngModel)]="busquedaPaciente"
+            (ionInput)="filtrarPacientes()"
+            placeholder="Buscar paciente..."
+            animated>
+          </ion-searchbar>
+          @if (pacientesFiltrados.length > 0) {
+            <div class="pacientes-resultados">
+              @for (pac of pacientesFiltrados; track pac.id) {
+                <button class="paciente-item" (click)="seleccionarPaciente(pac)">
+                  <ion-icon name="person-outline"></ion-icon>
+                  <span>{{ pac.nombre || pac.nombre_completo }}</span>
+                </button>
+              }
+            </div>
+          }
         </div>
       }
 

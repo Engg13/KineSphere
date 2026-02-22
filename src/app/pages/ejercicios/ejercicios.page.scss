@@ -39,45 +39,48 @@ ion-content {
 // ==================== SELECTOR PACIENTE ====================
 .selector-paciente {
   margin: 8px 16px;
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  padding: 14px;
-  box-shadow: var(--shadow);
 
-  .selector-titulo {
-    font-size: 0.9rem;
-    color: var(--medium);
-    margin: 0 0 10px;
-    text-align: center;
+  ion-searchbar {
+    --background: var(--card-bg);
+    --border-radius: 12px;
+    --box-shadow: var(--shadow);
+    padding: 0;
   }
 
-  .pacientes-lista {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+  .pacientes-resultados {
+    background: var(--card-bg);
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: var(--shadow);
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: -4px;
   }
 
-  .paciente-chip {
+  .paciente-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border: 1.5px solid var(--pri);
-    border-radius: 20px;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 1px solid var(--light);
     background: transparent;
-    color: var(--pri);
-    font-size: 0.85rem;
-    font-weight: 500;
+    color: var(--dark);
+    font-size: 0.9rem;
+    text-align: left;
     cursor: pointer;
-    transition: all 0.2s;
+
+    &:last-child {
+      border-bottom: none;
+    }
 
     &:active {
-      background: var(--pri);
-      color: #fff;
+      background: var(--light);
     }
 
     ion-icon {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      color: var(--pri);
     }
   }
 }
