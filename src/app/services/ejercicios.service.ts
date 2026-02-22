@@ -288,6 +288,11 @@ export class EjerciciosService {
         msg += `  Descanso: ${ej.descansoSegundos}s\n`;
       }
 
+      // Imagen del ejercicio (solo URLs web, no base64)
+      if (ej.ejercicio.imagenUrl && !ej.ejercicio.imagenUrl.startsWith('data:')) {
+        msg += `  Imagen: ${ej.ejercicio.imagenUrl}\n`;
+      }
+
       if (ej.ejercicio.videoUrl) {
         msg += `  Video: ${ej.ejercicio.videoUrl}\n`;
       }
