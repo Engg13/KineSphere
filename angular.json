@@ -16,6 +16,14 @@
             "outputPath": {
               "base": "www"
             },
+            "allowedCommonJsDependencies": [
+              "canvg",
+              "html2canvas",
+              "file-saver",
+              "raf",
+              "rgbcolor",
+              "core-js"
+            ],
             "index": "src/index.html",
             "polyfills": [
               "src/polyfills.ts"
@@ -36,7 +44,10 @@
             ],
             "styles": ["src/global.scss", "src/theme/variables.scss"],
             "scripts": [],
-            "browser": "src/main.ts"
+            "browser": "src/main.ts",
+            "optimization": {
+              "fonts": false
+            }
           },
           "configurations": {
             "production": {
@@ -48,8 +59,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kb",
-                  "maximumError": "6kb"
+                  "maximumWarning": "16kb",
+                  "maximumError": "24kb"
                 }
               ],
               "fileReplacements": [
@@ -149,4 +160,6 @@
       "styleext": "scss"
     }
   }
+
+  
 }

@@ -9,12 +9,12 @@ import { EvaluacionFinalPageRoutingModule } from './evaluacion-final-routing.mod
 import { EvaluacionFinalPage } from './evaluacion-final.page';
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    EvaluacionFinalPageRoutingModule
-  ],
-  declarations: [EvaluacionFinalPage]
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        EvaluacionFinalPageRoutingModule,
+        EvaluacionFinalPage
+    ]
 })
 export class EvaluacionFinalPageModule {}

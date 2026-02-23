@@ -9,12 +9,12 @@ import { AgregarPacientePageRoutingModule } from './agregar-paciente-routing.mod
 import { AgregarPacientePage } from './agregar-paciente.page';
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    AgregarPacientePageRoutingModule
-  ],
-  declarations: [AgregarPacientePage]
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        AgregarPacientePageRoutingModule,
+        AgregarPacientePage
+    ]
 })
 export class AgregarPacientePageModule {}

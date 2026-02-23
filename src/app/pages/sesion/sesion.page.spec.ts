@@ -37,15 +37,15 @@ describe('SesionPage', () => {
     );
 
     await TestBed.configureTestingModule({
-      declarations: [SesionPage],
-      imports: [
+    imports: [
         IonicModule.forRoot(),
         HttpClientTestingModule,
         RouterTestingModule, // ← Esto provee ActivatedRoute
         FormsModule,
-        ReactiveFormsModule
-      ],
-      providers: [
+        ReactiveFormsModule,
+        SesionPage
+    ],
+    providers: [
         // ActivatedRoute se provee automáticamente con RouterTestingModule
         { provide: DatabaseService, useValue: databaseServiceMock },
         { provide: PlatformService, useValue: platformServiceMock },
@@ -53,9 +53,9 @@ describe('SesionPage', () => {
         { provide: 'NavController', useValue: navControllerMock },
         { provide: 'ToastController', useValue: toastControllerMock }
         // NO necesitas proveer ActivatedRoute si usas RouterTestingModule
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+}).compileComponents();
 
     fixture = TestBed.createComponent(SesionPage);
     component = fixture.componentInstance;

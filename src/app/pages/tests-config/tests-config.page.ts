@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
-import { NavController, AlertController, ViewWillEnter } from '@ionic/angular';
+import { NavController, AlertController, ViewWillEnter, IonicModule } from '@ionic/angular';
+import { NgIf, NgFor } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 export interface TestPregunta {
   texto: string;
@@ -351,10 +353,11 @@ const TESTS_PREDETERMINADOS: TestTemplate[] = [
 ];
 
 @Component({
-  selector: 'app-tests-config',
-  templateUrl: './tests-config.page.html',
-  styleUrls: ['./tests-config.page.scss'],
-  standalone: false
+    selector: 'app-tests-config',
+    templateUrl: './tests-config.page.html',
+    styleUrls: ['./tests-config.page.scss'],
+    standalone: true,
+    imports: [IonicModule, NgIf, NgFor, FormsModule]
 })
 export class TestsConfigPage implements ViewWillEnter {
   tests: TestTemplate[] = [];

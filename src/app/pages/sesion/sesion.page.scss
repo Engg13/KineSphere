@@ -402,6 +402,89 @@
   }
 }
 
+/* ===== RUTINA SECTION ===== */
+.rutina-empty-hint {
+  p {
+    color: #9ca3af;
+    font-size: 0.82rem;
+    margin: 0 0 8px;
+  }
+}
+
+.btn-crear-rutina {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1.5px dashed #0d9488;
+  border-radius: 10px;
+  background: #f0fdfa;
+  color: #0d9488;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 1.1rem;
+  }
+
+  &:active {
+    background: #ccfbf1;
+  }
+}
+
+/* ===== RUTINA PREVIEW ===== */
+.rutina-preview {
+  margin-top: 12px;
+  background: #f0fdfa;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid #ccfbf1;
+}
+
+.rutina-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e0f2f1;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.preview-letra {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #0d9488;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.preview-nombre {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.preview-series {
+  font-size: 0.78rem;
+  color: #0d9488;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
 /* ===== FIXED BUTTONS ===== */
 .botones-spacer {
   height: 90px;

@@ -1,23 +1,36 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { NavController, ToastController } from '@ionic/angular';
+import { NavController, ToastController, IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { DatabaseService } from 'src/app/services/database.service';
+import { RutinasFirestoreService } from 'src/app/services/rutinas-firestore.service';
+import { RutinaEjercicios } from 'src/app/models/interfaces';
+import { NgIf, NgFor } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
 
 @Component({
   selector: 'app-sesion',
   templateUrl: './sesion.page.html',
   styleUrls: ['./sesion.page.scss'],
-  standalone: false
+  standalone: true,
+  imports: [IonicModule, NgIf, FormsModule, SleepQualityComponent, NgFor]
 })
 export class SesionPage {
-  // Datos del paciente
-  pacienteId: string = '';
-  pacienteNombre: string = '';
-  pacienteDiagnostico: string = '';
-  numeroSesion: number = 1;
-  sesionesPlanificadas: number = 10;
 
-  // Datos de la sesion
+  // ===============================
+  // DATOS PACIENTE
+  // ===============================
+
+  pacienteId = '';
+  pacienteNombre = '';
+  pacienteDiagnostico = '';
+  numeroSesion = 1;
+  sesionesPlanificadas = 10;
+
+  // ===============================
+  // DATOS SESIÓN
+  // ===============================
+
   sesionData = {
     nivelDolor: null as number | null,
     calidadSueno: 3,
@@ -30,7 +43,10 @@ export class SesionPage {
     objetivoProxima: ''
   };
 
-  // Zonas de tratamiento
+  // ===============================
+  // ZONAS
+  // ===============================
+
   zonasTratamiento: string[] = [
     'Columna cervical',
     'Columna dorsal',
@@ -45,7 +61,10 @@ export class SesionPage {
     'Otra'
   ];
 
-  // Técnicas kinésicas
+  // ===============================
+  // TÉCNICAS
+  // ===============================
+
   tecnicasDisponibles: { nombre: string; seleccionada: boolean }[] = [
     { nombre: 'Masoterapia', seleccionada: false },
     { nombre: 'Movilizacion articular', seleccionada: false },
@@ -59,12 +78,22 @@ export class SesionPage {
     { nombre: 'Educacion al paciente', seleccionada: false }
   ];
 
-  // Tests predeterminados
+  // ===============================
+  // TESTS (por ahora localStorage)
+  // ===============================
+
   testsDisponibles: any[] = [];
   testSeleccionado: any = null;
   respuestasTest: number[] = [];
   puntajeTotal = 0;
   resultadoTest = '';
+
+  // ===============================
+  // RUTINAS (Firestore)
+  // ===============================
+
+  rutinasDisponibles: any[] = [];
+  rutinaSeleccionada: any = null;
 
   @ViewChild('observacionesTextarea') observacionesTextarea!: ElementRef;
 
@@ -72,11 +101,16 @@ export class SesionPage {
     private navCtrl: NavController,
     private router: Router,
     private databaseService: DatabaseService,
+    private rutinasService: RutinasFirestoreService,
     private toastCtrl: ToastController
   ) {}
 
+  // =====================================================
+  // INIT
+  // =====================================================
+
   ionViewDidEnter() {
-    // Read params from current URL to avoid stale cached params
+
     const tree = this.router.parseUrl(this.router.url);
     const params = tree.queryParams;
 
@@ -84,7 +118,15 @@ export class SesionPage {
     this.pacienteNombre = params['pacienteNombre'] || 'Paciente';
     this.pacienteDiagnostico = params['diagnostico'] || '';
 
-    // Reset form
+    this.resetFormulario();
+
+    this.cargarTestsDisponibles();
+    this.calcularNumeroSesion();
+    this.cargarDatosPaciente();
+    this.cargarRutinasDisponibles();
+  }
+
+  resetFormulario() {
     this.sesionData = {
       nivelDolor: null,
       calidadSueno: 3,
@@ -96,137 +138,144 @@ export class SesionPage {
       rom: '',
       objetivoProxima: ''
     };
+
     this.tecnicasDisponibles.forEach(t => t.seleccionada = false);
     this.testSeleccionado = null;
     this.respuestasTest = [];
     this.puntajeTotal = 0;
     this.resultadoTest = '';
-
-    this.cargarTestsDisponibles();
-    this.calcularNumeroSesion();
-    this.cargarDatosPaciente();
+    this.rutinaSeleccionada = null;
   }
+
+  // =====================================================
+  // PACIENTE
+  // =====================================================
 
   async cargarDatosPaciente() {
     if (!this.pacienteId) return;
-    try {
-      const pacientes = await this.databaseService.getPacientes();
-      const p = pacientes.find((pac: any) => String(pac.id) === String(this.pacienteId));
-      if (p) {
-        this.pacienteNombre = p.nombre || this.pacienteNombre;
-        this.pacienteDiagnostico = p.diagnostico || '';
-        this.sesionesPlanificadas = p.sesionesPlanificadas || 10;
-      }
-    } catch {}
+
+    const pacientes = await this.databaseService.getPacientes();
+    const p = pacientes.find((pac: any) => String(pac.id) === String(this.pacienteId));
+
+    if (p) {
+      this.pacienteNombre = p.nombre || this.pacienteNombre;
+      this.pacienteDiagnostico = p.diagnostico || '';
+      this.sesionesPlanificadas = p.sesionesPlanificadas || 10;
+    }
   }
 
   async calcularNumeroSesion() {
-    if (!this.pacienteId) {
-      this.numeroSesion = 1;
-      return;
-    }
-    try {
-      const sesiones = await this.databaseService.getSesionesByPaciente(this.pacienteId);
-      this.numeroSesion = sesiones.length + 1;
-    } catch {
-      this.numeroSesion = 1;
-    }
+    if (!this.pacienteId) return;
+
+    const sesiones = await this.databaseService.getSesionesByPaciente(this.pacienteId);
+    this.numeroSesion = sesiones.length + 1;
   }
 
-  // Keyboard handling
-  onEnterObservaciones(event: any) {
-    if (event.preventDefault) event.preventDefault();
-    this.cerrarTeclado();
-    return false;
+  // =====================================================
+  // RUTINAS (Firestore realtime)
+  // =====================================================
+
+  cargarRutinasDisponibles() {
+    if (!this.pacienteId) return;
+
+    this.rutinasService
+      .getRutinasPorPacienteRealtime(this.pacienteId)
+      .subscribe(rutinas => {
+        this.rutinasDisponibles = rutinas.filter(r => !r.completada);
+      });
   }
 
-  cerrarTeclado() {
-    const activeElement = document.activeElement as HTMLElement;
-    if (activeElement) activeElement.blur();
-    if (typeof (window as any).Keyboard !== 'undefined') {
-      try { (window as any).Keyboard.hide(); } catch {}
-    }
+  seleccionarRutina(event: any) {
+    const rutinaId = event?.detail?.value;
+    this.rutinaSeleccionada =
+      this.rutinasDisponibles.find(r => r.id === rutinaId) || null;
   }
 
-  onContentClick(event: any) {
-    const el = event.target as HTMLElement;
-    const isInput = el.closest('ion-input') || el.closest('ion-textarea') ||
-                    el.closest('ion-range') || el.closest('ion-checkbox') ||
-                    el.closest('ion-select') || el.closest('ion-toggle');
-    if (!isInput) this.cerrarTeclado();
+  irACrearRutina() {
+    this.navCtrl.navigateRoot('/ejercicios', {
+      queryParams: {
+        pacienteId: this.pacienteId,
+        pacienteNombre: this.pacienteNombre
+      }
+    });
   }
 
-  // Técnicas toggle
-  toggleTecnica(tecnica: { nombre: string; seleccionada: boolean }) {
+  // =====================================================
+  // TÉCNICAS
+  // =====================================================
+
+  toggleTecnica(tecnica: any) {
     tecnica.seleccionada = !tecnica.seleccionada;
-    this.sesionData.tecnicasAplicadas = this.tecnicasDisponibles
-      .filter(t => t.seleccionada)
-      .map(t => t.nombre);
+    this.sesionData.tecnicasAplicadas =
+      this.tecnicasDisponibles
+        .filter(t => t.seleccionada)
+        .map(t => t.nombre);
   }
 
-  // Form validation
+  // =====================================================
+  // VALIDACIÓN
+  // =====================================================
+
   esFormularioValido(): boolean {
-    return this.sesionData.nivelDolor !== null && this.sesionData.nivelDolor >= 0;
+    return this.sesionData.nivelDolor !== null;
   }
 
   getProgresoSesiones(): number {
     return Math.min((this.numeroSesion / this.sesionesPlanificadas) * 100, 100);
   }
 
+  // =====================================================
+  // GUARDAR SESIÓN (Firestore)
+  // =====================================================
+
   async guardarSesion() {
+
     if (!this.esFormularioValido()) {
-      this.mostrarToast('Completa la evaluacion de dolor (EVA)', 'warning');
+      this.mostrarToast('Completa la evaluación EVA', 'warning');
       return;
     }
 
-    if (!this.pacienteId) {
-      this.mostrarToast('No se identifico al paciente. Regrese e intente nuevamente.', 'danger');
-      return;
+    const datosSesion: any = {
+      pacienteId: this.pacienteId,
+      pacienteNombre: this.pacienteNombre,
+      numeroSesion: this.numeroSesion,
+      fecha: this.sesionData.fechaSesion,
+      eva: this.sesionData.nivelDolor,
+      sueno: this.sesionData.calidadSueno,
+      zonaTratamiento: this.sesionData.zonaTratamiento,
+      tecnicasAplicadas: this.sesionData.tecnicasAplicadas,
+      rom: this.sesionData.rom,
+      objetivoProxima: this.sesionData.objetivoProxima,
+      observaciones: this.sesionData.observaciones,
+      enviadoWhatsapp: false
+    };
+
+    if (this.rutinaSeleccionada) {
+      datosSesion.rutinaId = this.rutinaSeleccionada.id;
+      datosSesion.rutinaNombre = this.rutinaSeleccionada.nombre;
     }
 
-    try {
-      const datosSesion: any = {
-        paciente_id: this.pacienteId,
-        paciente_nombre: this.pacienteNombre,
-        numero_sesion: this.numeroSesion,
-        fecha: this.sesionData.fechaSesion,
-        ejercicios: this.sesionData.ejerciciosRealizados ? 'Realizados' : 'No realizados',
-        observaciones: this.sesionData.observaciones,
-        eva: this.sesionData.nivelDolor,
-        sueno: this.sesionData.calidadSueno,
-        zona_tratamiento: this.sesionData.zonaTratamiento,
-        tecnicas_aplicadas: this.sesionData.tecnicasAplicadas,
-        rom: this.sesionData.rom,
-        objetivo_proxima: this.sesionData.objetivoProxima,
-        enviado_whatsapp: false
+    if (this.testSeleccionado) {
+      datosSesion.test = {
+        testId: this.testSeleccionado.id,
+        testNombre: this.testSeleccionado.nombre,
+        puntajeTotal: this.puntajeTotal,
+        resultado: this.resultadoTest
       };
-
-      // Include test results if applied
-      if (this.testSeleccionado) {
-        datosSesion.test = {
-          testId: this.testSeleccionado.id,
-          testNombre: this.testSeleccionado.nombre,
-          respuestas: [...this.respuestasTest],
-          puntajeTotal: this.puntajeTotal,
-          resultado: this.resultadoTest
-        };
-      }
-
-      await this.databaseService.addSesion(datosSesion);
-
-      this.mostrarToast(`Sesion ${this.numeroSesion} guardada correctamente`, 'success');
-
-      // Navigate back to patient detail
-      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
-      this.navCtrl.navigateRoot('/paciente-detalle');
-
-    } catch (error) {
-      console.error('Error al guardar sesion:', error);
-      this.mostrarToast('Error al guardar la sesion. Intente nuevamente.', 'danger');
     }
+
+    await this.databaseService.addSesion(datosSesion);
+
+    this.mostrarToast(`Sesión ${this.numeroSesion} guardada`, 'success');
+
+    localStorage.setItem('ver_paciente_id', this.pacienteId);
+    this.navCtrl.navigateRoot('/paciente-detalle');
   }
 
-  // Tests
+  // =====================================================
+  // TESTS (local temporal)
+  // =====================================================
+
   cargarTestsDisponibles() {
     try {
       const data = localStorage.getItem('test_templates');
@@ -238,45 +287,50 @@ export class SesionPage {
 
   seleccionarTest(event: any) {
     const testId = event?.detail?.value;
-    if (!testId) {
-      this.testSeleccionado = null;
-      this.respuestasTest = [];
-      this.puntajeTotal = 0;
-      this.resultadoTest = '';
-      return;
-    }
-    this.testSeleccionado = this.testsDisponibles.find((t: any) => t.id === testId);
+
+    this.testSeleccionado =
+      this.testsDisponibles.find((t: any) => t.id === testId) || null;
+
     if (this.testSeleccionado) {
-      this.respuestasTest = this.testSeleccionado.preguntas.map(() => 0);
+      this.respuestasTest =
+        this.testSeleccionado.preguntas.map(() => 0);
       this.calcularPuntajeTest();
     }
   }
 
   calcularPuntajeTest() {
-    if (!this.testSeleccionado) return;
-    this.puntajeTotal = this.respuestasTest.reduce((sum, val) => sum + (val || 0), 0);
-    const rango = this.testSeleccionado.rangos.find((r: any) =>
-      this.puntajeTotal >= r.min && this.puntajeTotal <= r.max
-    );
-    this.resultadoTest = rango ? rango.nombre : 'Sin clasificacion';
+    this.puntajeTotal =
+      this.respuestasTest.reduce((sum, val) => sum + (val || 0), 0);
+
+    const rango =
+      this.testSeleccionado?.rangos.find((r: any) =>
+        this.puntajeTotal >= r.min && this.puntajeTotal <= r.max
+      );
+
+    this.resultadoTest = rango ? rango.nombre : 'Sin clasificación';
   }
 
   getResultadoColor(): string {
-    if (!this.testSeleccionado) return '#6b7280';
-    const rango = this.testSeleccionado.rangos.find((r: any) =>
-      this.puntajeTotal >= r.min && this.puntajeTotal <= r.max
-    );
+    const rango =
+      this.testSeleccionado?.rangos.find((r: any) =>
+        this.puntajeTotal >= r.min && this.puntajeTotal <= r.max
+      );
+
     return rango ? rango.color : '#6b7280';
   }
 
+  // =====================================================
+  // NAVEGACIÓN
+  // =====================================================
+
   volverAPaciente() {
-    if (this.pacienteId) {
-      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
-      this.navCtrl.navigateRoot('/paciente-detalle');
-    } else {
-      this.navCtrl.navigateRoot('/dashboard');
-    }
+    localStorage.setItem('ver_paciente_id', this.pacienteId);
+    this.navCtrl.navigateRoot('/paciente-detalle');
   }
+
+  // =====================================================
+  // UTIL
+  // =====================================================
 
   private async mostrarToast(message: string, color: string) {
     const toast = await this.toastCtrl.create({
@@ -286,5 +340,28 @@ export class SesionPage {
       color
     });
     await toast.present();
+  }
+
+  onContentClick(event: any) {
+    const el = event.target as HTMLElement;
+
+    const esInput =
+      el.closest('ion-input') ||
+      el.closest('ion-textarea') ||
+      el.closest('ion-select') ||
+      el.closest('input') ||
+      el.closest('textarea');
+
+    if (!esInput) {
+      const active = document.activeElement as HTMLElement;
+      active?.blur();
+    }
+  }
+
+  onEnterObservaciones(event: any) {
+    event.preventDefault();
+    const active = document.activeElement as HTMLElement;
+    active?.blur();
+    return false;
   }
 }

@@ -9,12 +9,12 @@ import { PacienteDetallePageRoutingModule } from './paciente-detalle-routing.mod
 import { PacienteDetallePage } from './paciente-detalle.page';
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    PacienteDetallePageRoutingModule
-  ],
-  declarations: [PacienteDetallePage]
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        PacienteDetallePageRoutingModule,
+        PacienteDetallePage
+    ]
 })
 export class PacienteDetallePageModule {}

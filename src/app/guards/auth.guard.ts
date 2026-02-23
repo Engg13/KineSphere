@@ -1,7 +1,9 @@
-// auth.guard.ts
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { Auth } from '@angular/fire/auth';
+import { authState } from '@angular/fire/auth';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -9,16 +11,21 @@ import { AuthService } from '../services/auth.service';
 export class AuthGuard implements CanActivate {
 
   constructor(
-    private authService: AuthService,
+    private auth: Auth,
     private router: Router
   ) {}
 
-  canActivate(): boolean {
-    if (this.authService.isAuthenticated()) {
-      return true;
-    } else {
-      this.router.navigate(['/login']);
-      return false;
-    }
+  canActivate(): Observable<boolean> {
+    return authState(this.auth).pipe(
+      take(1),
+      map(user => {
+        if (user) {
+          return true;
+        } else {
+          this.router.navigate(['/login']);
+          return false;
+        }
+      })
+    );
   }
 }

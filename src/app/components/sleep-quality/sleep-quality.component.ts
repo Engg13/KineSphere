@@ -1,10 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { IonicModule } from '@ionic/angular';
 
 @Component({
-  selector: 'app-sleep-quality',
-  templateUrl: './sleep-quality.component.html',
-  styleUrls: ['./sleep-quality.component.scss'],
-  standalone: false
+    selector: 'app-sleep-quality',
+    templateUrl: './sleep-quality.component.html',
+    styleUrls: ['./sleep-quality.component.scss'],
+    standalone: true,
+    imports: [IonicModule]
 })
 export class SleepQualityComponent {
   @Input() valor: number = 0;

@@ -1,13 +1,16 @@
 import { Component } from '@angular/core';
-import { NavController, ViewWillEnter, ToastController } from '@ionic/angular';
+import { NavController, ViewWillEnter, ToastController, IonicModule } from '@ionic/angular';
 import { DatabaseService } from '../../services/database.service';
 import { PdfService } from '../../services/pdf.services';
+import { NgFor, NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-evaluacion-final',
-  templateUrl: './evaluacion-final.page.html',
-  styleUrls: ['./evaluacion-final.page.scss'],
-  standalone: false
+    selector: 'app-evaluacion-final',
+    templateUrl: './evaluacion-final.page.html',
+    styleUrls: ['./evaluacion-final.page.scss'],
+    standalone: true,
+    imports: [IonicModule, NgFor, NgIf, FormsModule]
 })
 export class EvaluacionFinalPage implements ViewWillEnter {
   pacientes: any[] = [];

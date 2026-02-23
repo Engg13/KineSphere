@@ -12,15 +12,14 @@ import { SleepQualityComponent } from '../../components/sleep-quality/sleep-qual
 
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    SesionPageRoutingModule
-  ],
-  declarations: [SesionPage,
-    EvaScaleComponent,
-    SleepQualityComponent
-  ]
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        SesionPageRoutingModule,
+        SesionPage,
+        EvaScaleComponent,
+        SleepQualityComponent
+    ]
 })
 export class SesionPageModule {}

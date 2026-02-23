@@ -1,65 +1,92 @@
-import { Component } from '@angular/core';
-import { NavController } from '@ionic/angular';
+import { Component, OnDestroy } from '@angular/core';
+import { NavController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
+import { RutinaEjercicios } from '../../models/interfaces';
+import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-paciente-detalle',
   templateUrl: './paciente-detalle.page.html',
   styleUrls: ['./paciente-detalle.page.scss'],
-  standalone: false
+  standalone: true,
+  imports: [IonicModule]
 })
-export class PacienteDetallePage {
+export class PacienteDetallePage implements OnDestroy {
+
   paciente: any = null;
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
+  rutinasCompletadas: RutinaEjercicios[] = [];
+  sesionesExpandidas: Set<string | number> = new Set();
   pacienteId: string = '';
   fechaActual = new Date().toISOString();
+
+  private rutinasSub?: Subscription;
 
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
     private router: Router,
-    private databaseService: DatabaseService
-  ) { }
+    private databaseService: DatabaseService,
+    private rutinasService: RutinasFirestoreService
+  ) {}
+
+  // ==============================
+  // 🔥 CICLO DE VIDA
+  // ==============================
 
   async ionViewDidEnter() {
-    // Leer ID desde localStorage (más confiable que query params con Ionic caching)
     const storedId = localStorage.getItem('ver_paciente_id');
     if (storedId) {
-      localStorage.removeItem('ver_paciente_id');
       this.pacienteId = storedId;
     }
-
-    console.log('paciente-detalle ionViewDidEnter - pacienteId:', this.pacienteId);
 
     if (this.pacienteId) {
       await this.cargarPaciente(this.pacienteId);
     } else {
-      console.log('No hay ID de paciente disponible');
       this.estaCargando = false;
     }
   }
+
+  ionViewWillLeave() {
+    this.cancelarSuscripciones();
+  }
+
+  ngOnDestroy() {
+    this.cancelarSuscripciones();
+  }
+
+  private cancelarSuscripciones() {
+    if (this.rutinasSub) {
+      this.rutinasSub.unsubscribe();
+      this.rutinasSub = undefined;
+    }
+  }
+
+  // ==============================
+  // 👤 CARGA PACIENTE
+  // ==============================
 
   private async cargarPaciente(id: string) {
     this.estaCargando = true;
 
     try {
-      // Buscar paciente - getPacientes funciona con cualquier tipo de ID
       const todosPacientes = await this.databaseService.getPacientes();
       const paciente = todosPacientes.find(p =>
-        String(p.id) === String(id) ||
-        p.pacienteId === id
+        String(p.id) === String(id) || p.pacienteId === id
       );
 
       if (paciente) {
         this.paciente = paciente;
         this.verificarYCorregirEdad();
         await this.cargarHistorialSesiones(id);
+        this.cargarRutinasCompletadas(id);
       } else {
-        console.log('Paciente no encontrado con ID:', id);
         this.paciente = null;
       }
+
     } catch (error) {
       console.error('Error cargando paciente:', error);
       this.paciente = null;
@@ -67,6 +94,54 @@ export class PacienteDetallePage {
       this.estaCargando = false;
     }
   }
+
+  // ==============================
+  // 📚 RUTINAS (REALTIME PRO)
+  // ==============================
+
+  private cargarRutinasCompletadas(pacienteId: string) {
+
+    this.cancelarSuscripciones();
+
+    this.rutinasSub = this.rutinasService
+      .getRutinasPorPacienteRealtime(pacienteId)
+      .subscribe({
+        next: (rutinas: RutinaEjercicios[]) => {
+          this.rutinasCompletadas = rutinas
+            .filter(r => r.completada)
+            .sort((a, b) =>
+              (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+            );
+        },
+        error: (error) => {
+          console.error('Error cargando rutinas:', error);
+          this.rutinasCompletadas = [];
+        }
+      });
+  }
+
+  // ==============================
+  // 📅 HISTORIAL SESIONES
+  // ==============================
+
+  private async cargarHistorialSesiones(pacienteId: string) {
+    try {
+      const sesiones = await this.databaseService.getSesionesByPaciente(pacienteId);
+      this.historialSesiones = sesiones || [];
+
+      if (this.paciente) {
+        this.paciente.sesionesCompletadas = this.historialSesiones.length;
+      }
+
+    } catch (error) {
+      console.error('Error cargando historial:', error);
+      this.historialSesiones = [];
+    }
+  }
+
+  // ==============================
+  // 🎂 EDAD
+  // ==============================
 
   private verificarYCorregirEdad() {
     if (!this.paciente) return;
@@ -84,61 +159,26 @@ export class PacienteDetallePage {
   private calcularEdad(fechaNacimiento: string): number {
     if (!fechaNacimiento) return 0;
 
-    try {
-      const nacimiento = new Date(fechaNacimiento);
-      if (isNaN(nacimiento.getTime())) return 0;
+    const nacimiento = new Date(fechaNacimiento);
+    if (isNaN(nacimiento.getTime())) return 0;
 
-      const hoy = new Date();
-      let edad = hoy.getFullYear() - nacimiento.getFullYear();
-      if (hoy.getMonth() < nacimiento.getMonth() ||
-          (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate())) {
-        edad--;
-      }
-      return edad > 0 ? edad : 0;
-    } catch {
-      return 0;
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+
+    if (
+      hoy.getMonth() < nacimiento.getMonth() ||
+      (hoy.getMonth() === nacimiento.getMonth() &&
+        hoy.getDate() < nacimiento.getDate())
+    ) {
+      edad--;
     }
+
+    return edad > 0 ? edad : 0;
   }
 
-  private async cargarHistorialSesiones(pacienteId: string) {
-    try {
-      const sesiones = await this.databaseService.getSesionesByPaciente(pacienteId);
-      this.historialSesiones = sesiones || [];
-
-      if (this.paciente) {
-        this.paciente.sesionesCompletadas = this.historialSesiones.length;
-      }
-    } catch (error) {
-      console.error('Error cargando historial:', error);
-      this.historialSesiones = [];
-    }
-  }
-
-  //  MÉTODO PARA FORMATEAR FECHA 
-  formatearFecha(fechaString: string): string {
-    if (!fechaString) return 'No registrada';
-    
-    try {
-      // Si ya está en formato legible, devolverlo
-      if (fechaString.includes('/') || (fechaString.includes('-') && !fechaString.includes('T'))) {
-        return fechaString;
-      }
-      
-      // Si es ISO string, formatear
-      const fecha = new Date(fechaString);
-      if (isNaN(fecha.getTime())) {
-        return fechaString;
-      }
-      
-      return fecha.toLocaleDateString('es-CL', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return fechaString;
-    }
-  }
+  // ==============================
+  // 🔄 REFRESH
+  // ==============================
 
   async refrescarDatos(event?: any) {
     if (this.pacienteId) {
@@ -150,16 +190,46 @@ export class PacienteDetallePage {
     }
   }
 
-  // ✅ MÉTODOS DE NAVEGACIÓN (MANTENER TUS MÉTODOS ORIGINALES)
+  // ==============================
+  // 🔽 UI HELPERS
+  // ==============================
+
+  toggleSesionExpandida(sesionId: string | number) {
+    if (this.sesionesExpandidas.has(sesionId)) {
+      this.sesionesExpandidas.delete(sesionId);
+    } else {
+      this.sesionesExpandidas.add(sesionId);
+    }
+  }
+
+  isSesionExpandida(sesionId: string | number): boolean {
+    return this.sesionesExpandidas.has(sesionId);
+  }
+
+  formatearFecha(fechaString: string): string {
+    if (!fechaString) return 'No registrada';
+
+    const fecha = new Date(fechaString);
+    if (isNaN(fecha.getTime())) return fechaString;
+
+    return fecha.toLocaleDateString('es-CL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  // ==============================
+  // 🧭 NAVEGACIÓN
+  // ==============================
+
   nuevaSesion() {
     if (!this.paciente) return;
-    
-    console.log('➕ Nueva sesión para:', this.paciente.nombre);
-    
+
     const proximaSesion = (this.paciente.sesionesCompletadas || 0) + 1;
-    
+
     this.navCtrl.navigateRoot('/sesion', {
-      queryParams: { 
+      queryParams: {
         pacienteId: this.paciente.id,
         pacienteNombre: this.paciente.nombre,
         numeroSesion: proximaSesion
@@ -171,22 +241,33 @@ export class PacienteDetallePage {
     this.navCtrl.navigateBack('/pacientes-lista');
   }
 
+  irAEjercicios() {
+    if (!this.paciente) return;
+
+    this.navCtrl.navigateRoot('/ejercicios', {
+      queryParams: {
+        pacienteId: this.paciente.id,
+        pacienteNombre: this.paciente.nombre
+      }
+    });
+  }
+
   irADocumentos() {
     if (!this.paciente) return;
-    console.log('📄 Navegando a documentos:', this.paciente.nombre);
+
     this.navCtrl.navigateRoot('/documentos-medicos', {
-      queryParams: { 
+      queryParams: {
         pacienteId: this.paciente.id,
-        pacienteNombre: this.paciente.nombre 
+        pacienteNombre: this.paciente.nombre
       }
     });
   }
 
   editarPaciente() {
     if (!this.paciente) return;
-    // Pasar datos por localStorage Y query params (doble seguro contra Ionic caching)
+
     localStorage.setItem('editar_paciente_id', String(this.pacienteId));
-    console.log('editarPaciente - ID:', this.pacienteId);
+
     this.navCtrl.navigateRoot('/agregar-paciente', {
       queryParams: {
         id: this.pacienteId,
@@ -196,13 +277,12 @@ export class PacienteDetallePage {
   }
 
   llamarPaciente() {
-    if (!this.paciente || !this.paciente.telefono) return;
+    if (!this.paciente?.telefono) return;
     window.open(`tel:${this.paciente.telefono}`, '_system');
   }
 
   enviarEmail() {
-    if (!this.paciente || !this.paciente.email) return;
+    if (!this.paciente?.email) return;
     window.open(`mailto:${this.paciente.email}`, '_system');
   }
-
 }

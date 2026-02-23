@@ -78,9 +78,8 @@ describe('PacientesListaPage', () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [PacientesListaPage],
-      imports: [IonicModule.forRoot()],
-      providers: [
+    imports: [IonicModule.forRoot(), PacientesListaPage],
+    providers: [
         { provide: JsonServerService, useValue: mockJsonServerService },
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: PlatformService, useValue: mockPlatformService },
@@ -90,9 +89,9 @@ describe('PacientesListaPage', () => {
         { provide: AlertController, useValue: mockAlertController },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+}).compileComponents();
 
     fixture = TestBed.createComponent(PacientesListaPage);
     component = fixture.componentInstance;

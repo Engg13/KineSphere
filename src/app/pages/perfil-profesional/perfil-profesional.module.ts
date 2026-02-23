@@ -9,12 +9,12 @@ import { PerfilProfesionalPageRoutingModule } from './perfil-profesional-routing
 import { PerfilProfesionalPage } from './perfil-profesional.page';
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    PerfilProfesionalPageRoutingModule
-  ],
-  declarations: [PerfilProfesionalPage]
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        PerfilProfesionalPageRoutingModule,
+        PerfilProfesionalPage
+    ]
 })
 export class PerfilProfesionalPageModule {}

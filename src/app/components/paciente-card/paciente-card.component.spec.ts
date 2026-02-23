@@ -10,11 +10,10 @@ describe('PacienteCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [PacienteCardComponent],
-      imports: [IonicModule.forRoot()],
-      providers: [DatePipe], // Para el pipe date
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+    imports: [IonicModule.forRoot(), PacienteCardComponent],
+    providers: [DatePipe], // Para el pipe date
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+}).compileComponents();
 
     fixture = TestBed.createComponent(PacienteCardComponent);
     component = fixture.componentInstance;

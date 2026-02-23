@@ -32,19 +32,19 @@ describe('PacienteDetallePage', () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [PacienteDetallePage],
-      imports: [
+    imports: [
         IonicModule.forRoot(),
-        HttpClientTestingModule
-      ],
-      providers: [
+        HttpClientTestingModule,
+        PacienteDetallePage
+    ],
+    providers: [
         { provide: JsonServerService, useValue: jsonServerServiceSpy },
         { provide: DatabaseService, useValue: databaseServiceSpy },
         { provide: NavController, useValue: navControllerSpy },
         { provide: ActivatedRoute, useValue: activatedRouteSpy }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+}).compileComponents();
 
     fixture = TestBed.createComponent(PacienteDetallePage);
     component = fixture.componentInstance;

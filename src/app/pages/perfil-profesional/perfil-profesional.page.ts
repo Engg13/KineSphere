@@ -1,12 +1,15 @@
 import { Component } from '@angular/core';
-import { NavController, ToastController, AlertController } from '@ionic/angular';
+import { NavController, ToastController, AlertController, IonicModule } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { FormsModule } from '@angular/forms';
+import { NgIf } from '@angular/common';
 
 @Component({
-  selector: 'app-perfil-profesional',
-  templateUrl: './perfil-profesional.page.html',
-  styleUrls: ['./perfil-profesional.page.scss'],
-  standalone: false
+    selector: 'app-perfil-profesional',
+    templateUrl: './perfil-profesional.page.html',
+    styleUrls: ['./perfil-profesional.page.scss'],
+    standalone: true,
+    imports: [IonicModule, FormsModule, NgIf]
 })
 export class PerfilProfesionalPage {
 
@@ -76,7 +79,7 @@ export class PerfilProfesionalPage {
       return;
     }
 
-    const resultado = this.authService.cambiarPassword(this.passwordActual, this.passwordNueva);
+    const resultado = await this.authService.cambiarPassword(this.passwordActual, this.passwordNueva);
     if (resultado.success) {
       this.mostrarToast(resultado.message, 'success');
       this.passwordActual = '';

@@ -1,10 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { IonicModule } from '@ionic/angular';
 
 @Component({
-  selector: 'app-eva-scale',
-  templateUrl: './eva-scale.component.html',
-  styleUrls: ['./eva-scale.component.scss'],
-  standalone: false
+    selector: 'app-eva-scale',
+    templateUrl: './eva-scale.component.html',
+    styleUrls: ['./eva-scale.component.scss'],
+    standalone: true,
+    imports: [IonicModule]
 })
 export class EvaScaleComponent {
   @Input() valor: number | null=null;

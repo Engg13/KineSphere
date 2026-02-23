@@ -1,406 +1,839 @@
-// src/app/pages/ejercicios/ejercicios.page.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { WgerApiService, Ejercicio } from '../../services/wger-api.service';
-import { AlertController, LoadingController, NavController  } from '@ionic/angular';
+import {
+  AlertController,
+  NavController,
+  ToastController,
+  IonicModule
+} from '@ionic/angular';
+import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { finalize, catchError } from 'rxjs/operators';
+
+import { DatabaseService } from '../../services/database.service';
+import { EjerciciosFirestoreService } from '../../services/EjerciciosFirestoreService.service';
+import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
+
+import {
+  EjercicioLocal,
+  CategoriaEjercicio,
+  RutinaEjercicios,
+  EjercicioEnRutina,
+  SerieEjercicio
+} from '../../models/interfaces';
 
 @Component({
   selector: 'app-ejercicios',
   templateUrl: './ejercicios.page.html',
   styleUrls: ['./ejercicios.page.scss'],
-  standalone: false
+  standalone: true,
+  imports: [IonicModule, FormsModule, DatePipe]
 })
 export class EjerciciosPage implements OnInit, OnDestroy {
-  ejercicios: Ejercicio[] = [];
-  ejerciciosFiltrados: Ejercicio[] = [];
-  terminoBusqueda: string = '';
-  categorias: any[] = [];
-  musculos: any[] = [];
-  equipamiento: any[] = [];
-  
-  // Estados mejorados
-  loading = {
-    ejercicios: false,
-    busqueda: false,
-    categorias: false
-  };
-  
-  error: string | null = null;
-  paginaActual = 1;
-  totalEjercicios = 0;
-  
-  private subscriptions: Subscription = new Subscription();
+
+  pacienteId = '';
+  pacienteNombre = '';
+  pacienteTelefono = '';
+
+  vista: 'rutina' | 'rutinas' | 'biblioteca' | 'historial' = 'rutinas';
+
+  rutinaActiva: RutinaEjercicios | null = null;
+  rutinasAnteriores: RutinaEjercicios[] = [];
+
+  ejerciciosBiblioteca: EjercicioLocal[] = [];
+  ejerciciosFiltrados: EjercicioLocal[] = [];
+  terminoBusqueda = '';
+  categoriaFiltro: CategoriaEjercicio | '' = '';
+
+  ejerciciosExpandidos: Set<number> = new Set();
+  sesionIniciada = false;
+
+  historialEjercicio: any[] = [];
+  ejercicioHistorialNombre = '';
+
+  listaPacientes: any[] = [];
+  pacientesFiltrados: any[] = [];
+  busquedaPaciente = '';
+  plantillas: any[] = [];
+  todasLasRutinas: any[] = [];
+  rutinasExpandidas = new Set<string>();
+
+  mostrarFormNuevo = false;
+  editandoEjercicioId: string | null = null;
+
+  nuevoEjercicio: Partial<EjercicioLocal> = this.getEjercicioVacio();
+
+  categorias: {
+    valor: CategoriaEjercicio;
+    nombre: string;
+    color: string;
+    icono: string;
+  }[] = [
+    { valor: 'fuerza', nombre: 'Fuerza', color: '#ef4444', icono: 'barbell-outline' },
+    { valor: 'movilidad', nombre: 'Movilidad', color: '#3b82f6', icono: 'walk-outline' },
+    { valor: 'rehabilitacion', nombre: 'Rehabilitación', color: '#10b981', icono: 'medkit-outline' },
+    { valor: 'equilibrio', nombre: 'Equilibrio', color: '#f59e0b', icono: 'body-outline' },
+    { valor: 'cardio', nombre: 'Cardio', color: '#ec4899', icono: 'heart-outline' },
+    { valor: 'funcional', nombre: 'Funcional', color: '#6366f1', icono: 'fitness-outline' },
+    { valor: 'estiramiento', nombre: 'Estiramiento', color: '#14b8a6', icono: 'accessibility-outline' }
+  ];
+
+  private subs: Subscription[] = [];
 
   constructor(
-    private wgerService: WgerApiService,
-    private loadingCtrl: LoadingController,
-    private alertController: AlertController,
-    private navCtrl: NavController
-    
+    private route: ActivatedRoute,
+    private navCtrl: NavController,
+    private alertCtrl: AlertController,
+    private toastCtrl: ToastController,
+    private databaseService: DatabaseService,
+    private ejerciciosService: EjerciciosFirestoreService,
+    private rutinasService: RutinasFirestoreService
   ) {}
 
-  async ngOnInit() {
-    await this.cargarTodo();
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      this.pacienteId = params['pacienteId'] || '';
+      this.pacienteNombre = params['pacienteNombre'] || '';
+
+      this.cargarPacientes();
+      this.cargarBiblioteca();
+
+      if (this.pacienteId) {
+        this.cargarRutinasPaciente();
+      }
+
+      this.cargarTodasLasRutinas();
+    });
   }
 
   ngOnDestroy() {
-    this.subscriptions.unsubscribe();
+    this.subs.forEach(s => s.unsubscribe());
   }
 
-  // ✅ CARGAR TODO EN PARALELO
-  async cargarTodo() {
-    const loading = await this.loadingCtrl.create({
-      message: 'Cargando recursos...'
-    });
-    await loading.present();
+  // ================= PACIENTES =================
 
-    try {
-      // Cargar en paralelo
-      await Promise.all([
-        this.cargarEjercicios(),
-        this.cargarCategorias(),
-        this.cargarMusculos(),
-        this.cargarEquipamiento()
-      ]);
-    } catch (error) {
-      this.mostrarError('Error cargando recursos');
-    } finally {
-      await loading.dismiss();
+  async cargarPacientes() {
+    this.listaPacientes = await this.databaseService.getPacientes();
+    this.pacientesFiltrados = [...this.listaPacientes];
+  }
+
+  filtrarPacientes() {
+    const t = this.busquedaPaciente.toLowerCase();
+    this.pacientesFiltrados = this.listaPacientes.filter(p =>
+      (p.nombre || '').toLowerCase().includes(t)
+    );
+  }
+
+  seleccionarPaciente(p: any) {
+    this.pacienteId = p.id;
+    this.pacienteNombre = p.nombre;
+    this.pacienteTelefono = p.telefono || '';
+    this.cargarRutinas();
+  }
+
+  // ================= BIBLIOTECA =================
+
+  cargarBiblioteca() {
+    const sub = this.ejerciciosService.getEjercicios()
+      .subscribe(ejs => {
+        this.ejerciciosBiblioteca = ejs;
+        this.ejerciciosFiltrados = [...ejs];
+      });
+
+    this.subs.push(sub);
+  }
+
+  filtrarEjercicios() {
+    let resultado = [...this.ejerciciosBiblioteca];
+
+    if (this.terminoBusqueda.trim()) {
+      const t = this.terminoBusqueda.toLowerCase();
+      resultado = resultado.filter(e =>
+        e.nombre.toLowerCase().includes(t)
+      );
+    }
+
+    if (this.categoriaFiltro) {
+      resultado = resultado.filter(e =>
+        e.categoria === this.categoriaFiltro
+      );
+    }
+
+    this.ejerciciosFiltrados = resultado;
+  }
+
+  filtrarPorCategoria(cat: CategoriaEjercicio | '') {
+    this.categoriaFiltro = this.categoriaFiltro === cat ? '' : cat;
+    this.filtrarEjercicios();
+  }
+
+  // ================= RUTINAS =================
+
+  cargarRutinas() {
+
+      // 🧠 SI NO HAY PACIENTE
+      if (!this.pacienteId) {
+
+        const sub = this.rutinasService
+          .getRutinasGeneralesRealtime()
+          .subscribe((rutinas: any[]) => {
+
+            this.rutinaActiva =
+              rutinas.find(r => !r.completada) || null;
+
+            this.rutinasAnteriores =
+              rutinas.filter(r => r.completada);
+
+          });
+
+        this.subs.push(sub);
+        return;
+      }
+
+      // 🧠 SI HAY PACIENTE
+      const sub = this.rutinasService
+        .getRutinasPorPacienteRealtime(this.pacienteId)
+        .subscribe((rutinas: any[]) => {
+
+          this.rutinaActiva =
+            rutinas.find(r => !r.completada) || null;
+
+          this.rutinasAnteriores =
+            rutinas.filter(r => r.completada);
+
+        });
+
+      this.subs.push(sub);
+    }
+
+  async completarRutina() {
+  if (!this.rutinaActiva) return;
+
+  const alert = await this.alertCtrl.create({
+    header: 'Finalizar rutina',
+    message: '¿Seguro que deseas marcar esta rutina como completada?',
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Finalizar',
+        handler: async () => {
+          await this.rutinasService.actualizarRutina(
+            this.rutinaActiva.id,
+            {
+              completada: true,
+              fechaCompletada: new Date().toISOString()
+            }
+          );
+
+          this.mostrarToast('Rutina completada', 'success');
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
+
+  cambiarVista(v: 'rutina' | 'rutinas' | 'biblioteca' | 'historial') {
+    this.vista = v;
+  }
+
+  async crearNuevaRutina() {
+    const alert = await this.alertCtrl.create({
+      header: 'Nueva Rutina',
+      inputs: [
+        {
+          name: 'nombre',
+          type: 'text',
+          placeholder: 'Ej: Tren inferior fuerza'
+        }
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Crear',
+          handler: async (data) => {
+            if (!data.nombre?.trim()) return false;
+
+            await this.rutinasService.crearRutina({
+              pacienteId: this.pacienteId || null,   // 👈 clave
+              pacienteNombre: this.pacienteNombre || null,
+              nombre: data.nombre.trim(),
+              ejercicios: []
+            });
+
+            this.mostrarToast('Rutina creada', 'success');
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  // ================= UTILIDADES UI =================
+
+  toggleRutinaExpandida(id: string) {
+    if (this.rutinasExpandidas.has(id)) {
+      this.rutinasExpandidas.delete(id);
+    } else {
+      this.rutinasExpandidas.add(id);
     }
   }
 
-  // ✅ CARGAR EJERCICIOS OPTIMIZADO
-  async cargarEjercicios() {
-    this.loading.ejercicios = true;
-    this.error = null;
+  isRutinaExpandida(id: string): boolean {
+    return this.rutinasExpandidas.has(id);
+  }
 
-    try {
-      const ejerciciosSub = this.wgerService.getEjerciciosCompletos(50)
-        .pipe(
-          finalize(() => this.loading.ejercicios = false),
-          catchError(error => {
-            this.error = error.message;
-            this.mostrarError(`Error: ${error.message}`);
-            return [];
-          })
-        )
-        .subscribe({
-          next: (ejerciciosData) => {
-            this.ejercicios = ejerciciosData;
-            this.ejerciciosFiltrados = [...this.ejercicios];
-            console.log(`✅ ${ejerciciosData.length} ejercicios cargados`);
-            
-            if (ejerciciosData.length === 0) {
-              this.mostrarError('No se encontraron ejercicios en español');
+    toggleEjercicioExpandido(idx: number) {
+      if (this.ejerciciosExpandidos.has(idx)) {
+        this.ejerciciosExpandidos.delete(idx);
+      } else {
+        this.ejerciciosExpandidos.add(idx);
+      }
+    }
+
+  isExpandido(idx: number): boolean {
+    return this.ejerciciosExpandidos.has(idx);
+  }
+
+  iniciarSesionEjercicios() {
+    this.sesionIniciada = true;
+
+    if (this.rutinaActiva) {
+      this.rutinaActiva.ejercicios.forEach((_, i) =>
+        this.ejerciciosExpandidos.add(i)
+      );
+    }
+
+    this.mostrarToast('Sesión iniciada', 'primary');
+  }
+
+
+  getProgresoRutina(): number {
+    if (!this.rutinaActiva) return 0;
+
+    let total = 0;
+    let completadas = 0;
+
+    this.rutinaActiva.ejercicios.forEach(ej => {
+      total += ej.series.length;
+      completadas += ej.series.filter(s => s.completada).length;
+    });
+
+    return total ? Math.round((completadas / total) * 100) : 0;
+  }
+
+  getSeriesCompletadas(i: number): number {
+    if (!this.rutinaActiva) return 0;
+    return this.rutinaActiva.ejercicios[i].series.filter(s => s.completada).length;
+  }
+
+  todasSeriesCompletadas(i: number): boolean {
+    if (!this.rutinaActiva) return false;
+    return this.rutinaActiva.ejercicios[i].series.every(s => s.completada);
+  }
+
+  getColorCategoria(cat: CategoriaEjercicio) {
+    return this.categorias.find(c => c.valor === cat)?.color || '#6b7280';
+  }
+
+  getIconoCategoria(cat: CategoriaEjercicio) {
+    return this.categorias.find(c => c.valor === cat)?.icono || 'fitness-outline';
+  }
+
+  abrirVideo(url: string) {
+    window.open(url, '_blank');
+  }
+
+  getVideoThumbnail(url: string): string | null {
+    if (!url) return null;
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const id = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
+      return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    }
+    return null;
+  }
+
+  verHistorial(id: string, nombre: string) {
+    this.ejercicioHistorialNombre = nombre;
+    this.vista = 'historial';
+  }
+
+  async enviarWhatsappConNumero(rutina: RutinaEjercicios | null) {
+    if (!rutina) return;
+    this.mostrarToast('Función WhatsApp lista para implementar', 'primary');
+  }
+
+  trackByEjercicio(index: number, item: EjercicioEnRutina) {
+    return item.ejercicioId;
+  }
+
+  trackBySerie(index: number, item: SerieEjercicio) {
+    return item.numero;
+  }
+
+  trackByEjercicioLocal(index: number, item: EjercicioLocal) {
+    return item.id;
+  }
+
+  private async mostrarToast(message: string, color: string) {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2000,
+      position: 'bottom',
+      color
+    });
+    await toast.present();
+  }
+
+  // ================= NAVEGACIÓN =================
+
+  volverAtras() {
+    // Si viene desde paciente-detalle, mantener el ID
+    if (this.pacienteId) {
+      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
+    }
+
+  this.navCtrl.back();
+  }
+
+  // ================= RECARGAR DATOS =================
+
+  cargarDatos() {
+    this.cargarBiblioteca();
+    this.cargarRutinas();
+  }
+
+  // =====================================================
+// SERIES (AUTO-SAVE FIRESTORE)
+// =====================================================
+
+  async onRepChange(ejercicioIdx: number, serieIdx: number, valor: string) {
+    if (!this.rutinaActiva) return;
+
+    const reps = valor ? parseInt(valor, 10) : null;
+
+    this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx].repeticiones = reps;
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+  async onPesoChange(ejercicioIdx: number, serieIdx: number, valor: string) {
+    if (!this.rutinaActiva) return;
+
+    const peso = valor ? parseFloat(valor) : null;
+
+    this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx].peso = peso;
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+  async toggleSerie(ejercicioIdx: number, serieIdx: number) {
+    if (!this.rutinaActiva) return;
+
+    const serie = this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx];
+
+    serie.completada = !serie.completada;
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+
+  // -----------------------------------------------------
+  // COMPLETAR / DESMARCAR TODAS
+  // -----------------------------------------------------
+
+  async cumplimentarTodas(ejercicioIdx: number) {
+    if (!this.rutinaActiva) return;
+
+    const ejercicio = this.rutinaActiva.ejercicios[ejercicioIdx];
+    const todasCompletadas = ejercicio.series.every(s => s.completada);
+
+    ejercicio.series.forEach(s => s.completada = !todasCompletadas);
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+  // -----------------------------------------------------
+  // ELIMINAR EJERCICIO
+  // -----------------------------------------------------
+
+  async eliminarEjercicioDeRutina(ejercicioIdx: number) {
+    if (!this.rutinaActiva) return;
+
+    this.rutinaActiva.ejercicios.splice(ejercicioIdx, 1);
+
+    // Recalcular letras A, B, C...
+    this.rutinaActiva.ejercicios.forEach((e, i) => {
+      e.letra = String.fromCharCode(65 + i);
+    });
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+
+    this.mostrarToast('Ejercicio eliminado', 'medium');
+  }
+
+  // =====================================================
+// FORM NUEVO / EDITAR EJERCICIO
+// =====================================================
+
+toggleFormNuevo() {
+  this.mostrarFormNuevo = !this.mostrarFormNuevo;
+
+  if (this.mostrarFormNuevo) {
+    this.editandoEjercicioId = null;
+    this.nuevoEjercicio = this.getEjercicioVacio();
+  }
+}
+
+editarEjercicio(ejercicio: EjercicioLocal) {
+  this.editandoEjercicioId = ejercicio.id;
+  this.nuevoEjercicio = { ...ejercicio };
+  this.mostrarFormNuevo = true;
+}
+
+async guardarNuevoEjercicio() {
+  if (!this.nuevoEjercicio.nombre?.trim()) {
+    this.mostrarToast('El nombre es obligatorio', 'warning');
+    return;
+  }
+
+  if (this.editandoEjercicioId) {
+    await this.ejerciciosService.actualizarEjercicio(
+      this.editandoEjercicioId,
+      this.nuevoEjercicio
+    );
+    this.mostrarToast('Ejercicio actualizado', 'success');
+  } else {
+    await this.ejerciciosService.agregarEjercicioPersonalizado(
+      this.nuevoEjercicio
+    );
+    this.mostrarToast('Ejercicio creado', 'success');
+  }
+
+  this.mostrarFormNuevo = false;
+}
+
+  private getEjercicioVacio(): Partial<EjercicioLocal> {
+    return {
+      nombre: '',
+      descripcion: '',
+      instrucciones: '',
+      categoria: 'rehabilitacion',
+      musculoPrincipal: '',
+      equipamiento: 'Ninguno',
+      videoUrl: '',
+      dificultad: 'basico'
+    };
+  }
+
+  estaEnRutina(ejercicioId: string): boolean {
+    if (!this.rutinaActiva) return false;
+
+    return this.rutinaActiva.ejercicios?.some(
+      (e: any) => e.ejercicioId === ejercicioId
+    );
+  }
+
+  async agregarARutina(ejercicio: EjercicioLocal) {
+
+      if (!this.rutinaActiva) {
+        this.mostrarToast('Primero crea una rutina', 'warning');
+        return;
+      }
+
+      if (this.estaEnRutina(ejercicio.id)) {
+        this.mostrarToast('Ya está en la rutina', 'warning');
+        return;
+      }
+
+      const alert = await this.alertCtrl.create({
+        header: 'Agregar a rutina',
+        subHeader: ejercicio.nombre,
+        inputs: [
+          {
+            name: 'series',
+            type: 'number',
+            placeholder: 'Cantidad de series',
+            value: 3,
+            min: 1
+          },
+          {
+            name: 'reps',
+            type: 'number',
+            placeholder: 'Repeticiones',
+            value: 12,
+            min: 1
+          }
+        ],
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          {
+            text: 'Agregar',
+            handler: async data => {
+
+              const cantidadSeries = parseInt(data.series) || 3;
+              const repeticiones = parseInt(data.reps) || 12;
+
+              const nuevasSeries = [];
+
+              for (let i = 1; i <= cantidadSeries; i++) {
+                nuevasSeries.push({
+                  numero: i,
+                  repeticiones,
+                  peso: null,
+                  completada: false
+                });
+              }
+
+              const nuevoEjercicio = {
+                ejercicioId: ejercicio.id,
+                ejercicio,
+                letra: String.fromCharCode(
+                  65 + (this.rutinaActiva.ejercicios?.length || 0)
+                ),
+                descansoSegundos: 60,
+                series: nuevasSeries
+              };
+
+              const ejerciciosActualizados = [
+                ...(this.rutinaActiva.ejercicios || []),
+                nuevoEjercicio
+              ];
+
+              await this.rutinasService.actualizarRutina(
+                this.rutinaActiva.id,
+                { ejercicios: ejerciciosActualizados }
+              );
+
+              this.mostrarToast('Ejercicio agregado', 'success');
             }
           }
-        });
-      
-      this.subscriptions.add(ejerciciosSub);
-      
-    } catch (error: any) {
-      this.loading.ejercicios = false;
-      this.error = error.message;
-      this.mostrarError('Error crítico cargando ejercicios');
-    }
-  }
-
-  // ✅ CARGAR CATEGORÍAS
-  async cargarCategorias() {
-    this.loading.categorias = true;
-
-    const categoriasSub = this.wgerService.getCategorias()
-      .pipe(
-        finalize(() => this.loading.categorias = false)
-      )
-      .subscribe({
-        next: (categorias) => {
-          this.categorias = categorias;
-        },
-        error: (error) => {
-          console.warn('⚠️ No se pudieron cargar categorías:', error.message);
-        }
+        ]
       });
-    
-    this.subscriptions.add(categoriasSub);
-  }
 
-  // ✅ NUEVO: CARGAR MÚSCULOS
-  async cargarMusculos() {
-    const musculosSub = this.wgerService.getMusculos().subscribe({
-      next: (musculos) => {
-        this.musculos = musculos;
-      },
-      error: (error) => {
-        console.warn('⚠️ No se pudieron cargar músculos:', error.message);
-      }
-    });
-    
-    this.subscriptions.add(musculosSub);
-  }
-
-  // ✅ NUEVO: CARGAR EQUIPAMIENTO
-  async cargarEquipamiento() {
-    const equipamientoSub = this.wgerService.getEquipamiento().subscribe({
-      next: (equipamiento) => {
-        this.equipamiento = equipamiento;
-      },
-      error: (error) => {
-        console.warn('⚠️ No se pudieron cargar equipamiento:', error.message);
-      }
-    });
-    
-    this.subscriptions.add(equipamientoSub);
-  }
-
-  // ✅ FILTRAR EJERCICIOS (LOCAL)
-  filtrarEjercicios() {
-    if (!this.terminoBusqueda.trim()) {
-      this.ejerciciosFiltrados = [...this.ejercicios];
-      return;
+      await alert.present();
     }
 
-    const termino = this.terminoBusqueda.toLowerCase().trim();
-    
-    this.ejerciciosFiltrados = this.ejercicios.filter(ejercicio => {
-      const nombreMatch = ejercicio.nombre.toLowerCase().includes(termino);
-      const descripcionMatch = ejercicio.descripcion.toLowerCase().includes(termino);
-      
-      return nombreMatch || descripcionMatch;
-    });
-  }
-
-  // ✅ BUSCAR EN API (CON PAGINACIÓN OPCIONAL)
-  async buscarEjercicios() {
-    if (!this.terminoBusqueda.trim()) {
-      await this.cargarEjercicios();
-      return;
-    }
-
-    this.loading.busqueda = true;
-    this.error = null;
-
-    const busquedaSub = this.wgerService.buscarEjercicios(this.terminoBusqueda)
-      .pipe(
-        finalize(() => this.loading.busqueda = false)
-      )
-      .subscribe({
-        next: (resultados) => {
-          this.ejerciciosFiltrados = resultados;
-          
-          if (resultados.length === 0) {
-            this.mostrarMensaje('No se encontraron ejercicios con ese término');
-          }
-        },
-        error: (error) => {
-          this.error = error.message;
-          this.mostrarError(`Búsqueda fallida: ${error.message}`);
-        }
-      });
-    
-    this.subscriptions.add(busquedaSub);
-  }
-
-  // ✅ OBTENER NOMBRE CATEGORÍA 
-  obtenerNombreCategoria(categoriaId?: number): string {
-  if (!categoriaId || !this.categorias.length) return 'General';
-  
-  const categoria = this.categorias.find(cat => cat.id === categoriaId);
-  return categoria ? categoria.name : 'General';
-}
-
-  // ✅ OBTENER NOMBRE MÚSCULO 
-  obtenerNombreMusculo(musculoId: number): string {
-    if (!this.musculos.length) return '';
-    
-    const musculo = this.musculos.find(m => m.id === musculoId);
-    return musculo ? musculo.name : '';
-  }
-
-  // ✅ OBTENER NOMBRE EQUIPAMIENTO 
-  obtenerNombreEquipamiento(equipoId: number): string {
-    if (!this.equipamiento.length) return '';
-    
-    const equipo = this.equipamiento.find(e => e.id === equipoId);
-    return equipo ? equipo.name : '';
-  }
-
-  // ✅ SELECCIONAR EJERCICIO
-  seleccionarEjercicio(ejercicio: Ejercicio) {
-    console.log('✅ Ejercicio seleccionado:', ejercicio.nombre);
-    this.mostrarDetalleEjercicio(ejercicio);
-  }
-
-  // ✅ DETALLE EJERCICIO MEJORADO
-  async mostrarDetalleEjercicio(ejercicio: Ejercicio) {
-    // Preparar información adicional
-    const musculosPrincipales = ejercicio.musculos
-      .map(id => this.obtenerNombreMusculo(id))
-      .filter(nombre => nombre)
-      .join(', ');
-    
-    const equipos = ejercicio.equipamiento
-      .map(id => this.obtenerNombreEquipamiento(id))
-      .filter(nombre => nombre)
-      .join(', ') || 'Ninguno';
-
-    const alert = await this.alertController.create({
-      header: ejercicio.nombre,
-      message: `
-        <div class="ejercicio-detalle" style="max-height: 60vh; overflow-y: auto;">
-          <p><strong>Descripción:</strong></p>
-          <p style="margin-bottom: 15px;">${ejercicio.descripcion}</p>
-          
-          <p><strong>Categoría:</strong> ${this.obtenerNombreCategoria(ejercicio.categoria)}</p>
-          
-          ${musculosPrincipales ? `
-          <p><strong>Músculos principales:</strong> ${musculosPrincipales}</p>
-          ` : ''}
-          
-          <p><strong>Equipamiento necesario:</strong> ${equipos}</p>
-          
-          ${ejercicio.imagenes && ejercicio.imagenes.length > 0 ? `
-          <p><strong>Imágenes disponibles:</strong> ${ejercicio.imagenes.length}</p>
-          ` : ''}
-        </div>
-      `,
+  async eliminarEjercicioBiblioteca(ejercicio: EjercicioLocal) {
+    const alert = await this.alertCtrl.create({
+      header: 'Eliminar ejercicio',
+      message: `Eliminar "${ejercicio.nombre}"?`,
       buttons: [
+        { text: 'Cancelar', role: 'cancel' },
         {
-          text: 'Asignar a Paciente',
-          cssClass: 'primary-button',
-          handler: () => {
-            this.confirmarSeleccion(ejercicio);
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: async () => {
+            await this.ejerciciosService.eliminarEjercicio(ejercicio.id);
+            this.mostrarToast('Ejercicio eliminado', 'medium');
           }
-        },
-        {
-          text: 'Cerrar',
-          role: 'cancel'
         }
       ]
     });
-    
+
     await alert.present();
   }
 
-  // ✅ CONFIRMAR SELECCIÓN MEJORADA
-  async confirmarSeleccion(ejercicio: Ejercicio) {
-    const confirm = await this.alertController.create({
-      header: 'Confirmar',
-      message: `¿Asignar <strong>${ejercicio.nombre}</strong> al paciente?`,
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
-        {
-          text: 'Asignar',
-          cssClass: 'primary-button',
-          handler: () => {
-            this.guardarEjercicioSeleccionado(ejercicio);
-          }
-        }
-      ]
+  async usarPlantilla(plantilla: any) {
+
+    // Si NO hay paciente → simplemente clonar como rutina activa general
+    if (!this.pacienteId) {
+
+      await this.rutinasService.crearRutina({
+        pacienteId: null,
+        pacienteNombre: null,
+        nombre: plantilla.nombre,
+        ejercicios: plantilla.ejercicios
+      });
+
+      this.mostrarToast('Rutina creada desde plantilla', 'success');
+      return;
+    }
+
+    // Si hay paciente → asignarla
+    await this.rutinasService.crearRutina({
+      pacienteId: this.pacienteId,
+      pacienteNombre: this.pacienteNombre,
+      nombre: plantilla.nombre,
+      ejercicios: plantilla.ejercicios
     });
-    
-    await confirm.present();
+
+    this.mostrarToast('Plantilla asignada al paciente', 'success');
   }
 
-  // ✅ GUARDAR EJERCICIO 
-  private guardarEjercicioSeleccionado(ejercicio: Ejercicio) {
-    const ejercicioAsignado = {
-      ...ejercicio,
-      fechaAsignacion: new Date().toISOString(),
-      completado: false,
-      series: 3,
-      repeticiones: 10,
-      descanso: '60 segundos'
+  ejerciciosBibliotecaExpandidos: Set<string> = new Set();
+
+  toggleBibliotecaExpandido(id: string) {
+    if (this.ejerciciosBibliotecaExpandidos.has(id)) {
+      this.ejerciciosBibliotecaExpandidos.delete(id);
+    } else {
+      this.ejerciciosBibliotecaExpandidos.add(id);
+    }
+  }
+
+  isBibliotecaExpandido(id: string): boolean {
+    return this.ejerciciosBibliotecaExpandidos.has(id);
+    }
+  
+  async agregarSerieAEjercicio(index: number) {
+
+    if (!this.rutinaActiva) return;
+
+    const ejercicio = this.rutinaActiva.ejercicios[index];
+
+    const nuevaSerie = {
+      numero: ejercicio.series.length + 1,
+      repeticiones: 12,
+      peso: null,
+      completada: false
     };
 
-    // Guardar en localStorage (o en tu servicio de datos)
-    localStorage.setItem('ejercicioSeleccionado', JSON.stringify(ejercicioAsignado));
-    
-    this.mostrarMensaje(`"${ejercicio.nombre}" asignado correctamente`);
+    ejercicio.series.push(nuevaSerie);
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
   }
 
-  // ✅ LIMPIAR BÚSQUEDA
-  limpiarBusqueda() {
-    this.terminoBusqueda = '';
-    this.ejerciciosFiltrados = [...this.ejercicios];
-    this.error = null;
-  }
+  async asignarRutinaAPaciente(rutina: any) {
 
-  // ✅ RECARGAR DATOS
-  async recargarDatos() {
-    this.wgerService.clearCache(); // Limpiar caché del servicio
-    await this.cargarTodo();
-  }
+    if (this.listaPacientes.length === 0) {
+      this.mostrarToast('No hay pacientes registrados', 'warning');
+      return;
+    }
 
-  // ✅ MENSAJES MEJORADOS
-  async mostrarError(mensaje: string) {
-    const alert = await this.alertController.create({
-      header: '⚠️ Error',
-      message: mensaje,
-      buttons: ['Entendido']
+    const alert = await this.alertCtrl.create({
+      header: 'Asignar a paciente',
+      inputs: this.listaPacientes.map(p => ({
+        type: 'radio',
+        label: p.nombre || p.nombre_completo,
+        value: p
+      })),
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Asignar',
+          handler: async (pacienteSeleccionado) => {
+
+            if (!pacienteSeleccionado) return false;
+
+            await this.rutinasService.clonarRutinaACliente(
+              rutina,
+              pacienteSeleccionado.id,
+              pacienteSeleccionado.nombre || pacienteSeleccionado.nombre_completo
+            );
+
+            this.mostrarToast('Rutina asignada correctamente', 'success');
+            return true;
+          }
+        }
+      ]
     });
+
     await alert.present();
   }
 
-  async mostrarMensaje(mensaje: string) {
-    const alert = await this.alertController.create({
-      header: '✅ Éxito',
-      message: mensaje,
-      buttons: ['OK']
+  abrirRutina(rut: RutinaEjercicios) {
+  this.rutinaActiva = rut;
+  this.cambiarVista('rutina');
+}
+
+async eliminarRutina(id: string) {
+
+    const confirmar = confirm('¿Eliminar esta rutina?');
+
+    if (!confirmar) return;
+
+    await this.rutinasService.eliminarRutina(id);
+
+    this.mostrarToast('Rutina eliminada', 'success');
+  }
+
+  async crearNuevaRutinaGeneral() {
+
+    const alert = await this.alertCtrl.create({
+      header: 'Nueva rutina general',
+      inputs: [
+        {
+          name: 'nombre',
+          type: 'text',
+          placeholder: 'Nombre de la rutina'
+        }
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Crear',
+          handler: async data => {
+
+            if (!data.nombre?.trim()) return false;
+
+            await this.rutinasService.crearRutina({
+              pacienteId: null,
+              pacienteNombre: null,
+              nombre: data.nombre.trim(),
+              ejercicios: []
+            });
+
+            this.mostrarToast('Rutina creada correctamente', 'success');
+
+            return true;
+          }
+        }
+      ]
     });
+
     await alert.present();
   }
 
-  // ✅ GETTERS PARA TEMPLATE
-  get hayEjercicios(): boolean {
-    return this.ejerciciosFiltrados.length > 0;
+  cerrarRutinaActiva() {
+    this.rutinaActiva = null;
+    this.sesionIniciada = false;
+    this.vista = 'rutinas';
   }
 
-  get hayResultadosBusqueda(): boolean {
-    return this.terminoBusqueda.trim() !== '' && this.ejerciciosFiltrados.length === 0;
+  cargarRutinasPaciente() {
+    const sub = this.rutinasService
+      .getRutinasPorPacienteRealtime(this.pacienteId)
+      .subscribe(rutinas => {
+        this.rutinaActiva = rutinas.find(r => !r.completada) || null;
+        this.rutinasAnteriores = rutinas.filter(r => r.completada);
+      });
+
+    this.subs.push(sub);
   }
 
-  get estaCargando(): boolean {
-    return this.loading.ejercicios || this.loading.busqueda;
+  cargarTodasLasRutinas() {
+    const sub = this.rutinasService
+      .getRutinasRealtime()
+      .subscribe(rutinas => {
+        this.todasLasRutinas = rutinas;
+      });
+
+    this.subs.push(sub);
   }
 
-  // ✅ SEGUIMIENTO POR ID (mejor performance)
-trackById(index: number, ejercicio: Ejercicio | null | undefined): number {
-  return ejercicio?.id || index;
-}
 
-// Método getExerciseIcon actualizado para manejar undefined
-getExerciseIcon(categoriaId?: number): string {
-  if (!categoriaId) return 'fitness'; // Valor por defecto
-  
-  const nombreCategoria = this.obtenerNombreCategoria(categoriaId).toLowerCase();
-  
-  if (nombreCategoria.includes('fuerza')) return 'barbell';
-  if (nombreCategoria.includes('cardio')) return 'heart';
-  if (nombreCategoria.includes('flexibilidad')) return 'body';
-  if (nombreCategoria.includes('equilibrio')) return 'accessibility';
-  if (nombreCategoria.includes('rehabilitación') || nombreCategoria.includes('rehabilitacion')) {
-    return 'medkit';
-  }
-  
-  return 'fitness';
-}
 
-// ✅ FORMATO CORTO PARA DESCRIPCIÓN
-getDescripcionCorta(descripcion: string, maxLength: number = 120): string {
-  if (!descripcion) return 'Sin descripción';
-  
-  if (descripcion.length <= maxLength) return descripcion;
-  
-  return descripcion.substring(0, maxLength) + '...';
-}
 
-volverAtras() {
-    console.log('Volver atrás ejecutado');
-    this.navCtrl.back();
-}
+
 }

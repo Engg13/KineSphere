@@ -11,18 +11,17 @@ describe('EvaluacionFinalPage', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [EvaluacionFinalPage],
-      imports: [IonicModule.forRoot()], // ← Para ion-button, ion-input, etc.
-      providers: [
-        { 
-          provide: ActivatedRoute, 
-          useValue: {
-            queryParams: of({}) // ← Mock básico de ActivatedRoute
-          } 
+    imports: [IonicModule.forRoot(), EvaluacionFinalPage], // ← Para ion-button, ion-input, etc.
+    providers: [
+        {
+            provide: ActivatedRoute,
+            useValue: {
+                queryParams: of({}) // ← Mock básico de ActivatedRoute
+            }
         }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA] // ← Para que no falle con componentes Ionic
-    }).compileComponents();
+    ],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA] // ← Para que no falle con componentes Ionic
+}).compileComponents();
 
     fixture = TestBed.createComponent(EvaluacionFinalPage);
     component = fixture.componentInstance;

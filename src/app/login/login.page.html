@@ -1,107 +1,74 @@
 <ion-content [fullscreen]="true" class="login-content">
   <div class="login-wrapper">
 
-    <!-- BRAND SECTION -->
+    <!-- BRAND -->
     <div class="brand-section">
       <div class="brand-icon-wrapper">
         <ion-icon name="fitness-outline"></ion-icon>
       </div>
       <h1 class="brand-name">KINESPHERE</h1>
-      <p class="brand-tagline">Seguimiento de pacientes</p>
+      <p class="brand-tagline">Panel profesional</p>
     </div>
 
-    <!-- LOGIN FORM -->
+    <!-- FORM -->
     <div class="form-section">
-      <h2 class="form-title">Iniciar Sesion</h2>
+      <h2 class="form-title">Acceso Administrador</h2>
 
-      <form #loginForm="ngForm" (ngSubmit)="login(loginForm)">
+      <form (ngSubmit)="login()">
 
-        <!-- USUARIO -->
+        <!-- EMAIL -->
         <div class="input-group">
-          <label class="input-label">Usuario</label>
+          <label class="input-label">Email</label>
           <div class="input-wrapper">
-            <ion-icon name="person-outline" class="input-icon"></ion-icon>
+            <ion-icon name="mail-outline" class="input-icon"></ion-icon>
             <input
-              type="text"
+              type="email"
               class="custom-input"
-              [placeholder]="animatedPlaceholder"
-              [(ngModel)]="username"
-              name="username"
-              #usernameRef="ngModel"
-              required
-              minlength="3"
-              maxlength="8"
-              pattern="[a-zA-Z0-9]*"
-              (input)="validateUsernameInRealTime()">
+              placeholder="tu@email.com"
+              [(ngModel)]="email"
+              name="email"
+              required>
           </div>
-          @if (usernameRef.invalid && usernameRef.touched) {
-            <small class="input-error">Entre 3 y 8 caracteres alfanumericos</small>
-          }
-          @if (username && usernameRef.valid) {
-            <small class="input-success">{{ validateUsernameInRealTime() }}</small>
-          }
         </div>
 
         <!-- PASSWORD -->
         <div class="input-group">
-          <label class="input-label">Contrasena</label>
+          <label class="input-label">Contraseña</label>
           <div class="input-wrapper">
             <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
             <input
               [type]="showPwd ? 'text' : 'password'"
               class="custom-input"
-              placeholder="4 digitos"
+              placeholder="Tu contraseña"
               [(ngModel)]="password"
               name="password"
-              #passwordRef="ngModel"
-              required
-              minlength="4"
-              maxlength="4"
-              pattern="[0-9]*"
-              autocomplete="current-password"
-              (input)="validatePasswordInRealTime()">
+              required>
             <button type="button" class="toggle-pwd-btn" (click)="togglePwd()">
               <ion-icon [name]="showPwd ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
             </button>
           </div>
-          @if (passwordRef.invalid && passwordRef.touched) {
-            <small class="input-error">Debe ser un numero de 4 digitos</small>
-          }
-          @if (password && passwordRef.valid) {
-            <small class="input-success">{{ validatePasswordInRealTime() }}</small>
-          }
-        </div>
-
-        <!-- REMEMBER -->
-        <div class="remember-row">
-          <label class="remember-label">
-            <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" class="remember-check">
-            <span>Recordar mis datos</span>
-          </label>
         </div>
 
         <!-- LOGIN BUTTON -->
         <button
           type="submit"
           class="login-btn"
-          [disabled]="loginForm.invalid || isLoading">
+          [disabled]="isLoading">
+
           @if (isLoading) {
             <ion-spinner name="crescent" class="btn-spinner"></ion-spinner>
           } @else {
             Ingresar
           }
+
         </button>
       </form>
-
-      <!-- DEMO INFO -->
-      <div class="demo-hint">
-        <small>Usuario: 3-8 caracteres | Contrasena: 4 digitos</small>
-      </div>
     </div>
 
     <!-- FOOTER -->
     <div class="login-footer">
-      <small>Desarrollado por Esteban Gomez</small>
+      <small>KineSphere Admin</small>
     </div>
+
   </div>
 </ion-content>
