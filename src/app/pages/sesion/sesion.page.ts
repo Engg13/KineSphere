@@ -7,6 +7,8 @@ import { RutinaEjercicios } from 'src/app/models/interfaces';
 import { NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
+import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
+import { TestTemplate } from '../../models/test-template.model';
 
 @Component({
   selector: 'app-sesion',
@@ -79,11 +81,11 @@ export class SesionPage {
   ];
 
   // ===============================
-  // TESTS (por ahora localStorage)
+  // TESTS (Firestore + respaldo local)
   // ===============================
 
-  testsDisponibles: any[] = [];
-  testSeleccionado: any = null;
+  testsDisponibles: TestTemplate[] = [];
+  testSeleccionado: TestTemplate | null = null;
   respuestasTest: number[] = [];
   puntajeTotal = 0;
   resultadoTest = '';
@@ -102,6 +104,7 @@ export class SesionPage {
     private router: Router,
     private databaseService: DatabaseService,
     private rutinasService: RutinasFirestoreService,
+    private testTemplatesService: TestTemplatesFirestoreService,
     private toastCtrl: ToastController
   ) {}
 
@@ -109,7 +112,7 @@ export class SesionPage {
   // INIT
   // =====================================================
 
-  ionViewDidEnter() {
+  async ionViewDidEnter() {
 
     const tree = this.router.parseUrl(this.router.url);
     const params = tree.queryParams;
@@ -120,7 +123,7 @@ export class SesionPage {
 
     this.resetFormulario();
 
-    this.cargarTestsDisponibles();
+    await this.cargarTestsDisponibles();
     this.calcularNumeroSesion();
     this.cargarDatosPaciente();
     this.cargarRutinasDisponibles();
@@ -268,21 +271,17 @@ export class SesionPage {
 
     this.mostrarToast(`Sesión ${this.numeroSesion} guardada`, 'success');
 
-    localStorage.setItem('ver_paciente_id', this.pacienteId);
-    this.navCtrl.navigateRoot('/paciente-detalle');
+    this.navCtrl.navigateRoot('/paciente-detalle', {
+      queryParams: { pacienteId: this.pacienteId }
+    });
   }
 
   // =====================================================
   // TESTS (local temporal)
   // =====================================================
 
-  cargarTestsDisponibles() {
-    try {
-      const data = localStorage.getItem('test_templates');
-      this.testsDisponibles = data ? JSON.parse(data) : [];
-    } catch {
-      this.testsDisponibles = [];
-    }
+  async cargarTestsDisponibles() {
+    this.testsDisponibles = await this.testTemplatesService.getTests();
   }
 
   seleccionarTest(event: any) {
@@ -324,8 +323,9 @@ export class SesionPage {
   // =====================================================
 
   volverAPaciente() {
-    localStorage.setItem('ver_paciente_id', this.pacienteId);
-    this.navCtrl.navigateRoot('/paciente-detalle');
+    this.navCtrl.navigateRoot('/paciente-detalle', {
+      queryParams: { pacienteId: this.pacienteId }
+    });
   }
 
   // =====================================================

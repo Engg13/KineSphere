@@ -107,8 +107,9 @@ export class DashboardPage implements OnDestroy {
   }
 
   verDetallePaciente(paciente: any) {
-    localStorage.setItem('ver_paciente_id', paciente.id);
-    this.navCtrl.navigateRoot('/paciente-detalle');
+    this.navCtrl.navigateRoot('/paciente-detalle', {
+      queryParams: { pacienteId: paciente.id }
+    });
   }
 
   irAEvaluacionesClinicas() {

@@ -8,8 +8,6 @@ import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 
-import { SQLite } from '@awesome-cordova-plugins/sqlite/ngx';
-
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -39,7 +37,6 @@ bootstrapApplication(AppComponent, {
       MatFormFieldModule
     ),
 
-    SQLite,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
 
     provideHttpClient(withInterceptorsFromDi()),

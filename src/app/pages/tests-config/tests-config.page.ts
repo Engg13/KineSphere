@@ -2,30 +2,8 @@ import { Component } from '@angular/core';
 import { NavController, AlertController, ViewWillEnter, IonicModule } from '@ionic/angular';
 import { NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-export interface TestPregunta {
-  texto: string;
-  puntajeMin: number;
-  puntajeMax: number;
-}
-
-export interface TestRangoResultado {
-  nombre: string;
-  min: number;
-  max: number;
-  color: string;
-}
-
-export interface TestTemplate {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  preguntas: TestPregunta[];
-  rangos: TestRangoResultado[];
-  fechaCreacion: string;
-}
-
-const STORAGE_KEY = 'test_templates';
+import { TestPregunta, TestRangoResultado, TestTemplate } from '../../models/test-template.model';
+import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
 
 const TESTS_PREDETERMINADOS: TestTemplate[] = [
   {
@@ -378,24 +356,20 @@ export class TestsConfigPage implements ViewWillEnter {
 
   constructor(
     private navCtrl: NavController,
-    private alertCtrl: AlertController
+    private alertCtrl: AlertController,
+    private testTemplatesService: TestTemplatesFirestoreService
   ) {}
 
-  ionViewWillEnter() {
-    this.cargarTests();
+  async ionViewWillEnter() {
+    await this.cargarTests();
   }
 
-  cargarTests() {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY);
-      this.tests = data ? JSON.parse(data) : [];
-    } catch {
-      this.tests = [];
-    }
+  async cargarTests() {
+    this.tests = await this.testTemplatesService.getTests();
   }
 
   guardarTests() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.tests));
+    this.testTemplatesService.persistLocalBackup(this.tests);
   }
 
   // === CREAR / EDITAR TEST ===
@@ -469,22 +443,25 @@ export class TestsConfigPage implements ViewWillEnter {
     return true;
   }
 
-  guardarTest() {
+  async guardarTest() {
     if (!this.formularioValido()) return;
+
+    let testGuardado: TestTemplate | null = null;
 
     if (this.modoEditar) {
       const index = this.tests.findIndex(t => t.id === this.testEditandoId);
       if (index !== -1) {
-        this.tests[index] = {
+        testGuardado = {
           ...this.tests[index],
           nombre: this.nuevoTest.nombre.trim(),
           descripcion: this.nuevoTest.descripcion.trim(),
           preguntas: [...this.preguntas],
           rangos: [...this.rangos]
         };
+        this.tests[index] = testGuardado;
       }
     } else {
-      const test: TestTemplate = {
+      testGuardado = {
         id: 'test_' + Date.now(),
         nombre: this.nuevoTest.nombre.trim(),
         descripcion: this.nuevoTest.descripcion.trim(),
@@ -492,7 +469,11 @@ export class TestsConfigPage implements ViewWillEnter {
         rangos: [...this.rangos],
         fechaCreacion: new Date().toISOString()
       };
-      this.tests.push(test);
+      this.tests.push(testGuardado);
+    }
+
+    if (testGuardado) {
+      await this.testTemplatesService.upsertTest(testGuardado);
     }
 
     this.guardarTests();
@@ -511,9 +492,14 @@ export class TestsConfigPage implements ViewWillEnter {
         {
           text: 'Eliminar',
           role: 'destructive',
-          handler: () => {
+          handler: async () => {
             this.tests = this.tests.filter(t => t.id !== test.id);
             this.guardarTests();
+            try {
+              await this.testTemplatesService.deleteTest(test.id);
+            } catch (error) {
+              console.warn('No se pudo eliminar en Firestore. Se eliminó solo localmente.', error);
+            }
           }
         }
       ]
@@ -529,7 +515,7 @@ export class TestsConfigPage implements ViewWillEnter {
     return this.tests.some(t => t.id === testId);
   }
 
-  agregarTestPredeterminado(test: TestTemplate) {
+  async agregarTestPredeterminado(test: TestTemplate) {
     if (this.testYaAgregado(test.id)) return;
     this.tests.push({
       ...test,
@@ -537,10 +523,11 @@ export class TestsConfigPage implements ViewWillEnter {
       rangos: test.rangos.map(r => ({ ...r })),
       fechaCreacion: new Date().toISOString()
     });
+    await this.testTemplatesService.upsertTest(this.tests[this.tests.length - 1]);
     this.guardarTests();
   }
 
-  agregarTodosPredeterminados() {
+  async agregarTodosPredeterminados() {
     let agregados = 0;
     for (const test of TESTS_PREDETERMINADOS) {
       if (!this.testYaAgregado(test.id)) {
@@ -553,7 +540,12 @@ export class TestsConfigPage implements ViewWillEnter {
         agregados++;
       }
     }
-    if (agregados > 0) this.guardarTests();
+    if (agregados > 0) {
+      for (const test of this.tests) {
+        await this.testTemplatesService.upsertTest(test);
+      }
+      this.guardarTests();
+    }
     return agregados;
   }
 
