@@ -1,6 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { NavController, IonicModule } from '@ionic/angular';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
 import { RutinaEjercicios } from '../../models/interfaces';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
@@ -28,7 +28,6 @@ export class PacienteDetallePage implements OnDestroy {
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
-    private router: Router,
     private databaseService: DatabaseService,
     private rutinasService: RutinasFirestoreService
   ) {}
@@ -38,9 +37,9 @@ export class PacienteDetallePage implements OnDestroy {
   // ==============================
 
   async ionViewDidEnter() {
-    const storedId = localStorage.getItem('ver_paciente_id');
-    if (storedId) {
-      this.pacienteId = storedId;
+    const queryId = this.route.snapshot.queryParamMap.get('pacienteId');
+    if (queryId) {
+      this.pacienteId = queryId;
     }
 
     if (this.pacienteId) {
@@ -265,8 +264,6 @@ export class PacienteDetallePage implements OnDestroy {
 
   editarPaciente() {
     if (!this.paciente) return;
-
-    localStorage.setItem('editar_paciente_id', String(this.pacienteId));
 
     this.navCtrl.navigateRoot('/agregar-paciente', {
       queryParams: {

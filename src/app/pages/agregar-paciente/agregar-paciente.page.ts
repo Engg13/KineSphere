@@ -45,24 +45,19 @@ export class AgregarPacientePage implements ViewWillEnter {
   // === LIFECYCLE ===
 
   async ionViewWillEnter() {
-    // 1) Intentar leer ID de edición desde localStorage
-    const editId = localStorage.getItem('editar_paciente_id');
-    localStorage.removeItem('editar_paciente_id');
-
-    // 2) Fallback: leer desde query params actuales del Router
+    // 1) Leer desde query params actuales del Router
     const urlTree = this.router.parseUrl(this.router.url);
     const urlId = urlTree.queryParams['id'];
     const urlModo = urlTree.queryParams['modoEdicion'];
 
-    // 3) Fallback: leer desde snapshot de ActivatedRoute
+    // 2) Fallback: leer desde snapshot de ActivatedRoute
     const snapId = this.route.snapshot.queryParams['id'];
     const snapModo = this.route.snapshot.queryParams['modoEdicion'];
 
     // Usar el primer valor disponible
-    const id = editId || (urlModo === 'true' ? urlId : null) || (snapModo === 'true' ? snapId : null);
+    const id = (urlModo === 'true' ? urlId : null) || (snapModo === 'true' ? snapId : null);
 
     console.log('=== agregar-paciente ionViewWillEnter ===');
-    console.log('localStorage editId:', editId);
     console.log('router.url:', this.router.url);
     console.log('urlParams:', { urlId, urlModo });
     console.log('snapParams:', { snapId, snapModo });
@@ -241,8 +236,8 @@ export class AgregarPacientePage implements ViewWillEnter {
       this.paciente.edad = edadCalculada;
 
       if (this.modoEdicion) {
-        // MODO EDICION: actualizar paciente existente en localStorage
-        await this.actualizarPacienteEnStorage();
+        // MODO EDICION: actualizar paciente existente en Firestore
+        await this.actualizarPacienteEnFirestore();
         this.mostrarToast('Paciente actualizado exitosamente', 'success');
       } else {
         // MODO NUEVO: crear paciente
@@ -258,8 +253,7 @@ export class AgregarPacientePage implements ViewWillEnter {
 
       setTimeout(() => {
         if (this.modoEdicion) {
-          localStorage.setItem('ver_paciente_id', String(this.pacienteIdOriginal));
-          this.navCtrl.navigateRoot('/paciente-detalle');
+          this.navCtrl.navigateRoot('/paciente-detalle', { queryParams: { pacienteId: this.pacienteIdOriginal } });
         } else {
           this.navCtrl.navigateRoot('/pacientes-lista');
         }
@@ -271,27 +265,19 @@ export class AgregarPacientePage implements ViewWillEnter {
     }
   }
 
-  private async actualizarPacienteEnStorage() {
-    // Actualizar en localStorage
-    const userPacientes = JSON.parse(localStorage.getItem('user_pacientes') || '[]');
-    const index = userPacientes.findIndex((p: any) =>
-      String(p.id) === String(this.pacienteIdOriginal)
-    );
+  private async actualizarPacienteEnFirestore() {
+    const data = {
+      nombre: this.paciente.nombre,
+      rut: this.paciente.rut,
+      fechaNacimiento: this.paciente.fechaNacimiento,
+      edad: this.paciente.edad,
+      email: this.paciente.email,
+      telefono: this.paciente.telefono,
+      diagnostico: this.paciente.diagnostico,
+      sesionesPlanificadas: this.paciente.sesionesPlanificadas
+    };
 
-    if (index !== -1) {
-      userPacientes[index] = {
-        ...userPacientes[index],
-        nombre: this.paciente.nombre,
-        rut: this.paciente.rut,
-        fechaNacimiento: this.paciente.fechaNacimiento,
-        edad: this.paciente.edad,
-        email: this.paciente.email,
-        telefono: this.paciente.telefono,
-        diagnostico: this.paciente.diagnostico,
-        sesionesPlanificadas: this.paciente.sesionesPlanificadas
-      };
-      localStorage.setItem('user_pacientes', JSON.stringify(userPacientes));
-    }
+    await this.databaseService.updatePaciente(this.pacienteIdOriginal, data);
   }
 
   // === MÉTODOS AUXILIARES ===
@@ -374,9 +360,9 @@ export class AgregarPacientePage implements ViewWillEnter {
   
   async verificarGuardado() {
     try {
-      console.log('🔍 Verificando guardado en SQLite...');
+      console.log('🔍 Verificando guardado en Firestore...');
       const pacientes = await this.databaseService.getPacientes();
-      console.log(`📊 Total pacientes en SQLite: ${pacientes.length}`);
+      console.log(`📊 Total pacientes en Firestore: ${pacientes.length}`);
       
       if (pacientes.length > 0) {
         console.log('📋 Últimos 3 pacientes:');
@@ -385,7 +371,7 @@ export class AgregarPacientePage implements ViewWillEnter {
         });
       }
     } catch (error) {
-      console.error('❌ Error verificando SQLite:', error);
+      console.error('❌ Error verificando Firestore:', error);
     }
   }
 }

@@ -4,6 +4,8 @@ import { DatabaseService } from '../../services/database.service';
 import { PdfService } from '../../services/pdf.services';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
+import { TestTemplate } from '../../models/test-template.model';
 
 @Component({
     selector: 'app-evaluacion-final',
@@ -19,6 +21,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
   cargando = false;
   resumen: any = null;
   testResults: any[] = [];
+  testTemplates: TestTemplate[] = [];
 
   // Clinical narrative fields for PDF
   evaluacionInicial = '';
@@ -29,6 +32,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     private navCtrl: NavController,
     private databaseService: DatabaseService,
     private pdfService: PdfService,
+    private testTemplatesService: TestTemplatesFirestoreService,
     private toastCtrl: ToastController
   ) {}
 
@@ -40,6 +44,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     this.evaluacionInicial = '';
     this.respuestaTratamiento = '';
     this.planTratamiento = '';
+    this.testTemplates = await this.testTemplatesService.getTests();
     await this.cargarPacientes();
   }
 
@@ -158,14 +163,10 @@ export class EvaluacionFinalPage implements ViewWillEnter {
   }
 
   getTestResultColor(resultado: string): string {
-    // Try to find matching rango color from stored templates
-    try {
-      const templates = JSON.parse(localStorage.getItem('test_templates') || '[]');
-      for (const t of templates) {
-        const rango = (t.rangos || []).find((r: any) => r.nombre === resultado);
-        if (rango && rango.color) return rango.color;
-      }
-    } catch {}
+    for (const t of this.testTemplates) {
+      const rango = (t.rangos || []).find((r: any) => r.nombre === resultado);
+      if (rango && rango.color) return rango.color;
+    }
     // Default colors based on common result patterns
     if (resultado.toLowerCase().includes('normal') || resultado.toLowerCase().includes('leve')) return '#10b981';
     if (resultado.toLowerCase().includes('moderado') || resultado.toLowerCase().includes('medio')) return '#f59e0b';
