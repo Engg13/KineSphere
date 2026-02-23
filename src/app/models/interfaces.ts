@@ -1,3 +1,6 @@
+import { Timestamp } from '@angular/fire/firestore';
+
+
 export interface Paciente {
   id: number | string;
   nombre: string;
@@ -109,8 +112,8 @@ export interface EjercicioEnRutina {
 }
 
 export interface RutinaEjercicios {
-  id: string;
-  pacienteId: string | number;
+  id?: string;
+  pacienteId: string;
   pacienteNombre?: string;
   nombre: string;
   descripcion?: string;
@@ -119,6 +122,7 @@ export interface RutinaEjercicios {
   completada: boolean;
   fechaCompletada?: string;
   enviadaWhatsapp: boolean;
+  createdAt?: Timestamp;
 }
 
 export interface HistorialEjercicio {

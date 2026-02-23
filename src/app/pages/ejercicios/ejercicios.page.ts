@@ -1,337 +1,162 @@
-import { Component, OnInit } from '@angular/core';
-import { AlertController, NavController, ToastController, ModalController, IonicModule } from '@ionic/angular';
-import { ActivatedRoute } from '@angular/router';
-import { EjerciciosService } from '../../services/ejercicios.service';
-import { DatabaseService } from '../../services/database.service';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
-  EjercicioLocal,
-  EjercicioEnRutina,
-  RutinaEjercicios,
-  SerieEjercicio,
-  CategoriaEjercicio,
-  HistorialEjercicio
-} from '../../models/interfaces';
+  AlertController,
+  NavController,
+  ToastController,
+  IonicModule
+} from '@ionic/angular';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { Subscription } from 'rxjs';
 
+import { DatabaseService } from '../../services/database.service';
+import { EjerciciosFirestoreService } from '../../services/EjerciciosFirestoreService.service';
+import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
+
+import {
+  EjercicioLocal,
+  CategoriaEjercicio,
+  RutinaEjercicios,
+  EjercicioEnRutina,
+  SerieEjercicio
+} from '../../models/interfaces';
 
 @Component({
-    selector: 'app-ejercicios',
-    templateUrl: './ejercicios.page.html',
-    styleUrls: ['./ejercicios.page.scss'],
-    standalone: true,
-    imports: [IonicModule, FormsModule, DatePipe]
+  selector: 'app-ejercicios',
+  templateUrl: './ejercicios.page.html',
+  styleUrls: ['./ejercicios.page.scss'],
+  standalone: true,
+  imports: [IonicModule, FormsModule, DatePipe]
 })
-export class EjerciciosPage implements OnInit {
-  // Datos del paciente
-  pacienteId: string = '';
-  pacienteNombre: string = '';
-  pacienteTelefono: string = '';
+export class EjerciciosPage implements OnInit, OnDestroy {
 
-  // Vista actual
-  vista: 'rutina' | 'biblioteca' | 'historial' = 'rutina';
+  pacienteId = '';
+  pacienteNombre = '';
+  pacienteTelefono = '';
 
-  // Rutina activa
+  vista: 'rutina' | 'rutinas' | 'biblioteca' | 'historial' = 'rutinas';
+
   rutinaActiva: RutinaEjercicios | null = null;
   rutinasAnteriores: RutinaEjercicios[] = [];
 
-  // Biblioteca
   ejerciciosBiblioteca: EjercicioLocal[] = [];
   ejerciciosFiltrados: EjercicioLocal[] = [];
-  terminoBusqueda: string = '';
+  terminoBusqueda = '';
   categoriaFiltro: CategoriaEjercicio | '' = '';
-  categorias = this.ejerciciosService.getCategorias();
 
-  // Estado UI
   ejerciciosExpandidos: Set<number> = new Set();
-  sesionIniciada: boolean = false;
+  sesionIniciada = false;
 
-  // Historial
-  historialEjercicio: HistorialEjercicio[] = [];
-  ejercicioHistorialNombre: string = '';
+  historialEjercicio: any[] = [];
+  ejercicioHistorialNombre = '';
 
-  // Selector de pacientes
   listaPacientes: any[] = [];
   pacientesFiltrados: any[] = [];
-  busquedaPaciente: string = '';
+  busquedaPaciente = '';
+  plantillas: any[] = [];
+  todasLasRutinas: any[] = [];
+  rutinasExpandidas = new Set<string>();
 
-  // Nuevo/editar ejercicio
-  mostrarFormNuevo: boolean = false;
-  nuevoEjercicio = this.getEjercicioVacio();
+  mostrarFormNuevo = false;
   editandoEjercicioId: string | null = null;
 
+  nuevoEjercicio: Partial<EjercicioLocal> = this.getEjercicioVacio();
+
+  categorias: {
+    valor: CategoriaEjercicio;
+    nombre: string;
+    color: string;
+    icono: string;
+  }[] = [
+    { valor: 'fuerza', nombre: 'Fuerza', color: '#ef4444', icono: 'barbell-outline' },
+    { valor: 'movilidad', nombre: 'Movilidad', color: '#3b82f6', icono: 'walk-outline' },
+    { valor: 'rehabilitacion', nombre: 'Rehabilitación', color: '#10b981', icono: 'medkit-outline' },
+    { valor: 'equilibrio', nombre: 'Equilibrio', color: '#f59e0b', icono: 'body-outline' },
+    { valor: 'cardio', nombre: 'Cardio', color: '#ec4899', icono: 'heart-outline' },
+    { valor: 'funcional', nombre: 'Funcional', color: '#6366f1', icono: 'fitness-outline' },
+    { valor: 'estiramiento', nombre: 'Estiramiento', color: '#14b8a6', icono: 'accessibility-outline' }
+  ];
+
+  private subs: Subscription[] = [];
+
   constructor(
-    private ejerciciosService: EjerciciosService,
-    private databaseService: DatabaseService,
+    private route: ActivatedRoute,
+    private navCtrl: NavController,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
-    private navCtrl: NavController,
-    private route: ActivatedRoute
+    private databaseService: DatabaseService,
+    private ejerciciosService: EjerciciosFirestoreService,
+    private rutinasService: RutinasFirestoreService
   ) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.pacienteId = params['pacienteId'] || '';
       this.pacienteNombre = params['pacienteNombre'] || '';
-    });
-    this.cargarDatos();
-  }
 
-  ionViewDidEnter() {
-    this.cargarDatos();
-    this.cargarPacientes();
-  }
+      this.cargarPacientes();
+      this.cargarBiblioteca();
 
-  private async cargarPacientes() {
-    try {
-      this.listaPacientes = await this.databaseService.getPacientes();
-      this.pacientesFiltrados = [...this.listaPacientes];
-      if (this.pacienteId && this.pacienteId !== 'general') {
-        const p = this.listaPacientes.find((pac: any) => String(pac.id) === String(this.pacienteId));
-        if (p?.telefono) {
-          this.pacienteTelefono = p.telefono;
-        }
+      if (this.pacienteId) {
+        this.cargarRutinasPaciente();
       }
-    } catch {}
+
+      this.cargarTodasLasRutinas();
+    });
+  }
+
+  ngOnDestroy() {
+    this.subs.forEach(s => s.unsubscribe());
+  }
+
+  // ================= PACIENTES =================
+
+  async cargarPacientes() {
+    this.listaPacientes = await this.databaseService.getPacientes();
+    this.pacientesFiltrados = [...this.listaPacientes];
   }
 
   filtrarPacientes() {
-    const t = this.busquedaPaciente.toLowerCase().trim();
-    if (!t) {
-      this.pacientesFiltrados = [...this.listaPacientes];
-      return;
-    }
-    this.pacientesFiltrados = this.listaPacientes.filter(p => {
-      const nombre = (p.nombre || p.nombre_completo || '').toLowerCase();
-      return nombre.includes(t);
-    });
-  }
-
-  seleccionarPaciente(paciente: any) {
-    this.pacienteId = String(paciente.id);
-    this.pacienteNombre = paciente.nombre || `${paciente.nombre_completo || ''}`.trim();
-    this.pacienteTelefono = paciente.telefono || '';
-    this.busquedaPaciente = '';
-    this.cargarDatos();
-  }
-
-  cargarDatos() {
-    this.ejerciciosBiblioteca = this.ejerciciosService.getEjercicios();
-    this.ejerciciosFiltrados = [...this.ejerciciosBiblioteca];
-
-    const id = this.pacienteId || 'general';
-    const rutinas = this.ejerciciosService.getRutinasPorPaciente(id);
-    this.rutinaActiva = rutinas.find(r => !r.completada) || null;
-    this.rutinasAnteriores = rutinas.filter(r => r.completada);
-  }
-
-  // ==================== NAVEGACIÓN VISTAS ====================
-
-  cambiarVista(vista: 'rutina' | 'biblioteca' | 'historial') {
-    this.vista = vista;
-    if (vista === 'biblioteca') {
-      this.ejerciciosFiltrados = [...this.ejerciciosBiblioteca];
-      this.terminoBusqueda = '';
-      this.categoriaFiltro = '';
-    }
-  }
-
-  // ==================== RUTINA ====================
-
-  async crearNuevaRutina() {
-    if (!this.pacienteId) {
-      this.pacienteId = 'general';
-      this.pacienteNombre = this.pacienteNombre || 'Sin paciente';
-    }
-
-    const alert = await this.alertCtrl.create({
-      header: 'Nueva Rutina',
-      inputs: [
-        {
-          name: 'nombre',
-          type: 'text',
-          placeholder: 'Nombre de la rutina',
-          value: `Rutina ${new Date().toLocaleDateString('es-CL')}`
-        }
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Crear',
-          handler: (data) => {
-            if (!data.nombre?.trim()) return false;
-            this.rutinaActiva = this.ejerciciosService.crearRutina(
-              this.pacienteId, data.nombre.trim(), this.pacienteNombre
-            );
-            this.mostrarToast('Rutina creada. Agrega ejercicios.', 'success');
-            // Ir a biblioteca para que agregue ejercicios
-            this.cambiarVista('biblioteca');
-            return true;
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
-
-  toggleEjercicioExpandido(idx: number) {
-    if (this.ejerciciosExpandidos.has(idx)) {
-      this.ejerciciosExpandidos.delete(idx);
-    } else {
-      this.ejerciciosExpandidos.add(idx);
-    }
-  }
-
-  isExpandido(idx: number): boolean {
-    return this.ejerciciosExpandidos.has(idx);
-  }
-
-  iniciarSesionEjercicios() {
-    this.sesionIniciada = true;
-    // Expandir todos al iniciar
-    if (this.rutinaActiva) {
-      this.rutinaActiva.ejercicios.forEach((_, i) => this.ejerciciosExpandidos.add(i));
-    }
-    this.mostrarToast('Sesion iniciada', 'primary');
-  }
-
-  // Series
-  onRepChange(ejercicioIdx: number, serieIdx: number, valor: string) {
-    if (!this.rutinaActiva) return;
-    const reps = valor ? parseInt(valor, 10) : null;
-    this.ejerciciosService.actualizarSerie(
-      this.pacienteId, this.rutinaActiva.id, ejercicioIdx, serieIdx, { repeticiones: reps }
-    );
-    this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx].repeticiones = reps;
-  }
-
-  onPesoChange(ejercicioIdx: number, serieIdx: number, valor: string) {
-    if (!this.rutinaActiva) return;
-    const peso = valor ? parseFloat(valor) : null;
-    this.ejerciciosService.actualizarSerie(
-      this.pacienteId, this.rutinaActiva.id, ejercicioIdx, serieIdx, { peso }
-    );
-    this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx].peso = peso;
-  }
-
-  toggleSerie(ejercicioIdx: number, serieIdx: number) {
-    if (!this.rutinaActiva || !this.sesionIniciada) return;
-    const completada = this.ejerciciosService.toggleSerieCompletada(
-      this.pacienteId, this.rutinaActiva.id, ejercicioIdx, serieIdx
-    );
-    this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx].completada = completada;
-  }
-
-  cumplimentarTodas(ejercicioIdx: number) {
-    if (!this.rutinaActiva || !this.sesionIniciada) return;
-    this.ejerciciosService.cumplimentarTodas(
-      this.pacienteId, this.rutinaActiva.id, ejercicioIdx
-    );
-    // Recargar estado
-    const rutina = this.ejerciciosService.getRutina(this.pacienteId, this.rutinaActiva.id);
-    if (rutina) {
-      this.rutinaActiva.ejercicios[ejercicioIdx].series = rutina.ejercicios[ejercicioIdx].series;
-    }
-  }
-
-  todasSeriesCompletadas(ejercicioIdx: number): boolean {
-    if (!this.rutinaActiva) return false;
-    return this.rutinaActiva.ejercicios[ejercicioIdx].series.every(s => s.completada);
-  }
-
-  getSeriesCompletadas(ejercicioIdx: number): number {
-    if (!this.rutinaActiva) return 0;
-    return this.rutinaActiva.ejercicios[ejercicioIdx].series.filter(s => s.completada).length;
-  }
-
-  getProgresoRutina(): number {
-    if (!this.rutinaActiva) return 0;
-    let total = 0, completadas = 0;
-    this.rutinaActiva.ejercicios.forEach(ej => {
-      total += ej.series.length;
-      completadas += ej.series.filter(s => s.completada).length;
-    });
-    return total > 0 ? Math.round((completadas / total) * 100) : 0;
-  }
-
-  async agregarSerieAEjercicio(ejercicioIdx: number) {
-    if (!this.rutinaActiva) return;
-    const ej = this.rutinaActiva.ejercicios[ejercicioIdx];
-    const ultimaSerie = ej.series[ej.series.length - 1];
-    ej.series.push({
-      numero: ej.series.length + 1,
-      repeticiones: ultimaSerie?.repeticiones || 12,
-      peso: ultimaSerie?.peso || null,
-      completada: false
-    });
-    this.ejerciciosService.actualizarSerie(
-      this.pacienteId, this.rutinaActiva.id, ejercicioIdx, ej.series.length - 1,
-      ej.series[ej.series.length - 1]
+    const t = this.busquedaPaciente.toLowerCase();
+    this.pacientesFiltrados = this.listaPacientes.filter(p =>
+      (p.nombre || '').toLowerCase().includes(t)
     );
   }
 
-  async eliminarEjercicioDeRutina(ejercicioIdx: number) {
-    if (!this.rutinaActiva) return;
-    const ej = this.rutinaActiva.ejercicios[ejercicioIdx];
-    const alert = await this.alertCtrl.create({
-      header: 'Eliminar ejercicio',
-      message: `Quitar "${ej.ejercicio.nombre}" de la rutina?`,
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Eliminar',
-          cssClass: 'danger',
-          handler: () => {
-            this.ejerciciosService.eliminarEjercicioDeRutina(
-              this.pacienteId, this.rutinaActiva!.id, ejercicioIdx
-            );
-            this.rutinaActiva!.ejercicios.splice(ejercicioIdx, 1);
-            this.rutinaActiva!.ejercicios.forEach((e, i) => e.letra = String.fromCharCode(65 + i));
-            this.ejerciciosExpandidos.delete(ejercicioIdx);
-          }
-        }
-      ]
-    });
-    await alert.present();
+  seleccionarPaciente(p: any) {
+    this.pacienteId = p.id;
+    this.pacienteNombre = p.nombre;
+    this.pacienteTelefono = p.telefono || '';
+    this.cargarRutinas();
   }
 
-  async completarRutina() {
-    if (!this.rutinaActiva) return;
-    const progreso = this.getProgresoRutina();
+  // ================= BIBLIOTECA =================
 
-    const alert = await this.alertCtrl.create({
-      header: 'Finalizar rutina',
-      message: progreso < 100
-        ? `Progreso: ${progreso}%. Algunas series no estan completadas. Finalizar de todas formas?`
-        : 'Todas las series completadas. Finalizar rutina?',
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Finalizar',
-          handler: () => {
-            this.ejerciciosService.completarRutina(this.pacienteId, this.rutinaActiva!.id);
-            this.mostrarToast('Rutina completada', 'success');
-            this.sesionIniciada = false;
-            this.ejerciciosExpandidos.clear();
-            this.cargarDatos();
-          }
-        }
-      ]
-    });
-    await alert.present();
+  cargarBiblioteca() {
+    const sub = this.ejerciciosService.getEjercicios()
+      .subscribe(ejs => {
+        this.ejerciciosBiblioteca = ejs;
+        this.ejerciciosFiltrados = [...ejs];
+      });
+
+    this.subs.push(sub);
   }
-
-  // ==================== BIBLIOTECA ====================
 
   filtrarEjercicios() {
     let resultado = [...this.ejerciciosBiblioteca];
 
     if (this.terminoBusqueda.trim()) {
-      resultado = this.ejerciciosService.buscarEjercicios(this.terminoBusqueda);
+      const t = this.terminoBusqueda.toLowerCase();
+      resultado = resultado.filter(e =>
+        e.nombre.toLowerCase().includes(t)
+      );
     }
 
     if (this.categoriaFiltro) {
-      resultado = resultado.filter(e => e.categoria === this.categoriaFiltro);
+      resultado = resultado.filter(e =>
+        e.categoria === this.categoriaFiltro
+      );
     }
 
     this.ejerciciosFiltrados = resultado;
@@ -342,215 +167,215 @@ export class EjerciciosPage implements OnInit {
     this.filtrarEjercicios();
   }
 
-  async agregarARutina(ejercicio: EjercicioLocal) {
-    // Si no hay pacienteId, usar uno genérico para rutinas sin paciente
-    if (!this.pacienteId) {
-      this.pacienteId = 'general';
-      this.pacienteNombre = this.pacienteNombre || 'Sin paciente';
+  // ================= RUTINAS =================
+
+  cargarRutinas() {
+
+      // 🧠 SI NO HAY PACIENTE
+      if (!this.pacienteId) {
+
+        const sub = this.rutinasService
+          .getRutinasGeneralesRealtime()
+          .subscribe((rutinas: any[]) => {
+
+            this.rutinaActiva =
+              rutinas.find(r => !r.completada) || null;
+
+            this.rutinasAnteriores =
+              rutinas.filter(r => r.completada);
+
+          });
+
+        this.subs.push(sub);
+        return;
+      }
+
+      // 🧠 SI HAY PACIENTE
+      const sub = this.rutinasService
+        .getRutinasPorPacienteRealtime(this.pacienteId)
+        .subscribe((rutinas: any[]) => {
+
+          this.rutinaActiva =
+            rutinas.find(r => !r.completada) || null;
+
+          this.rutinasAnteriores =
+            rutinas.filter(r => r.completada);
+
+        });
+
+      this.subs.push(sub);
     }
 
-    if (!this.rutinaActiva) {
-      // Crear rutina automáticamente
-      this.rutinaActiva = this.ejerciciosService.crearRutina(
-        this.pacienteId,
-        `Rutina ${new Date().toLocaleDateString('es-CL')}`,
-        this.pacienteNombre
+  async completarRutina() {
+  if (!this.rutinaActiva) return;
+
+  const alert = await this.alertCtrl.create({
+    header: 'Finalizar rutina',
+    message: '¿Seguro que deseas marcar esta rutina como completada?',
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Finalizar',
+        handler: async () => {
+          await this.rutinasService.actualizarRutina(
+            this.rutinaActiva.id,
+            {
+              completada: true,
+              fechaCompletada: new Date().toISOString()
+            }
+          );
+
+          this.mostrarToast('Rutina completada', 'success');
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
+
+  cambiarVista(v: 'rutina' | 'rutinas' | 'biblioteca' | 'historial') {
+    this.vista = v;
+  }
+
+  async crearNuevaRutina() {
+    const alert = await this.alertCtrl.create({
+      header: 'Nueva Rutina',
+      inputs: [
+        {
+          name: 'nombre',
+          type: 'text',
+          placeholder: 'Ej: Tren inferior fuerza'
+        }
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Crear',
+          handler: async (data) => {
+            if (!data.nombre?.trim()) return false;
+
+            await this.rutinasService.crearRutina({
+              pacienteId: this.pacienteId || null,   // 👈 clave
+              pacienteNombre: this.pacienteNombre || null,
+              nombre: data.nombre.trim(),
+              ejercicios: []
+            });
+
+            this.mostrarToast('Rutina creada', 'success');
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  // ================= UTILIDADES UI =================
+
+  toggleRutinaExpandida(id: string) {
+    if (this.rutinasExpandidas.has(id)) {
+      this.rutinasExpandidas.delete(id);
+    } else {
+      this.rutinasExpandidas.add(id);
+    }
+  }
+
+  isRutinaExpandida(id: string): boolean {
+    return this.rutinasExpandidas.has(id);
+  }
+
+    toggleEjercicioExpandido(idx: number) {
+      if (this.ejerciciosExpandidos.has(idx)) {
+        this.ejerciciosExpandidos.delete(idx);
+      } else {
+        this.ejerciciosExpandidos.add(idx);
+      }
+    }
+
+  isExpandido(idx: number): boolean {
+    return this.ejerciciosExpandidos.has(idx);
+  }
+
+  iniciarSesionEjercicios() {
+    this.sesionIniciada = true;
+
+    if (this.rutinaActiva) {
+      this.rutinaActiva.ejercicios.forEach((_, i) =>
+        this.ejerciciosExpandidos.add(i)
       );
     }
 
-    // Verificar si ya está en la rutina
-    if (this.rutinaActiva.ejercicios.some(e => e.ejercicioId === ejercicio.id)) {
-      this.mostrarToast('Este ejercicio ya esta en la rutina', 'warning');
-      return;
-    }
+    this.mostrarToast('Sesión iniciada', 'primary');
+  }
 
-    const alert = await this.alertCtrl.create({
-      header: 'Agregar a rutina',
-      subHeader: ejercicio.nombre,
-      inputs: [
-        { name: 'series', type: 'number', placeholder: 'Series', value: '3', min: 1, max: 10 },
-        { name: 'repeticiones', type: 'number', placeholder: 'Repeticiones', value: '12', min: 1, max: 100 },
-        { name: 'descanso', type: 'number', placeholder: 'Descanso (seg)', value: '60', min: 0, max: 300 }
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Agregar',
-          handler: (data) => {
-            this.ejerciciosService.agregarEjercicioARutina(
-              this.pacienteId,
-              this.rutinaActiva!.id,
-              ejercicio.id,
-              parseInt(data.series) || 3,
-              parseInt(data.repeticiones) || 12,
-              parseInt(data.descanso) || 60
-            );
-            // Recargar rutina
-            this.rutinaActiva = this.ejerciciosService.getRutina(this.pacienteId, this.rutinaActiva!.id) || null;
-            this.mostrarToast(`"${ejercicio.nombre}" agregado a la rutina`, 'success');
-            this.cambiarVista('rutina');
-          }
-        }
-      ]
+
+  getProgresoRutina(): number {
+    if (!this.rutinaActiva) return 0;
+
+    let total = 0;
+    let completadas = 0;
+
+    this.rutinaActiva.ejercicios.forEach(ej => {
+      total += ej.series.length;
+      completadas += ej.series.filter(s => s.completada).length;
     });
-    await alert.present();
+
+    return total ? Math.round((completadas / total) * 100) : 0;
   }
 
-  abrirVideo(videoUrl: string) {
-    if (videoUrl) {
-      window.open(videoUrl, '_blank');
+  getSeriesCompletadas(i: number): number {
+    if (!this.rutinaActiva) return 0;
+    return this.rutinaActiva.ejercicios[i].series.filter(s => s.completada).length;
+  }
+
+  todasSeriesCompletadas(i: number): boolean {
+    if (!this.rutinaActiva) return false;
+    return this.rutinaActiva.ejercicios[i].series.every(s => s.completada);
+  }
+
+  getColorCategoria(cat: CategoriaEjercicio) {
+    return this.categorias.find(c => c.valor === cat)?.color || '#6b7280';
+  }
+
+  getIconoCategoria(cat: CategoriaEjercicio) {
+    return this.categorias.find(c => c.valor === cat)?.icono || 'fitness-outline';
+  }
+
+  abrirVideo(url: string) {
+    window.open(url, '_blank');
+  }
+
+  getVideoThumbnail(url: string): string | null {
+    if (!url) return null;
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const id = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
+      return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
     }
+    return null;
   }
 
-  getVideoThumbnail(url: string): string {
-    return this.ejerciciosService.getVideoThumbnail(url);
-  }
-
-  getIconoCategoria(cat: CategoriaEjercicio): string {
-    return this.ejerciciosService.getIconoCategoria(cat);
-  }
-
-  getColorCategoria(cat: CategoriaEjercicio): string {
-    return this.ejerciciosService.getColorCategoria(cat);
-  }
-
-  // ==================== CREAR/EDITAR EJERCICIO ====================
-
-  toggleFormNuevo() {
-    this.mostrarFormNuevo = !this.mostrarFormNuevo;
-    if (this.mostrarFormNuevo) {
-      this.editandoEjercicioId = null;
-      this.nuevoEjercicio = this.getEjercicioVacio();
-    }
-  }
-
-  editarEjercicio(ejercicio: EjercicioLocal) {
-    this.editandoEjercicioId = ejercicio.id;
-    this.nuevoEjercicio = {
-      nombre: ejercicio.nombre,
-      descripcion: ejercicio.descripcion,
-      instrucciones: ejercicio.instrucciones || '',
-      categoria: ejercicio.categoria,
-      musculoPrincipal: ejercicio.musculoPrincipal,
-      equipamiento: ejercicio.equipamiento,
-      videoUrl: ejercicio.videoUrl || '',
-      dificultad: ejercicio.dificultad
-    };
-    this.mostrarFormNuevo = true;
-  }
-
-  guardarNuevoEjercicio() {
-    if (!this.nuevoEjercicio.nombre.trim()) {
-      this.mostrarToast('El nombre es obligatorio', 'warning');
-      return;
-    }
-
-    if (this.editandoEjercicioId) {
-      this.ejerciciosService.actualizarEjercicio(this.editandoEjercicioId, this.nuevoEjercicio);
-      this.mostrarToast('Ejercicio actualizado', 'success');
-      this.editandoEjercicioId = null;
-    } else {
-      this.ejerciciosService.agregarEjercicio(this.nuevoEjercicio);
-      this.mostrarToast('Ejercicio creado', 'success');
-    }
-    this.mostrarFormNuevo = false;
-    this.cargarDatos();
-    this.filtrarEjercicios();
-  }
-
-  async eliminarEjercicioBiblioteca(ejercicio: EjercicioLocal) {
-    const alert = await this.alertCtrl.create({
-      header: 'Eliminar ejercicio',
-      message: `Eliminar "${ejercicio.nombre}" de la biblioteca?`,
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Eliminar',
-          cssClass: 'danger',
-          handler: () => {
-            this.ejerciciosService.eliminarEjercicio(ejercicio.id);
-            this.cargarDatos();
-            this.filtrarEjercicios();
-            this.mostrarToast('Ejercicio eliminado', 'medium');
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
-
-  private getEjercicioVacio() {
-    return {
-      nombre: '',
-      descripcion: '',
-      instrucciones: '',
-      categoria: 'rehabilitacion' as CategoriaEjercicio,
-      musculoPrincipal: '',
-      equipamiento: 'Ninguno',
-      videoUrl: '',
-      dificultad: 'basico' as 'basico' | 'intermedio' | 'avanzado'
-    };
-  }
-
-  // ==================== HISTORIAL ====================
-
-  verHistorial(ejercicioId: string, nombre: string) {
+  verHistorial(id: string, nombre: string) {
     this.ejercicioHistorialNombre = nombre;
-    this.historialEjercicio = this.ejerciciosService.getHistorial(ejercicioId);
     this.vista = 'historial';
   }
 
-  // ==================== WHATSAPP ====================
-
   async enviarWhatsappConNumero(rutina: RutinaEjercicios | null) {
     if (!rutina) return;
-
-    // Si tenemos teléfono del paciente, enviar directo
-    if (this.pacienteTelefono) {
-      this.ejerciciosService.enviarPorWhatsapp(rutina, this.pacienteTelefono);
-      this.mostrarToast('Abriendo WhatsApp...', 'success');
-      return;
-    }
-
-    // Si no hay teléfono, preguntar
-    const alert = await this.alertCtrl.create({
-      header: 'Enviar por WhatsApp',
-      message: rutina.nombre,
-      inputs: [
-        {
-          name: 'telefono',
-          type: 'tel',
-          placeholder: 'Ej: +56912345678'
-        }
-      ],
-      buttons: [
-        {
-          text: 'Sin numero',
-          handler: () => {
-            this.ejerciciosService.enviarPorWhatsapp(rutina);
-            this.mostrarToast('Abriendo WhatsApp...', 'success');
-          }
-        },
-        {
-          text: 'Enviar',
-          handler: (data) => {
-            this.ejerciciosService.enviarPorWhatsapp(rutina, data.telefono || undefined);
-            this.mostrarToast('Abriendo WhatsApp...', 'success');
-          }
-        }
-      ]
-    });
-    await alert.present();
+    this.mostrarToast('Función WhatsApp lista para implementar', 'primary');
   }
 
-  // ==================== UTILIDADES ====================
+  trackByEjercicio(index: number, item: EjercicioEnRutina) {
+    return item.ejercicioId;
+  }
 
-  volverAtras() {
-    // Re-setear ID para que paciente-detalle lo encuentre al volver
-    if (this.pacienteId && this.pacienteId !== 'general') {
-      localStorage.setItem('ver_paciente_id', this.pacienteId);
-    }
-    this.navCtrl.back();
+  trackBySerie(index: number, item: SerieEjercicio) {
+    return item.numero;
+  }
+
+  trackByEjercicioLocal(index: number, item: EjercicioLocal) {
+    return item.id;
   }
 
   private async mostrarToast(message: string, color: string) {
@@ -563,19 +388,452 @@ export class EjerciciosPage implements OnInit {
     await toast.present();
   }
 
-  trackByEjercicio(index: number, item: EjercicioEnRutina): string {
-    return item.ejercicioId;
+  // ================= NAVEGACIÓN =================
+
+  volverAtras() {
+    // Si viene desde paciente-detalle, mantener el ID
+    if (this.pacienteId) {
+      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
+    }
+
+  this.navCtrl.back();
+  }
+
+  // ================= RECARGAR DATOS =================
+
+  cargarDatos() {
+    this.cargarBiblioteca();
+    this.cargarRutinas();
+  }
+
+  // =====================================================
+// SERIES (AUTO-SAVE FIRESTORE)
+// =====================================================
+
+  async onRepChange(ejercicioIdx: number, serieIdx: number, valor: string) {
+    if (!this.rutinaActiva) return;
+
+    const reps = valor ? parseInt(valor, 10) : null;
+
+    this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx].repeticiones = reps;
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+  async onPesoChange(ejercicioIdx: number, serieIdx: number, valor: string) {
+    if (!this.rutinaActiva) return;
+
+    const peso = valor ? parseFloat(valor) : null;
+
+    this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx].peso = peso;
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+  async toggleSerie(ejercicioIdx: number, serieIdx: number) {
+    if (!this.rutinaActiva) return;
+
+    const serie = this.rutinaActiva.ejercicios[ejercicioIdx].series[serieIdx];
+
+    serie.completada = !serie.completada;
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+
+  // -----------------------------------------------------
+  // COMPLETAR / DESMARCAR TODAS
+  // -----------------------------------------------------
+
+  async cumplimentarTodas(ejercicioIdx: number) {
+    if (!this.rutinaActiva) return;
+
+    const ejercicio = this.rutinaActiva.ejercicios[ejercicioIdx];
+    const todasCompletadas = ejercicio.series.every(s => s.completada);
+
+    ejercicio.series.forEach(s => s.completada = !todasCompletadas);
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+  // -----------------------------------------------------
+  // ELIMINAR EJERCICIO
+  // -----------------------------------------------------
+
+  async eliminarEjercicioDeRutina(ejercicioIdx: number) {
+    if (!this.rutinaActiva) return;
+
+    this.rutinaActiva.ejercicios.splice(ejercicioIdx, 1);
+
+    // Recalcular letras A, B, C...
+    this.rutinaActiva.ejercicios.forEach((e, i) => {
+      e.letra = String.fromCharCode(65 + i);
+    });
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+
+    this.mostrarToast('Ejercicio eliminado', 'medium');
+  }
+
+  // =====================================================
+// FORM NUEVO / EDITAR EJERCICIO
+// =====================================================
+
+toggleFormNuevo() {
+  this.mostrarFormNuevo = !this.mostrarFormNuevo;
+
+  if (this.mostrarFormNuevo) {
+    this.editandoEjercicioId = null;
+    this.nuevoEjercicio = this.getEjercicioVacio();
+  }
+}
+
+editarEjercicio(ejercicio: EjercicioLocal) {
+  this.editandoEjercicioId = ejercicio.id;
+  this.nuevoEjercicio = { ...ejercicio };
+  this.mostrarFormNuevo = true;
+}
+
+async guardarNuevoEjercicio() {
+  if (!this.nuevoEjercicio.nombre?.trim()) {
+    this.mostrarToast('El nombre es obligatorio', 'warning');
+    return;
+  }
+
+  if (this.editandoEjercicioId) {
+    await this.ejerciciosService.actualizarEjercicio(
+      this.editandoEjercicioId,
+      this.nuevoEjercicio
+    );
+    this.mostrarToast('Ejercicio actualizado', 'success');
+  } else {
+    await this.ejerciciosService.agregarEjercicioPersonalizado(
+      this.nuevoEjercicio
+    );
+    this.mostrarToast('Ejercicio creado', 'success');
+  }
+
+  this.mostrarFormNuevo = false;
+}
+
+  private getEjercicioVacio(): Partial<EjercicioLocal> {
+    return {
+      nombre: '',
+      descripcion: '',
+      instrucciones: '',
+      categoria: 'rehabilitacion',
+      musculoPrincipal: '',
+      equipamiento: 'Ninguno',
+      videoUrl: '',
+      dificultad: 'basico'
+    };
   }
 
   estaEnRutina(ejercicioId: string): boolean {
-    return !!this.rutinaActiva?.ejercicios.some(e => e.ejercicioId === ejercicioId);
+    if (!this.rutinaActiva) return false;
+
+    return this.rutinaActiva.ejercicios?.some(
+      (e: any) => e.ejercicioId === ejercicioId
+    );
   }
 
-  trackByEjercicioLocal(index: number, item: EjercicioLocal): string {
-    return item.id;
+  async agregarARutina(ejercicio: EjercicioLocal) {
+
+      if (!this.rutinaActiva) {
+        this.mostrarToast('Primero crea una rutina', 'warning');
+        return;
+      }
+
+      if (this.estaEnRutina(ejercicio.id)) {
+        this.mostrarToast('Ya está en la rutina', 'warning');
+        return;
+      }
+
+      const alert = await this.alertCtrl.create({
+        header: 'Agregar a rutina',
+        subHeader: ejercicio.nombre,
+        inputs: [
+          {
+            name: 'series',
+            type: 'number',
+            placeholder: 'Cantidad de series',
+            value: 3,
+            min: 1
+          },
+          {
+            name: 'reps',
+            type: 'number',
+            placeholder: 'Repeticiones',
+            value: 12,
+            min: 1
+          }
+        ],
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          {
+            text: 'Agregar',
+            handler: async data => {
+
+              const cantidadSeries = parseInt(data.series) || 3;
+              const repeticiones = parseInt(data.reps) || 12;
+
+              const nuevasSeries = [];
+
+              for (let i = 1; i <= cantidadSeries; i++) {
+                nuevasSeries.push({
+                  numero: i,
+                  repeticiones,
+                  peso: null,
+                  completada: false
+                });
+              }
+
+              const nuevoEjercicio = {
+                ejercicioId: ejercicio.id,
+                ejercicio,
+                letra: String.fromCharCode(
+                  65 + (this.rutinaActiva.ejercicios?.length || 0)
+                ),
+                descansoSegundos: 60,
+                series: nuevasSeries
+              };
+
+              const ejerciciosActualizados = [
+                ...(this.rutinaActiva.ejercicios || []),
+                nuevoEjercicio
+              ];
+
+              await this.rutinasService.actualizarRutina(
+                this.rutinaActiva.id,
+                { ejercicios: ejerciciosActualizados }
+              );
+
+              this.mostrarToast('Ejercicio agregado', 'success');
+            }
+          }
+        ]
+      });
+
+      await alert.present();
+    }
+
+  async eliminarEjercicioBiblioteca(ejercicio: EjercicioLocal) {
+    const alert = await this.alertCtrl.create({
+      header: 'Eliminar ejercicio',
+      message: `Eliminar "${ejercicio.nombre}"?`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: async () => {
+            await this.ejerciciosService.eliminarEjercicio(ejercicio.id);
+            this.mostrarToast('Ejercicio eliminado', 'medium');
+          }
+        }
+      ]
+    });
+
+    await alert.present();
   }
 
-  trackBySerie(index: number, item: SerieEjercicio): number {
-    return item.numero;
+  async usarPlantilla(plantilla: any) {
+
+    // Si NO hay paciente → simplemente clonar como rutina activa general
+    if (!this.pacienteId) {
+
+      await this.rutinasService.crearRutina({
+        pacienteId: null,
+        pacienteNombre: null,
+        nombre: plantilla.nombre,
+        ejercicios: plantilla.ejercicios
+      });
+
+      this.mostrarToast('Rutina creada desde plantilla', 'success');
+      return;
+    }
+
+    // Si hay paciente → asignarla
+    await this.rutinasService.crearRutina({
+      pacienteId: this.pacienteId,
+      pacienteNombre: this.pacienteNombre,
+      nombre: plantilla.nombre,
+      ejercicios: plantilla.ejercicios
+    });
+
+    this.mostrarToast('Plantilla asignada al paciente', 'success');
   }
+
+  ejerciciosBibliotecaExpandidos: Set<string> = new Set();
+
+  toggleBibliotecaExpandido(id: string) {
+    if (this.ejerciciosBibliotecaExpandidos.has(id)) {
+      this.ejerciciosBibliotecaExpandidos.delete(id);
+    } else {
+      this.ejerciciosBibliotecaExpandidos.add(id);
+    }
+  }
+
+  isBibliotecaExpandido(id: string): boolean {
+    return this.ejerciciosBibliotecaExpandidos.has(id);
+    }
+  
+  async agregarSerieAEjercicio(index: number) {
+
+    if (!this.rutinaActiva) return;
+
+    const ejercicio = this.rutinaActiva.ejercicios[index];
+
+    const nuevaSerie = {
+      numero: ejercicio.series.length + 1,
+      repeticiones: 12,
+      peso: null,
+      completada: false
+    };
+
+    ejercicio.series.push(nuevaSerie);
+
+    await this.rutinasService.actualizarRutina(
+      this.rutinaActiva.id,
+      { ejercicios: this.rutinaActiva.ejercicios }
+    );
+  }
+
+  async asignarRutinaAPaciente(rutina: any) {
+
+    if (this.listaPacientes.length === 0) {
+      this.mostrarToast('No hay pacientes registrados', 'warning');
+      return;
+    }
+
+    const alert = await this.alertCtrl.create({
+      header: 'Asignar a paciente',
+      inputs: this.listaPacientes.map(p => ({
+        type: 'radio',
+        label: p.nombre || p.nombre_completo,
+        value: p
+      })),
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Asignar',
+          handler: async (pacienteSeleccionado) => {
+
+            if (!pacienteSeleccionado) return false;
+
+            await this.rutinasService.clonarRutinaACliente(
+              rutina,
+              pacienteSeleccionado.id,
+              pacienteSeleccionado.nombre || pacienteSeleccionado.nombre_completo
+            );
+
+            this.mostrarToast('Rutina asignada correctamente', 'success');
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  abrirRutina(rut: RutinaEjercicios) {
+  this.rutinaActiva = rut;
+  this.cambiarVista('rutina');
+}
+
+async eliminarRutina(id: string) {
+
+    const confirmar = confirm('¿Eliminar esta rutina?');
+
+    if (!confirmar) return;
+
+    await this.rutinasService.eliminarRutina(id);
+
+    this.mostrarToast('Rutina eliminada', 'success');
+  }
+
+  async crearNuevaRutinaGeneral() {
+
+    const alert = await this.alertCtrl.create({
+      header: 'Nueva rutina general',
+      inputs: [
+        {
+          name: 'nombre',
+          type: 'text',
+          placeholder: 'Nombre de la rutina'
+        }
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Crear',
+          handler: async data => {
+
+            if (!data.nombre?.trim()) return false;
+
+            await this.rutinasService.crearRutina({
+              pacienteId: null,
+              pacienteNombre: null,
+              nombre: data.nombre.trim(),
+              ejercicios: []
+            });
+
+            this.mostrarToast('Rutina creada correctamente', 'success');
+
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  cerrarRutinaActiva() {
+    this.rutinaActiva = null;
+    this.sesionIniciada = false;
+    this.vista = 'rutinas';
+  }
+
+  cargarRutinasPaciente() {
+    const sub = this.rutinasService
+      .getRutinasPorPacienteRealtime(this.pacienteId)
+      .subscribe(rutinas => {
+        this.rutinaActiva = rutinas.find(r => !r.completada) || null;
+        this.rutinasAnteriores = rutinas.filter(r => r.completada);
+      });
+
+    this.subs.push(sub);
+  }
+
+  cargarTodasLasRutinas() {
+    const sub = this.rutinasService
+      .getRutinasRealtime()
+      .subscribe(rutinas => {
+        this.todasLasRutinas = rutinas;
+      });
+
+    this.subs.push(sub);
+  }
+
+
+
+
+
 }

@@ -1,4 +1,4 @@
-import { Component, signal, computed, HostListener } from '@angular/core';
+import { Component, signal, computed, HostListener, OnDestroy } from '@angular/core';
 import {
   NavController,
   LoadingController,
@@ -8,7 +8,7 @@ import {
 } from '@ionic/angular';
 import { DatePipe } from '@angular/common';
 import { DatabaseService } from '../../services/database.service';
-import { PlatformService } from '../../services/platform.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-pacientes-lista',
@@ -17,12 +17,13 @@ import { PlatformService } from '../../services/platform.service';
   standalone: true,
   imports: [IonicModule, DatePipe]
 })
-export class PacientesListaPage {
+export class PacientesListaPage implements OnDestroy {
 
   tituloPagina: string = 'Lista de Pacientes';
   pacientes: any[] = [];
   estaCargando: boolean = false;
-  plataformaInfo: any;
+
+  private pacientesSub?: Subscription;
 
   // 🔎 SEARCH PROFESIONAL
   busqueda = signal('');
@@ -34,7 +35,7 @@ export class PacientesListaPage {
     if (!texto) return [];
 
     return this.pacientes.filter(p =>
-      (p.nombre || p.nombre_completo || '')
+      (p.nombre || '')
         .toLowerCase()
         .includes(texto)
       ||
@@ -47,52 +48,57 @@ export class PacientesListaPage {
   constructor(
     private navCtrl: NavController,
     private databaseService: DatabaseService,
-    private platformService: PlatformService,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private alertController: AlertController
   ) {}
 
-  ngOnInit() {
-    this.plataformaInfo = this.platformService.getDebugInfo();
-  }
+  // ==============================
+  // 🔥 REALTIME LOAD
+  // ==============================
 
   ionViewDidEnter() {
-    this.cargarPacientes();
-  }
-
-  // ==============================
-  // CARGAR PACIENTES
-  // ==============================
-
-  async cargarPacientes() {
     this.estaCargando = true;
 
-    try {
-      this.pacientes = await this.databaseService.getPacientesConConteoSesiones();
-      console.log(`📊 ${this.pacientes.length} pacientes cargados`);
-    } catch (error) {
-      console.error('❌ Error cargando pacientes:', error);
-      this.pacientes = [];
-      this.mostrarToast('Error cargando pacientes', 'danger');
-    } finally {
-      this.estaCargando = false;
-    }
+    this.pacientesSub = this.databaseService
+      .getPacientesRealtime()
+      .subscribe({
+        next: pacientes => {
+          this.pacientes = pacientes;
+          this.estaCargando = false;
+        },
+        error: err => {
+          console.error('Error realtime:', err);
+          this.estaCargando = false;
+          this.mostrarToast('Error cargando pacientes', 'danger');
+        }
+      });
+  }
+
+  ionViewWillLeave() {
+    this.pacientesSub?.unsubscribe();
+  }
+
+  ngOnDestroy() {
+    this.pacientesSub?.unsubscribe();
   }
 
   async recargarPacientes(event?: any) {
-    await this.cargarPacientes();
+    // En realtime no hace falta recargar,
+    // pero lo dejamos para UX pull-to-refresh
     if (event) {
-      event.target.complete();
+      setTimeout(() => {
+        event.target.complete();
+      }, 600);
     }
   }
 
   // ==============================
-  // SEARCH SELECCIÓN
+  // SEARCH
   // ==============================
 
   seleccionarDesdeBusqueda(paciente: any) {
-    this.busqueda.set(paciente.nombre || paciente.nombre_completo);
+    this.busqueda.set(paciente.nombre);
     this.mostrarResultados.set(false);
     this.verDetallePaciente(paciente);
   }
@@ -126,8 +132,9 @@ export class PacientesListaPage {
   }
 
   verDetallePaciente(paciente: any) {
-    localStorage.setItem('ver_paciente_id', String(paciente.id));
-    this.navCtrl.navigateRoot('/paciente-detalle');
+    this.navCtrl.navigateRoot('/paciente-detalle', {
+      queryParams: { id: paciente.id }
+    });
   }
 
   volverAlDashboard() {
@@ -141,12 +148,9 @@ export class PacientesListaPage {
   async borrarTodosLosPacientes() {
     const alert = await this.alertController.create({
       header: '⚠️ Confirmar Eliminación',
-      message: '¿Estás seguro de que quieres eliminar todos los pacientes? Esta acción no se puede deshacer.',
+      message: '¿Eliminar todos los pacientes? Esta acción no se puede deshacer.',
       buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
+        { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Sí, Eliminar Todo',
           role: 'destructive',
@@ -172,14 +176,11 @@ export class PacientesListaPage {
         await this.databaseService.deletePaciente(paciente.id);
       }
 
-      await this.databaseService.clearAllData();
-      this.pacientes = [];
-
       await loading.dismiss();
       this.mostrarToast('Pacientes eliminados correctamente', 'success');
 
     } catch (error) {
-      console.error('❌ Error eliminando pacientes:', error);
+      console.error('Error eliminando pacientes:', error);
       await loading.dismiss();
       this.mostrarToast('Error eliminando pacientes', 'danger');
     }
@@ -193,9 +194,10 @@ export class PacientesListaPage {
     const toast = await this.toastController.create({
       message: mensaje,
       duration: 3000,
-      color: color,
+      color,
       position: 'bottom'
     });
+
     await toast.present();
   }
 }

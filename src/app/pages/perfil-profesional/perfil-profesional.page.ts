@@ -79,7 +79,7 @@ export class PerfilProfesionalPage {
       return;
     }
 
-    const resultado = this.authService.cambiarPassword(this.passwordActual, this.passwordNueva);
+    const resultado = await this.authService.cambiarPassword(this.passwordActual, this.passwordNueva);
     if (resultado.success) {
       this.mostrarToast(resultado.message, 'success');
       this.passwordActual = '';

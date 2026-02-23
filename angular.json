@@ -16,6 +16,14 @@
             "outputPath": {
               "base": "www"
             },
+            "allowedCommonJsDependencies": [
+              "canvg",
+              "html2canvas",
+              "file-saver",
+              "raf",
+              "rgbcolor",
+              "core-js"
+            ],
             "index": "src/index.html",
             "polyfills": [
               "src/polyfills.ts"
@@ -152,4 +160,6 @@
       "styleext": "scss"
     }
   }
+
+  
 }
