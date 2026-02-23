@@ -391,12 +391,14 @@ export class EjerciciosPage implements OnInit, OnDestroy {
   // ================= NAVEGACIÓN =================
 
   volverAtras() {
-    // Si viene desde paciente-detalle, mantener el ID
     if (this.pacienteId) {
-      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
+      this.navCtrl.navigateRoot('/paciente-detalle', {
+        queryParams: { pacienteId: this.pacienteId }
+      });
+      return;
     }
 
-  this.navCtrl.back();
+    this.navCtrl.back();
   }
 
   // ================= RECARGAR DATOS =================

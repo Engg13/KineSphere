@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { NavController, AlertController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
+import { FirestoreService } from '../../services/firestore.service';
 
 @Component({
     selector: 'app-documentos-medicos',
@@ -12,19 +13,20 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class DocumentosMedicosPage implements OnInit {
   documentos: any[] = [];
-  pacienteId: number = 0;
+  pacienteId: string = "";
   pacienteNombre: string = 'Paciente';
 
   constructor(
     private navCtrl: NavController,
     private alertController: AlertController,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private firestoreService: FirestoreService
   ) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       if (params['pacienteId']) {
-        this.pacienteId = Number(params['pacienteId']);
+        this.pacienteId = String(params['pacienteId']);
         this.pacienteNombre = params['pacienteNombre'] || 'Paciente';
         this.cargarDocumentos();
       }
@@ -32,20 +34,20 @@ export class DocumentosMedicosPage implements OnInit {
   }
 
   private cargarDocumentos() {
-    try {
-      const stored = localStorage.getItem(`documentos_${this.pacienteId}`);
-      this.documentos = stored ? JSON.parse(stored) : [];
-    } catch {
+    if (!this.pacienteId) {
       this.documentos = [];
+      return;
     }
-  }
 
-  private persistirDocumentos() {
-    try {
-      localStorage.setItem(`documentos_${this.pacienteId}`, JSON.stringify(this.documentos));
-    } catch (error) {
-      console.error('Error persistiendo documentos:', error);
-    }
+    this.firestoreService.getDocumentosByPaciente(this.pacienteId).subscribe({
+      next: documentos => {
+        this.documentos = documentos || [];
+      },
+      error: error => {
+        console.error('Error cargando documentos desde Firestore:', error);
+        this.documentos = [];
+      }
+    });
   }
 
   async tomarFoto() {
@@ -93,16 +95,14 @@ export class DocumentosMedicosPage implements OnInit {
   private async guardarDocumento(dataUrl: string, tipo: string) {
     try {
       const nuevoDocumento = {
-        id: Date.now(),
         imagen: dataUrl,
         fecha: new Date().toLocaleString('es-CL'),
         tipo: tipo,
-        pacienteId: this.pacienteId,
+        paciente_id: this.pacienteId,
         descripcion: `Documento médico - ${new Date().toLocaleDateString('es-CL')}`
       };
 
-      this.documentos.unshift(nuevoDocumento);
-      this.persistirDocumentos();
+      await this.firestoreService.addDocumento(nuevoDocumento);
       this.mostrarMensaje('Documento guardado exitosamente');
     } catch (error) {
       console.error('Error guardando documento:', error);
@@ -120,9 +120,12 @@ export class DocumentosMedicosPage implements OnInit {
           text: 'Eliminar',
           role: 'destructive',
           handler: () => {
-            this.documentos = this.documentos.filter(doc => doc.id !== documento.id);
-            this.persistirDocumentos();
-            this.mostrarMensaje('Documento eliminado');
+            this.firestoreService.deleteDocumento(documento.id)
+              .then(() => this.mostrarMensaje('Documento eliminado'))
+              .catch(error => {
+                console.error('Error eliminando documento en Firestore:', error);
+                this.mostrarError('No se pudo eliminar el documento');
+              });
           }
         }
       ]
@@ -164,9 +167,8 @@ export class DocumentosMedicosPage implements OnInit {
   }
 
   volverAlPaciente() {
-    if (this.pacienteId) {
-      localStorage.setItem('ver_paciente_id', String(this.pacienteId));
-    }
-    this.navCtrl.navigateBack('/paciente-detalle');
+    this.navCtrl.navigateRoot('/paciente-detalle', {
+      queryParams: { pacienteId: this.pacienteId }
+    });
   }
 }
