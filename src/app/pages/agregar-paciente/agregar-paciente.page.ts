@@ -47,11 +47,11 @@ export class AgregarPacientePage implements ViewWillEnter {
   async ionViewWillEnter() {
     // 1) Leer desde query params actuales del Router
     const urlTree = this.router.parseUrl(this.router.url);
-    const urlId = urlTree.queryParams['id'];
+    const urlId = urlTree.queryParams['pacienteId'] || urlTree.queryParams['id'];
     const urlModo = urlTree.queryParams['modoEdicion'];
 
     // 2) Fallback: leer desde snapshot de ActivatedRoute
-    const snapId = this.route.snapshot.queryParams['id'];
+    const snapId = this.route.snapshot.queryParams['pacienteId'] || this.route.snapshot.queryParams['id'];
     const snapModo = this.route.snapshot.queryParams['modoEdicion'];
 
     // Usar el primer valor disponible
@@ -59,8 +59,8 @@ export class AgregarPacientePage implements ViewWillEnter {
 
     console.log('=== agregar-paciente ionViewWillEnter ===');
     console.log('router.url:', this.router.url);
-    console.log('urlParams:', { urlId, urlModo });
-    console.log('snapParams:', { snapId, snapModo });
+    console.log('urlParams (pacienteId|id):', { urlId, urlModo });
+    console.log('snapParams (pacienteId|id):', { snapId, snapModo });
     console.log('ID final usado:', id);
 
     if (id) {

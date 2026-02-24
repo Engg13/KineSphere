@@ -133,7 +133,7 @@ export class PacientesListaPage implements OnDestroy {
 
   verDetallePaciente(paciente: any) {
     this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: { id: paciente.id }
+      queryParams: { pacienteId: paciente.id }
     });
   }
 
