@@ -119,7 +119,7 @@ export interface RutinaEjercicios {
   descripcion?: string;
   ejercicios: EjercicioEnRutina[];
   fecha: string;
-  completada: boolean;
+  estado: 'draft' | 'active' | 'completed' | 'archived';
   fechaCompletada?: string;
   enviadaWhatsapp: boolean;
   createdAt?: Timestamp;

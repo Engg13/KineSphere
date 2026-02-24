@@ -109,7 +109,7 @@ export class PacienteDetallePage implements OnDestroy {
       .subscribe({
         next: (rutinas: RutinaEjercicios[]) => {
           this.rutinasCompletadas = rutinas
-            .filter(r => r.completada)
+            .filter(r => r.estado === 'completed')
             .sort((a, b) =>
               (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
             );
