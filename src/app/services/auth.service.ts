@@ -100,6 +100,30 @@ export class AuthService {
     return this.auth.currentUser?.email || 'Usuario';
   }
 
+  async getCurrentUserData(): Promise<any> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('No autenticado');
+
+    const userRef = doc(this.firestore, `users/${user.uid}`);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      throw new Error('Usuario sin perfil en Firestore');
+    }
+
+    return snap.data();
+  }
+
+  async getCurrentClinicId(): Promise<string> {
+    const data = await this.getCurrentUserData();
+
+    if (!data?.clinicId) {
+      throw new Error('Usuario sin clinicId');
+    }
+
+    return data.clinicId;
+  }
+
   // =========================
   // PERFIL (Placeholder)
   // =========================

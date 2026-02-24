@@ -93,8 +93,10 @@ export class RutinasFirestoreService {
         if (!user) throw new Error('No autenticado');
 
         const esPlantilla = !data.pacienteId;
+        const clinicId = await this.authService.getCurrentClinicId();
 
         return addDoc(collection(this.firestore, 'rutinas'), {
+            clinicId,
             pacienteId: data.pacienteId ?? null,
             pacienteNombre: data.pacienteNombre ?? null,
             nombre: data.nombre,
@@ -242,7 +244,10 @@ export class RutinasFirestoreService {
         const user = this.authService.getCurrentUser();
         if (!user) throw new Error('No autenticado');
 
+        const clinicId = await this.authService.getCurrentClinicId();
+
         const nuevaRutina = {
+            clinicId,
             pacienteId,
             pacienteNombre,
             nombre: rutinaOriginal.nombre,

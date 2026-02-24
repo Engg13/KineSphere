@@ -144,8 +144,11 @@ export class DatabaseService {
     const user = this.authService.getCurrentUser();
     if (!user) throw new Error('No autenticado');
 
+    const clinicId = await this.authService.getCurrentClinicId();
+
     return addDoc(collection(this.firestore, 'pacientes'), {
       ...paciente,
+      clinicId,
       profesionalId: user.uid,
       activo: true,
       createdAt: serverTimestamp()
@@ -168,8 +171,11 @@ export class DatabaseService {
     const user = this.authService.getCurrentUser();
     if (!user) throw new Error('No autenticado');
 
+    const clinicId = await this.authService.getCurrentClinicId();
+
     return addDoc(collection(this.firestore, 'sesiones'), {
       ...sesion,
+      clinicId,
       profesionalId: user.uid,
       createdAt: serverTimestamp()
     });
