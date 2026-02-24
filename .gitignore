@@ -74,3 +74,5 @@ Thumbs.db
 *.jks
 keystore.properties
 key.properties
+scripts/kinesphere-6834d-firebase-adminsdk-fbsvc-27ea85d56a.json
+.firebase/
