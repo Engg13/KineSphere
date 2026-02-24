@@ -25,17 +25,6 @@ export class DatabaseService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
 
-  // =====================================================
-  // 🔐 HELPER: determinar si es admin
-  // =====================================================
-
-  private async isAdmin(): Promise<boolean> {
-    const user = this.authService.getCurrentUser();
-    if (!user) return false;
-
-    const role = await this.authService.getUserRole(user.uid);
-    return role === 'admin';
-  }
 
   // =====================================================
   // 🔥 REALTIME PACIENTES
@@ -46,21 +35,13 @@ export class DatabaseService {
       switchMap(user => {
         if (!user) throw new Error('Usuario no autenticado');
 
-        return from(this.authService.getUserRole(user.uid)).pipe(
-          switchMap(role => {
-
-            let q;
-
-            if (role === 'admin') {
-              // Admin ve todo
-              q = collection(this.firestore, 'pacientes');
-            } else {
-              // Profesional solo los suyos
-              q = query(
-                collection(this.firestore, 'pacientes'),
-                where('profesionalId', '==', user.uid)
-              );
-            }
+        return from(this.authService.getCurrentClinicId()).pipe(
+          switchMap(clinicId => {
+            const q = query(
+              collection(this.firestore, 'pacientes'),
+              where('clinicId', '==', clinicId),
+              where('profesionalId', '==', user.uid)
+            );
 
             return collectionData(q, { idField: 'id' }) as Observable<any[]>;
           })
@@ -78,19 +59,13 @@ export class DatabaseService {
       switchMap(user => {
         if (!user) throw new Error('Usuario no autenticado');
 
-        return from(this.authService.getUserRole(user.uid)).pipe(
-          switchMap(role => {
-
-            let q;
-
-            if (role === 'admin') {
-              q = collection(this.firestore, 'sesiones');
-            } else {
-              q = query(
-                collection(this.firestore, 'sesiones'),
-                where('profesionalId', '==', user.uid)
-              );
-            }
+        return from(this.authService.getCurrentClinicId()).pipe(
+          switchMap(clinicId => {
+            const q = query(
+              collection(this.firestore, 'sesiones'),
+              where('clinicId', '==', clinicId),
+              where('profesionalId', '==', user.uid)
+            );
 
             return collectionData(q, { idField: 'id' }) as Observable<any[]>;
           })
@@ -107,23 +82,18 @@ export class DatabaseService {
     const user = this.authService.getCurrentUser();
     if (!user) return [];
 
-    const role = await this.authService.getUserRole(user.uid);
+    const clinicId = await this.authService.getCurrentClinicId();
 
-    let q;
-
-    if (role === 'admin') {
-      q = collection(this.firestore, 'pacientes');
-    } else {
-      q = query(
-        collection(this.firestore, 'pacientes'),
-        where('profesionalId', '==', user.uid)
-      );
-    }
+    const q = query(
+      collection(this.firestore, 'pacientes'),
+      where('clinicId', '==', clinicId),
+      where('profesionalId', '==', user.uid)
+    );
 
     const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => {
-      const data = doc.data() as any; // 👈 casteo controlado
+      const data = doc.data() as any;
       return {
         id: doc.id,
         ...data
@@ -185,27 +155,19 @@ export class DatabaseService {
     const user = this.authService.getCurrentUser();
     if (!user) return [];
 
-    const role = await this.authService.getUserRole(user.uid);
+    const clinicId = await this.authService.getCurrentClinicId();
 
-    let q;
-
-    if (role === 'admin') {
-      q = query(
-        collection(this.firestore, 'sesiones'),
-        where('pacienteId', '==', pacienteId)
-      );
-    } else {
-      q = query(
-        collection(this.firestore, 'sesiones'),
-        where('pacienteId', '==', pacienteId),
-        where('profesionalId', '==', user.uid)
-      );
-    }
+    const q = query(
+      collection(this.firestore, 'sesiones'),
+      where('clinicId', '==', clinicId),
+      where('pacienteId', '==', pacienteId),
+      where('profesionalId', '==', user.uid)
+    );
 
     const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => {
-      const data = doc.data() as any; // 👈 casteo controlado
+      const data = doc.data() as any;
       return {
         id: doc.id,
         ...data
