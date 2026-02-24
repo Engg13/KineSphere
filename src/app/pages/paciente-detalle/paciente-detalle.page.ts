@@ -264,6 +264,18 @@ export class PacienteDetallePage implements OnDestroy {
     });
   }
 
+  nuevaEvolucion() {
+    if (!this.paciente) return;
+
+    this.navCtrl.navigateRoot('/evolucion', {
+      queryParams: {
+        patientId: this.paciente.id,
+        pacienteNombre: this.paciente.nombre,
+        diagnostico: this.paciente.diagnostico || ''
+      }
+    });
+  }
+
   editarPaciente() {
     if (!this.paciente) return;
 

@@ -1,0 +1,317 @@
+<ion-content [fullscreen]="true" (click)="onContentClick($event)">
+  <div class="evolucion-wrapper">
+
+    <!-- HERO HEADER -->
+    <div class="hero-header">
+      <button class="back-btn" (click)="volverAPaciente()">
+        <ion-icon name="arrow-back"></ion-icon>
+      </button>
+      <div class="hero-info">
+        <h1 class="hero-title">Evolucion #{{ sessionNumber }}</h1>
+        <p class="hero-patient">{{ pacienteNombre }}</p>
+        <p class="hero-diagnosis" *ngIf="pacienteDiagnostico">{{ pacienteDiagnostico }}</p>
+      </div>
+      <div class="session-badge">
+        <ion-icon name="document-text"></ion-icon>
+        <span>SOAP</span>
+      </div>
+    </div>
+
+    <!-- TIPO DE EVOLUCION -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="options-outline" class="section-icon"></ion-icon>
+        <h3>Tipo de Evolucion</h3>
+      </div>
+      <ion-item lines="none" class="select-item">
+        <ion-select
+          [(ngModel)]="tipoEvolucion"
+          placeholder="Seleccionar tipo..."
+          interface="action-sheet">
+          <ion-select-option value="initial">Evaluacion Inicial</ion-select-option>
+          <ion-select-option value="progress">Progreso</ion-select-option>
+          <ion-select-option value="discharge">Alta</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <div class="tipo-badge" [class.tipo-initial]="tipoEvolucion === 'initial'" [class.tipo-progress]="tipoEvolucion === 'progress'" [class.tipo-discharge]="tipoEvolucion === 'discharge'">
+        {{ getTipoLabel() }}
+      </div>
+    </div>
+
+    <!-- DATOS OBJETIVOS -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="analytics-outline" class="section-icon"></ion-icon>
+        <h3>Datos Objetivos</h3>
+      </div>
+
+      <!-- EVA -->
+      <div class="subsection">
+        <p class="subsection-title">Escala EVA (0-10)</p>
+        <div class="eva-container">
+          <ion-range
+            [(ngModel)]="painScale"
+            min="0"
+            max="10"
+            step="1"
+            snaps="true"
+            ticks="true"
+            class="eva-range">
+            <ion-label slot="start">0</ion-label>
+            <ion-label slot="end">10</ion-label>
+          </ion-range>
+
+          <div class="eva-value-display" *ngIf="painScale !== null">
+            <span class="eva-number"
+              [class.eva-low]="painScale <= 3"
+              [class.eva-mid]="painScale > 3 && painScale <= 6"
+              [class.eva-high]="painScale > 6">
+              {{ painScale }}
+            </span>
+            <span class="eva-label">/ 10</span>
+          </div>
+
+          <div class="eva-indicators">
+            <span class="ind-low">Sin dolor</span>
+            <span class="ind-mid">Moderado</span>
+            <span class="ind-high">Maximo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALIDAD SUENO -->
+      <div class="subsection">
+        <app-sleep-quality
+          [(valor)]="sleepQuality"
+          [titulo]="'Calidad del Sueno'"
+          [descripcion]="'Como fue la calidad de sueno durante la ultima noche?'">
+        </app-sleep-quality>
+      </div>
+
+      <!-- ROM -->
+      <div class="subsection">
+        <p class="subsection-title">ROM (Rango de Movimiento)</p>
+        <input
+          type="text"
+          class="text-input"
+          [(ngModel)]="rom"
+          placeholder="Ej: Flexion rodilla 0-120, Extension -5"
+          maxlength="100"
+        />
+      </div>
+
+      <!-- ZONA TRATAMIENTO -->
+      <div class="subsection">
+        <p class="subsection-title">Zona de Tratamiento</p>
+        <ion-item lines="none" class="select-item">
+          <ion-select
+            [(ngModel)]="zonaTratamiento"
+            placeholder="Seleccionar zona..."
+            interface="action-sheet">
+            <ion-select-option *ngFor="let zona of zonasTratamiento" [value]="zona">
+              {{ zona }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+      </div>
+
+      <!-- TECNICAS -->
+      <div class="subsection">
+        <p class="subsection-title">Tecnicas Aplicadas</p>
+        <div class="tecnicas-grid">
+          <button
+            *ngFor="let tecnica of tecnicasDisponibles"
+            class="tecnica-chip"
+            [class.tecnica-activa]="tecnica.seleccionada"
+            (click)="toggleTecnica(tecnica)">
+            <ion-icon [name]="tecnica.seleccionada ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
+            <span>{{ tecnica.nombre }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- S - SUBJETIVO -->
+    <div class="section-card soap-section">
+      <div class="section-header">
+        <div class="soap-letter soap-s">S</div>
+        <h3>Subjetivo</h3>
+        <span class="required-badge">Requerido</span>
+      </div>
+      <p class="section-desc">Lo que el paciente refiere: sintomas, sensaciones, molestias, cambios percibidos.</p>
+      <textarea
+        class="obs-textarea soap-textarea"
+        [(ngModel)]="subjective"
+        placeholder="Ej: Paciente refiere disminucion del dolor lumbar, mejora al caminar, persiste molestia al sentarse por periodos prolongados..."
+        rows="4">
+      </textarea>
+      <p class="char-count" *ngIf="subjective.length > 0">{{ subjective.length }} caracteres</p>
+    </div>
+
+    <!-- O - OBJETIVO -->
+    <div class="section-card soap-section">
+      <div class="section-header">
+        <div class="soap-letter soap-o">O</div>
+        <h3>Objetivo</h3>
+        <span class="required-badge">Requerido</span>
+      </div>
+      <p class="section-desc">Hallazgos clinicos, observaciones del profesional, mediciones, pruebas.</p>
+      <textarea
+        class="obs-textarea soap-textarea"
+        [(ngModel)]="objective"
+        placeholder="Ej: ROM lumbar mejorado, flexion 80 grados. Palpacion: contractura paravertebral disminuida. Test de Lasegue negativo bilateral..."
+        rows="4">
+      </textarea>
+      <p class="char-count" *ngIf="objective.length > 0">{{ objective.length }} caracteres</p>
+    </div>
+
+    <!-- A - ANALISIS -->
+    <div class="section-card soap-section">
+      <div class="section-header">
+        <div class="soap-letter soap-a">A</div>
+        <h3>Analisis / Evaluacion</h3>
+        <span class="optional-badge">Opcional</span>
+      </div>
+      <p class="section-desc">Interpretacion clinica, diagnostico kinesico, progreso respecto a sesion anterior.</p>
+      <textarea
+        class="obs-textarea soap-textarea"
+        [(ngModel)]="assessment"
+        placeholder="Ej: Paciente muestra progresion favorable. Dolor ha disminuido de EVA 7 a EVA 4 en 3 sesiones. Funcionalidad en mejora..."
+        rows="3">
+      </textarea>
+    </div>
+
+    <!-- P - PLAN -->
+    <div class="section-card soap-section">
+      <div class="section-header">
+        <div class="soap-letter soap-p">P</div>
+        <h3>Plan</h3>
+        <span class="optional-badge">Opcional</span>
+      </div>
+      <p class="section-desc">Plan de tratamiento, indicaciones, objetivos para proxima sesion.</p>
+      <textarea
+        class="obs-textarea soap-textarea"
+        [(ngModel)]="plan"
+        placeholder="Ej: Continuar con ejercicios de fortalecimiento core, progresar a fase 2 de rehabilitacion. Agregar trabajo propioceptivo..."
+        rows="3">
+      </textarea>
+    </div>
+
+    <!-- EJERCICIOS EN CASA -->
+    <div class="section-card ejercicio-card">
+      <div class="ejercicio-row">
+        <div class="ejercicio-info">
+          <ion-icon name="fitness-outline" class="section-icon"></ion-icon>
+          <div>
+            <h3>Ejercicios en Casa</h3>
+            <p class="section-desc">Realizo los ejercicios indicados?</p>
+          </div>
+        </div>
+        <ion-toggle
+          [(ngModel)]="ejerciciosRealizados"
+          color="success">
+        </ion-toggle>
+      </div>
+    </div>
+
+    <!-- TEST DE EVALUACION (OPCIONAL) -->
+    <div class="section-card" *ngIf="testsDisponibles.length > 0">
+      <div class="section-header">
+        <ion-icon name="clipboard-outline" class="section-icon"></ion-icon>
+        <h3>Test de Evaluacion</h3>
+        <span class="optional-badge">Opcional</span>
+      </div>
+
+      <ion-item lines="none" class="select-item">
+        <ion-select placeholder="Seleccionar test..." interface="action-sheet" (ionChange)="seleccionarTest($event)">
+          <ion-select-option [value]="null">Ninguno</ion-select-option>
+          <ion-select-option *ngFor="let t of testsDisponibles" [value]="t.id">
+            {{ t.nombre }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Preguntas del test -->
+      <div *ngIf="testSeleccionado" class="test-preguntas">
+        <div *ngFor="let pregunta of testSeleccionado.preguntas; let i = index" class="test-pregunta-item">
+          <span class="pregunta-texto">{{ i + 1 }}. {{ pregunta.texto }}</span>
+          <div class="pregunta-range-row">
+            <ion-range
+              [(ngModel)]="respuestasTest[i]"
+              [min]="pregunta.puntajeMin"
+              [max]="pregunta.puntajeMax"
+              step="1"
+              snaps="true"
+              ticks="true"
+              (ionChange)="calcularPuntajeTest()">
+              <ion-label slot="start">{{ pregunta.puntajeMin }}</ion-label>
+              <ion-label slot="end">{{ pregunta.puntajeMax }}</ion-label>
+            </ion-range>
+            <span class="pregunta-badge">{{ respuestasTest[i] || 0 }}</span>
+          </div>
+        </div>
+
+        <!-- Resultado -->
+        <div class="test-resultado">
+          <div class="resultado-puntaje">
+            <span class="resultado-label">Puntaje Total:</span>
+            <span class="resultado-valor" [style.color]="getResultadoColor()">{{ puntajeTotal }}</span>
+          </div>
+          <div class="resultado-clasificacion" [style.color]="getResultadoColor()">
+            {{ resultadoTest }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RUTINA ASOCIADA (OPCIONAL) -->
+    <div class="section-card">
+      <div class="section-header">
+        <ion-icon name="barbell-outline" class="section-icon"></ion-icon>
+        <h3>Rutina Asociada</h3>
+        <span class="optional-badge">Opcional</span>
+      </div>
+      <p class="section-desc">Vincular una rutina de ejercicios a esta evolucion</p>
+
+      <div *ngIf="rutinasDisponibles.length > 0">
+        <ion-item lines="none" class="select-item">
+          <ion-select
+            placeholder="Seleccionar rutina..."
+            interface="action-sheet"
+            (ionChange)="seleccionarRutina($event)">
+            <ion-select-option [value]="null">Ninguna</ion-select-option>
+            <ion-select-option *ngFor="let r of rutinasDisponibles" [value]="r.id">
+              {{ r.nombre }} ({{ r.ejercicios.length }} ej.)
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <div *ngIf="rutinaSeleccionada" class="rutina-preview">
+          <div *ngFor="let ej of rutinaSeleccionada.ejercicios" class="rutina-preview-item">
+            <span class="preview-letra">{{ ej.letra }}</span>
+            <span class="preview-nombre">{{ ej.ejercicio.nombre }}</span>
+            <span class="preview-series">{{ ej.series.length }}x{{ ej.series[0]?.repeticiones || '-' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="rutinasDisponibles.length === 0" class="rutina-empty-hint">
+        <p>No hay rutinas activas para este paciente</p>
+      </div>
+    </div>
+
+    <!-- SPACER FOR FIXED BUTTONS -->
+    <div class="botones-spacer"></div>
+  </div>
+
+  <!-- FIXED BOTTOM BUTTON -->
+  <div class="botones-fijos">
+    <button
+      class="btn-guardar"
+      [disabled]="!esFormularioValido() || guardando"
+      (click)="guardarEvolucion()">
+      <ion-icon name="checkmark-circle-outline"></ion-icon>
+      <span>{{ guardando ? 'Guardando...' : 'Guardar Evolucion' }}</span>
+    </button>
+  </div>
+</ion-content>

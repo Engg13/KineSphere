@@ -73,7 +73,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/perfil-profesional/perfil-profesional.module').then(m => m.PerfilProfesionalPageModule),
     canActivate: [AuthGuard]
   },
-  
+  {
+    path: 'evolucion',
+    loadChildren: () => import('./pages/evolucion/evolucion.module').then(m => m.EvolucionPageModule),
+    canActivate: [AuthGuard]
+  },
   {
     path: '**',
     loadChildren: () => import('./pages/not-found/not-found.module').then(m => m.NotFoundPageModule)  // ✅ 404
