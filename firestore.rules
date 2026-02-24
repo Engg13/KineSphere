@@ -121,6 +121,20 @@ service cloud.firestore {
       allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
     }
 
+
+    match /evoluciones/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.clinicId == requesterClinicId()
+        && request.resource.data.professionalId == request.auth.uid;
+
+      allow read: if resource.data.clinicId == requesterClinicId();
+
+      allow update: if resource.data.professionalId == request.auth.uid
+        && resource.data.clinicId == requesterClinicId();
+
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
