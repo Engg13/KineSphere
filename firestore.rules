@@ -10,12 +10,22 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
+    function requesterUserDocExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function requesterHasProfile() {
+      return isSignedIn() &&
+        requesterUserDocExists() &&
+        requesterUserDoc().keys().hasAll(['clinicId', 'role']);
+    }
+
     function requesterClinicId() {
       return requesterUserDoc().clinicId;
     }
 
     function isAdmin() {
-      return isSignedIn() &&
+      return requesterHasProfile() &&
         requesterUserDoc().role == 'admin';
     }
 
@@ -32,19 +42,21 @@ service cloud.firestore {
     }
 
     function isValidClinicalCreate(data) {
-      return hasClinicAndProfesional(data) &&
+      return requesterHasProfile() &&
+        hasClinicAndProfesional(data) &&
         data.clinicId == requesterClinicId() &&
-        data.profesionalId == request.auth.uid;
+        (isAdmin() || data.profesionalId == request.auth.uid);
     }
 
     function isValidClinicalUpdate() {
-      return isAdmin() || (
+      return requesterHasProfile() && (
+        isAdmin() || (
         hasClinicAndProfesional(resource.data) &&
         resource.data.clinicId == requesterClinicId() &&
         resource.data.profesionalId == request.auth.uid &&
         request.resource.data.clinicId == resource.data.clinicId &&
         request.resource.data.profesionalId == resource.data.profesionalId
-      );
+      ));
     }
 
     function hasNoLegacyCompletada(data) {
@@ -78,9 +90,13 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.keys().hasAll(['clinicId', 'role']);
+      allow update: if isSignedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.clinicId == resource.data.clinicId;
       allow delete: if false;
     }
 
@@ -103,11 +119,6 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidRutinaCreate();
       allow update: if isSignedIn() && isValidRutinaUpdate();
       allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
-    }
-
-    match /ejercicios/{ejercicioId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
     }
 
     match /{document=**} {
