@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
@@ -10,17 +10,20 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy
+  orderBy,
+  serverTimestamp
 } from '@angular/fire/firestore';
-import { Observable, from, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirestoreService {
 
-  constructor(private firestore: Firestore) {}
+  private firestore = inject(Firestore);
+  private authService = inject(AuthService);
 
   // ==================== PACIENTES ====================
 
@@ -46,13 +49,21 @@ export class FirestoreService {
   }
 
   async addPaciente(paciente: any): Promise<any> {
+    const user = this.authService.getCurrentUser();
+    if (!user) throw new Error('No autenticado');
+
+    const clinicId = await this.authService.getCurrentClinicId();
     const ref = collection(this.firestore, 'pacientes');
     const data = {
       ...paciente,
       activo: paciente.activo !== undefined ? paciente.activo : true,
       fechaCreacion: paciente.fechaCreacion || new Date().toISOString(),
-      num_sesiones: paciente.num_sesiones || 0
+      num_sesiones: paciente.num_sesiones || 0,
+      clinicId,
+      profesionalId: user.uid,
+      createdAt: serverTimestamp()
     };
+
     const docRef = await addDoc(ref, data);
     return { id: docRef.id, ...data };
   }
@@ -81,21 +92,24 @@ export class FirestoreService {
   }
 
   async addSesion(sesion: any): Promise<any> {
+    const user = this.authService.getCurrentUser();
+    if (!user) throw new Error('No autenticado');
+
+    const clinicId = await this.authService.getCurrentClinicId();
     const ref = collection(this.firestore, 'sesiones');
     const data = {
       ...sesion,
-      fecha: sesion.fecha || new Date().toISOString()
+      clinicId,
+      profesionalId: user.uid,
+      fecha: sesion.fecha || new Date().toISOString(),
+      createdAt: serverTimestamp()
     };
+
     const docRef = await addDoc(ref, data);
 
-    // Incrementar contador de sesiones en el paciente
     if (sesion.paciente_id) {
       try {
         const pacRef = doc(this.firestore, `pacientes/${sesion.paciente_id}`);
-        // We get current count from the sesiones query instead of increment
-        const sesiones = collection(this.firestore, 'sesiones');
-        const q = query(sesiones, where('paciente_id', '==', sesion.paciente_id));
-        // Simple approach: just update with known value if available
         if (sesion.numero_sesion) {
           await updateDoc(pacRef, { num_sesiones: sesion.numero_sesion });
         }
