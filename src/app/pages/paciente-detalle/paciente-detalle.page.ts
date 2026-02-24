@@ -37,7 +37,9 @@ export class PacienteDetallePage implements OnDestroy {
   // ==============================
 
   async ionViewDidEnter() {
-    const queryId = this.route.snapshot.queryParamMap.get('pacienteId');
+    const queryId = this.route.snapshot.queryParamMap.get('pacienteId')
+      || this.route.snapshot.queryParamMap.get('id');
+
     if (queryId) {
       this.pacienteId = queryId;
     }
@@ -267,7 +269,7 @@ export class PacienteDetallePage implements OnDestroy {
 
     this.navCtrl.navigateRoot('/agregar-paciente', {
       queryParams: {
-        id: this.pacienteId,
+        pacienteId: this.pacienteId,
         modoEdicion: 'true'
       }
     });

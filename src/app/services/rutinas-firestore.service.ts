@@ -13,7 +13,7 @@ import {
   collectionGroup,
   orderBy
 } from '@angular/fire/firestore';
-import { Observable, map } from 'rxjs';
+import { Observable, combineLatest, map } from 'rxjs';
 import { AuthService } from './auth.service';
 import { RutinaEjercicios } from '../models/interfaces';
 
@@ -33,30 +33,44 @@ export class RutinasFirestoreService {
     const user = this.authService.getCurrentUser();
     if (!user) throw new Error('No autenticado');
 
-    const rutinasRef = collection(this.firestore, 'rutinas');
+    const ref = collection(this.firestore, 'rutinas');
+    const isAdmin = this.authService.getRole() === 'admin';
 
-    return collectionData(rutinasRef, { idField: 'id' }).pipe(
-        map((rutinas: any[]) => {
+    // Admin: mantiene lectura completa explícita
+    if (isAdmin) {
+      return collectionData(ref, { idField: 'id' });
+    }
 
-        return rutinas.filter(r => {
+    // Profesional: solo consultas filtradas en servidor
+    const plantillasQ = query(
+      ref,
+      where('profesionalId', '==', user.uid),
+      where('esPlantilla', '==', true)
+    );
 
-            // Si NO hay paciente → mostrar solo plantillas
-            if (!pacienteId) {
-            return r.esPlantilla === true &&
-                    r.profesionalId === user.uid;
-            }
+    if (!pacienteId) {
+      return collectionData(plantillasQ, { idField: 'id' });
+    }
 
-            // Si hay paciente → mostrar:
-            // - rutinas del paciente
-            // - plantillas del profesional
-            return (
-            (r.pacienteId === pacienteId ||
-            r.esPlantilla === true) &&
-            r.profesionalId === user.uid
-            );
+    const pacienteQ = query(
+      ref,
+      where('profesionalId', '==', user.uid),
+      where('pacienteId', '==', pacienteId)
+    );
+
+    return combineLatest([
+      collectionData(pacienteQ, { idField: 'id' }) as Observable<any[]>,
+      collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>
+    ]).pipe(
+      map(([rutinasPaciente, plantillas]) => {
+        const mapRutinas = new Map<string, any>();
+
+        [...rutinasPaciente, ...plantillas].forEach(r => {
+          if (r?.id) mapRutinas.set(r.id, r);
         });
 
-        })
+        return Array.from(mapRutinas.values());
+      })
     );
 }
 
@@ -242,11 +256,17 @@ export class RutinasFirestoreService {
             if (!user) throw new Error('No autenticado');
 
             const ref = collection(this.firestore, 'rutinas');
+            const isAdmin = this.authService.getRole() === 'admin';
 
-            return collectionData(ref, { idField: 'id' }).pipe(
-                map((rutinas: any[]) =>
-                rutinas.filter(r => r.profesionalId === user.uid)
-                )
+            if (isAdmin) {
+              return collectionData(ref, { idField: 'id' });
+            }
+
+            const q = query(
+              ref,
+              where('profesionalId', '==', user.uid)
             );
+
+            return collectionData(q, { idField: 'id' });
             }
 }

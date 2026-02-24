@@ -28,16 +28,32 @@ export class EjerciciosFirestoreService {
     if (!user) throw new Error('No autenticado');
 
     const ejerciciosRef = collection(this.firestore, 'ejercicios');
+    const isAdmin = this.authService.getRole() === 'admin';
 
-    return collectionData(ejerciciosRef, { idField: 'id' }).pipe(
-        map((ejercicios: any[]) => {
-        return ejercicios.filter(ej =>
-            ej.esGlobal === true ||
-            ej.createdBy === user.uid
-                );
-            })
-        );
+    // Admin: lectura completa explícita
+    if (isAdmin) {
+      return collectionData(ejerciciosRef, { idField: 'id' });
     }
+
+    // Profesional: consultas filtradas en servidor
+    const qGlobal = query(ejerciciosRef, where('esGlobal', '==', true));
+    const qPropios = query(ejerciciosRef, where('createdBy', '==', user.uid));
+
+    return combineLatest([
+      collectionData(qGlobal, { idField: 'id' }) as Observable<any[]>,
+      collectionData(qPropios, { idField: 'id' }) as Observable<any[]>
+    ]).pipe(
+      map(([globales, propios]) => {
+        const ejerciciosMap = new Map<string, any>();
+
+        [...globales, ...propios].forEach(ej => {
+          if (ej?.id) ejerciciosMap.set(ej.id, ej);
+        });
+
+        return Array.from(ejerciciosMap.values());
+      })
+    );
+  }
 
   async agregarEjercicioPersonalizado(ejercicio: any) {
     const user = this.authService.getCurrentUser();
