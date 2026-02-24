@@ -5,14 +5,66 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(uidField) {
-      return isSignedIn() && request.auth.uid == uidField;
-    }
-
     function isAdmin() {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function hasProfesionalId(data) {
+      return data.keys().hasAll(['profesionalId']);
+    }
+
+    function isOwnerByProfesionalId(data) {
+      return hasProfesionalId(data) && request.auth.uid == data.profesionalId;
+    }
+
+    function canAccessByProfesionalId(data) {
+      return isAdmin() || isOwnerByProfesionalId(data);
+    }
+
+    function hasNoLegacyCompletada(data) {
+      return !data.keys().hasAny(['completada']);
+    }
+
+    function isValidRutinaEstado(estado) {
+      return estado in ['draft', 'active', 'completed', 'archived'];
+    }
+
+    function isValidRutinaCreate() {
+      return hasProfesionalId(request.resource.data) &&
+        request.resource.data.keys().hasAll(['estado']) &&
+        isValidRutinaEstado(request.resource.data.estado) &&
+        hasNoLegacyCompletada(request.resource.data) &&
+        (isAdmin() || request.resource.data.profesionalId == request.auth.uid);
+    }
+
+    function isValidRutinaUpdate() {
+      return hasNoLegacyCompletada(request.resource.data) &&
+        (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) ||
+          isValidRutinaEstado(request.resource.data.estado)
+        ) &&
+        (
+          isAdmin() ||
+          (
+            isOwnerByProfesionalId(resource.data) &&
+            request.resource.data.profesionalId == resource.data.profesionalId
+          )
+        );
+    }
+
+    function isValidOwnedCreate() {
+      return hasProfesionalId(request.resource.data) &&
+        (isAdmin() || request.resource.data.profesionalId == request.auth.uid);
+    }
+
+    function isValidOwnedUpdate() {
+      return isAdmin() ||
+        (
+          isOwnerByProfesionalId(resource.data) &&
+          request.resource.data.profesionalId == resource.data.profesionalId
+        );
     }
 
     match /users/{userId} {
@@ -22,15 +74,17 @@ service cloud.firestore {
     }
 
     match /pacientes/{pacienteId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read: if isSignedIn() && canAccessByProfesionalId(resource.data);
+      allow create: if isSignedIn() && isValidOwnedCreate();
+      allow update: if isSignedIn() && isValidOwnedUpdate();
+      allow delete: if isSignedIn() && canAccessByProfesionalId(resource.data);
     }
 
     match /sesiones/{sesionId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read: if isSignedIn() && canAccessByProfesionalId(resource.data);
+      allow create: if isSignedIn() && isValidOwnedCreate();
+      allow update: if isSignedIn() && isValidOwnedUpdate();
+      allow delete: if isSignedIn() && canAccessByProfesionalId(resource.data);
     }
 
     match /documentos/{documentoId} {
@@ -38,7 +92,6 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn();
     }
-
 
     match /test_templates/{testId} {
       allow read: if isSignedIn();
@@ -56,13 +109,19 @@ service cloud.firestore {
     }
 
     match /rutinas/{rutinaId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read: if isSignedIn() && canAccessByProfesionalId(resource.data);
+      allow create: if isSignedIn() && isValidRutinaCreate();
+      allow update: if isSignedIn() && isValidRutinaUpdate();
+      allow delete: if isSignedIn() && canAccessByProfesionalId(resource.data);
 
       match /{subCollection=**}/{docId} {
-        allow read: if isSignedIn();
-        allow create, update, delete: if isSignedIn();
+        allow read, create, update, delete: if isSignedIn() &&
+          (
+            isAdmin() ||
+            isOwnerByProfesionalId(
+              get(/databases/$(database)/documents/rutinas/$(rutinaId)).data
+            )
+          );
       }
     }
 

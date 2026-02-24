@@ -38,7 +38,9 @@ export class RutinasFirestoreService {
 
     // Admin: mantiene lectura completa explícita
     if (isAdmin) {
-      return collectionData(ref, { idField: 'id' });
+      return (collectionData(ref, { idField: 'id' }) as Observable<any[]>).pipe(
+        map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+      );
     }
 
     // Profesional: solo consultas filtradas en servidor
@@ -49,7 +51,9 @@ export class RutinasFirestoreService {
     );
 
     if (!pacienteId) {
-      return collectionData(plantillasQ, { idField: 'id' });
+      return (collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>).pipe(
+        map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+      );
     }
 
     const pacienteQ = query(
@@ -69,7 +73,7 @@ export class RutinasFirestoreService {
           if (r?.id) mapRutinas.set(r.id, r);
         });
 
-        return Array.from(mapRutinas.values());
+        return Array.from(mapRutinas.values()).map((r) => this.normalizarRutinaLegacy(r));
       })
     );
 }
@@ -82,6 +86,7 @@ export class RutinasFirestoreService {
         pacienteId?: string | null;
         pacienteNombre?: string;
         nombre: string;
+        estado: 'draft' | 'active' | 'completed' | 'archived';
         ejercicios?: any[];
         }) {
         const user = this.authService.getCurrentUser();
@@ -95,7 +100,7 @@ export class RutinasFirestoreService {
             nombre: data.nombre,
             ejercicios: data.ejercicios ?? [],
             fecha: new Date().toISOString(),
-            completada: false,
+            estado: data.estado,
             enviadaWhatsapp: false,
             esPlantilla,          
             profesionalId: user.uid,
@@ -224,7 +229,9 @@ export class RutinasFirestoreService {
         where('pacienteId', '==', null)
     );
 
-    return collectionData(q, { idField: 'id' });
+    return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
+      map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+    );
     }
 
     async clonarRutinaACliente(
@@ -241,7 +248,7 @@ export class RutinasFirestoreService {
             nombre: rutinaOriginal.nombre,
             ejercicios: rutinaOriginal.ejercicios || [],
             fecha: new Date().toISOString(),
-            completada: false,
+            estado: 'active',
             enviadaWhatsapp: false,
             esPlantilla: false,
             profesionalId: user.uid,
@@ -259,7 +266,9 @@ export class RutinasFirestoreService {
             const isAdmin = this.authService.getRole() === 'admin';
 
             if (isAdmin) {
-              return collectionData(ref, { idField: 'id' });
+              return (collectionData(ref, { idField: 'id' }) as Observable<any[]>).pipe(
+        map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+      );
             }
 
             const q = query(
@@ -267,6 +276,21 @@ export class RutinasFirestoreService {
               where('profesionalId', '==', user.uid)
             );
 
-            return collectionData(q, { idField: 'id' });
+            return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
+              map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+            );
             }
+
+
+  private normalizarRutinaLegacy(rutina: any): any {
+    if (rutina?.estado) return rutina;
+
+    const estado = rutina?.completada === true ? 'completed' : 'active';
+    const { completada, ...resto } = rutina || {};
+
+    return {
+      ...resto,
+      estado
+    };
+  }
 }
