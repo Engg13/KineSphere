@@ -28,6 +28,12 @@ const routes: Routes = [
     loadChildren: () => import('./pages/sesion/sesion.module').then(m => m.SesionPageModule),
     canActivate: [AuthGuard]  
   },
+
+  {
+    path: 'evolucion',
+    loadComponent: () => import('./pages/evolucion/evolucion.page').then(m => m.EvolucionPage),
+    canActivate: [AuthGuard]
+  },
   {
     path: 'ejercicios',
     loadChildren: () => import('./pages/ejercicios/ejercicios.module').then(m => m.EjerciciosPageModule),

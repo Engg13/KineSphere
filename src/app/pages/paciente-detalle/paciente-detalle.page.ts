@@ -229,8 +229,9 @@ export class PacienteDetallePage implements OnDestroy {
 
     const proximaSesion = (this.paciente.sesionesCompletadas || 0) + 1;
 
-    this.navCtrl.navigateRoot('/sesion', {
+    this.navCtrl.navigateRoot('/evolucion', {
       queryParams: {
+        patientId: this.paciente.id,
         pacienteId: this.paciente.id,
         pacienteNombre: this.paciente.nombre,
         numeroSesion: proximaSesion

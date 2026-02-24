@@ -1,0 +1,123 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="volver()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Evolución Clínica</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <form [formGroup]="evolucionForm" class="evolucion-form">
+    <ion-card>
+      <ion-card-header><ion-card-title>🟢 Tipo de Evolución</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-label position="stacked">Tipo</ion-label>
+          <ion-select formControlName="tipoEvolucion" interface="popover">
+            @for (tipo of tipoEvolucionOptions; track tipo.value) {
+              <ion-select-option [value]="tipo.value">{{ tipo.label }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header><ion-card-title>🟢 Datos Objetivos</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-label position="stacked">EVA (0-10)</ion-label>
+          <ion-input type="number" min="0" max="10" formControlName="painScale"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Calidad de sueño (1-5)</ion-label>
+          <ion-input type="number" min="1" max="5" formControlName="sleepQuality"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">ROM</ion-label>
+          <ion-input formControlName="rom"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Zona de tratamiento</ion-label>
+          <ion-input formControlName="zonaTratamiento"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="stacked">Técnicas aplicadas</ion-label>
+          <ion-select formControlName="tecnicasAplicadas" multiple="true" (ionChange)="onTecnicasChange($event)">
+            @for (tecnica of tecnicasDisponibles; track tecnica) {
+              <ion-select-option [value]="tecnica">{{ tecnica }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-checkbox formControlName="ejerciciosRealizados" labelPlacement="end">Ejercicios realizados</ion-checkbox>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header><ion-card-title>🟢 Subjetivo</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-textarea autoGrow="true" rows="6" formControlName="subjective"></ion-textarea>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header><ion-card-title>🟢 Objetivo</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-textarea autoGrow="true" rows="5" formControlName="objective"></ion-textarea>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header><ion-card-title>🟢 Análisis</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-textarea autoGrow="true" rows="4" formControlName="assessment"></ion-textarea>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header><ion-card-title>🟢 Plan</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-textarea autoGrow="true" rows="4" formControlName="plan"></ion-textarea>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header><ion-card-title>🟢 Test (si existe)</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <ion-item><ion-input label="Test ID" labelPlacement="stacked" formControlName="testId"></ion-input></ion-item>
+        <ion-item><ion-input label="Nombre Test" labelPlacement="stacked" formControlName="testNombre"></ion-input></ion-item>
+        <ion-item><ion-input type="number" label="Puntaje total" labelPlacement="stacked" formControlName="testPuntajeTotal"></ion-input></ion-item>
+        <ion-item><ion-input label="Resultado" labelPlacement="stacked" formControlName="testResultado"></ion-input></ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card>
+      <ion-card-header><ion-card-title>🟢 Rutina asociada (si existe)</ion-card-title></ion-card-header>
+      <ion-card-content>
+        <ion-item><ion-input label="Rutina ID" labelPlacement="stacked" formControlName="rutinaId"></ion-input></ion-item>
+        <ion-item><ion-input label="Nombre rutina" labelPlacement="stacked" formControlName="rutinaNombre"></ion-input></ion-item>
+      </ion-card-content>
+    </ion-card>
+  </form>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-button expand="block" [disabled]="guardando" (click)="guardarEvolucion()">
+      {{ guardando ? 'Guardando...' : 'Guardar Evolución' }}
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>
