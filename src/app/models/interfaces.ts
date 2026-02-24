@@ -14,6 +14,7 @@ export interface Paciente {
   sesionesPlanificadas?: number;
   sesionesCompletadas?: number;
   activo: boolean;
+  clinicId: string;
   es_demo?: boolean;
   fecha_creacion?: string;
   fechaIngreso?: string;
@@ -43,6 +44,7 @@ export interface Sesion {
   creado_en?: string;
   fecha_creacion?: string;
   fecha_registro?: string;
+  clinicId: string;
 }
 
 export interface Documento {
@@ -115,11 +117,12 @@ export interface RutinaEjercicios {
   id?: string;
   pacienteId: string;
   pacienteNombre?: string;
+  clinicId: string;
   nombre: string;
   descripcion?: string;
   ejercicios: EjercicioEnRutina[];
   fecha: string;
-  completada: boolean;
+  estado: 'draft' | 'active' | 'completed' | 'archived';
   fechaCompletada?: string;
   enviadaWhatsapp: boolean;
   createdAt?: Timestamp;

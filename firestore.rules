@@ -5,32 +5,107 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(uidField) {
-      return isSignedIn() && request.auth.uid == uidField;
-    }
-
     function isAdmin() {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    function requesterUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function requesterClinicId() {
+      return requesterUserDoc().clinicId;
+    }
+
+    function hasClinicAndProfesional(data) {
+      return data.keys().hasAll(['clinicId', 'profesionalId']);
+    }
+
+    function canAccessClinicalDoc(data) {
+      return isAdmin() || (
+        hasClinicAndProfesional(data) &&
+        data.clinicId == requesterClinicId() &&
+        data.profesionalId == request.auth.uid
+      );
+    }
+
+    function isValidClinicalCreate(data) {
+      return hasClinicAndProfesional(data) &&
+        data.clinicId == requesterClinicId() &&
+        data.profesionalId == request.auth.uid;
+    }
+
+    function isValidClinicalUpdate() {
+      return isAdmin() || (
+        hasClinicAndProfesional(resource.data) &&
+        hasClinicAndProfesional(request.resource.data) &&
+        resource.data.clinicId == requesterClinicId() &&
+        resource.data.profesionalId == request.auth.uid &&
+        request.resource.data.clinicId == resource.data.clinicId &&
+        request.resource.data.profesionalId == resource.data.profesionalId
+      );
+    }
+
+    function hasNoLegacyCompletada(data) {
+      return !data.keys().hasAny(['completada']);
+    }
+
+    function isValidRutinaEstado(estado) {
+      return estado in ['draft', 'active', 'completed', 'archived'];
+    }
+
+    function isValidRutinaCreate() {
+      return isValidClinicalCreate(request.resource.data) &&
+        request.resource.data.keys().hasAll(['estado']) &&
+        isValidRutinaEstado(request.resource.data.estado) &&
+        hasNoLegacyCompletada(request.resource.data);
+    }
+
+    function isValidRutinaUpdate() {
+      return isValidClinicalUpdate() &&
+        hasNoLegacyCompletada(request.resource.data) &&
+        (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) ||
+          isValidRutinaEstado(request.resource.data.estado)
+        );
+    }
+
+    match /clinics/{clinicId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || clinicId == requesterClinicId()
+      );
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update, delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn() &&
+        (request.auth.uid == userId || isAdmin()) &&
+        request.resource.data.keys().hasAll(['clinicId']) &&
+        request.resource.data.clinicId is string;
+      allow update: if isSignedIn() &&
+        (request.auth.uid == userId || isAdmin()) &&
+        resource.data.keys().hasAll(['clinicId']) &&
+        request.resource.data.keys().hasAll(['clinicId']) &&
+        request.resource.data.clinicId == resource.data.clinicId;
+      allow delete: if isAdmin();
     }
 
     match /pacientes/{pacienteId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read: if isSignedIn() && canAccessClinicalDoc(resource.data);
+      allow create: if isSignedIn() && isValidClinicalCreate(request.resource.data);
+      allow update: if isSignedIn() && isValidClinicalUpdate();
+      allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
     }
 
     match /sesiones/{sesionId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read: if isSignedIn() && canAccessClinicalDoc(resource.data);
+      allow create: if isSignedIn() && isValidClinicalCreate(request.resource.data);
+      allow update: if isSignedIn() && isValidClinicalUpdate();
+      allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
     }
 
     match /documentos/{documentoId} {
@@ -38,7 +113,6 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn();
     }
-
 
     match /test_templates/{testId} {
       allow read: if isSignedIn();
@@ -56,13 +130,17 @@ service cloud.firestore {
     }
 
     match /rutinas/{rutinaId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow read: if isSignedIn() && canAccessClinicalDoc(resource.data);
+      allow create: if isSignedIn() && isValidRutinaCreate();
+      allow update: if isSignedIn() && isValidRutinaUpdate();
+      allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
 
       match /{subCollection=**}/{docId} {
-        allow read: if isSignedIn();
-        allow create, update, delete: if isSignedIn();
+        allow read, create, update, delete: if isSignedIn() && (
+          isAdmin() || canAccessClinicalDoc(
+            get(/databases/$(database)/documents/rutinas/$(rutinaId)).data
+          )
+        );
       }
     }
 
