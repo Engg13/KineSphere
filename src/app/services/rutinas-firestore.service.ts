@@ -92,6 +92,8 @@ export class RutinasFirestoreService {
 
         const esPlantilla = !data.pacienteId;
         const clinicId = await this.authService.getCurrentClinicId();
+        console.log("ClinicId:", clinicId);
+        console.log("User UID:", user.uid);
 
         return addDoc(collection(this.firestore, 'rutinas'), {
             clinicId,

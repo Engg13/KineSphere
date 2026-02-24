@@ -78,13 +78,9 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn() && request.auth.uid == userId;
-      allow create: if isSignedIn() &&
-        request.auth.uid == userId &&
-        request.resource.data.clinicId == requesterClinicId();
-      allow update: if isSignedIn() &&
-        request.auth.uid == userId &&
-        request.resource.data.clinicId == resource.data.clinicId;
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
       allow delete: if false;
     }
 
@@ -107,6 +103,11 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidRutinaCreate();
       allow update: if isSignedIn() && isValidRutinaUpdate();
       allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
+    }
+
+    match /ejercicios/{ejercicioId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     match /{document=**} {
