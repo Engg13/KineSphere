@@ -78,15 +78,14 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn() &&
-        (request.auth.uid == userId || isAdmin());
+      allow read: if isSignedIn() && request.auth.uid == userId;
       allow create: if isSignedIn() &&
         request.auth.uid == userId &&
         request.resource.data.clinicId == requesterClinicId();
       allow update: if isSignedIn() &&
-        (request.auth.uid == userId || isAdmin()) &&
+        request.auth.uid == userId &&
         request.resource.data.clinicId == resource.data.clinicId;
-      allow delete: if isAdmin();
+      allow delete: if false;
     }
 
     match /pacientes/{pacienteId} {
