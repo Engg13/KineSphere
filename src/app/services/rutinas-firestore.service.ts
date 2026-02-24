@@ -13,7 +13,8 @@ import {
   collectionGroup,
   orderBy
 } from '@angular/fire/firestore';
-import { Observable, combineLatest, map } from 'rxjs';
+import { Observable, combineLatest, from, map } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { RutinaEjercicios } from '../models/interfaces';
 
@@ -29,54 +30,51 @@ export class RutinasFirestoreService {
   // 🔥 RUTINAS REALTIME
   // =====================================================
 
-  getRutinasPorPacienteRealtime(pacienteId: string | null) {
+  getRutinasPorPacienteRealtime(pacienteId: string | null): Observable<any[]> {
     const user = this.authService.getCurrentUser();
     if (!user) throw new Error('No autenticado');
 
     const ref = collection(this.firestore, 'rutinas');
-    const isAdmin = this.authService.getRole() === 'admin';
 
-    // Admin: mantiene lectura completa explícita
-    if (isAdmin) {
-      return (collectionData(ref, { idField: 'id' }) as Observable<any[]>).pipe(
-        map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
-      );
-    }
+    return from(this.authService.getCurrentClinicId()).pipe(
+      switchMap((clinicId) => {
+        const plantillasQ = query(
+          ref,
+          where('clinicId', '==', clinicId),
+          where('profesionalId', '==', user.uid),
+          where('esPlantilla', '==', true)
+        );
 
-    // Profesional: solo consultas filtradas en servidor
-    const plantillasQ = query(
-      ref,
-      where('profesionalId', '==', user.uid),
-      where('esPlantilla', '==', true)
-    );
+        if (!pacienteId) {
+          return (collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>).pipe(
+            map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+          );
+        }
 
-    if (!pacienteId) {
-      return (collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>).pipe(
-        map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
-      );
-    }
+        const pacienteQ = query(
+          ref,
+          where('clinicId', '==', clinicId),
+          where('profesionalId', '==', user.uid),
+          where('pacienteId', '==', pacienteId)
+        );
 
-    const pacienteQ = query(
-      ref,
-      where('profesionalId', '==', user.uid),
-      where('pacienteId', '==', pacienteId)
-    );
+        return combineLatest([
+          collectionData(pacienteQ, { idField: 'id' }) as Observable<any[]>,
+          collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>
+        ]).pipe(
+          map(([rutinasPaciente, plantillas]) => {
+            const mapRutinas = new Map<string, any>();
 
-    return combineLatest([
-      collectionData(pacienteQ, { idField: 'id' }) as Observable<any[]>,
-      collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>
-    ]).pipe(
-      map(([rutinasPaciente, plantillas]) => {
-        const mapRutinas = new Map<string, any>();
+            [...rutinasPaciente, ...plantillas].forEach(r => {
+              if (r?.id) mapRutinas.set(r.id, r);
+            });
 
-        [...rutinasPaciente, ...plantillas].forEach(r => {
-          if (r?.id) mapRutinas.set(r.id, r);
-        });
-
-        return Array.from(mapRutinas.values()).map((r) => this.normalizarRutinaLegacy(r));
+            return Array.from(mapRutinas.values()).map((r) => this.normalizarRutinaLegacy(r));
+          })
+        );
       })
     );
-}
+  }
 
   // =====================================================
   // ➕ CREAR RUTINA
@@ -219,22 +217,27 @@ export class RutinasFirestoreService {
     return collectionData(q, { idField: 'id' });
   }
 
-  getRutinasGeneralesRealtime() {
+  getRutinasGeneralesRealtime(): Observable<any[]> {
     const user = this.authService.getCurrentUser();
     if (!user) throw new Error('No autenticado');
 
     const ref = collection(this.firestore, 'rutinas');
 
-    const q = query(
-        ref,
-        where('profesionalId', '==', user.uid),
-        where('pacienteId', '==', null)
-    );
+    return from(this.authService.getCurrentClinicId()).pipe(
+      switchMap((clinicId) => {
+        const q = query(
+          ref,
+          where('clinicId', '==', clinicId),
+          where('profesionalId', '==', user.uid),
+          where('pacienteId', '==', null)
+        );
 
-    return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
-      map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+        return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
+          map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+        );
+      })
     );
-    }
+  }
 
     async clonarRutinaACliente(
         rutinaOriginal: any,
@@ -263,26 +266,24 @@ export class RutinasFirestoreService {
         return addDoc(collection(this.firestore, 'rutinas'), nuevaRutina);
         }
 
-        getRutinasRealtime() {
+        getRutinasRealtime(): Observable<any[]> {
             const user = this.authService.getCurrentUser();
             if (!user) throw new Error('No autenticado');
 
             const ref = collection(this.firestore, 'rutinas');
-            const isAdmin = this.authService.getRole() === 'admin';
 
-            if (isAdmin) {
-              return (collectionData(ref, { idField: 'id' }) as Observable<any[]>).pipe(
-        map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
-      );
-            }
+            return from(this.authService.getCurrentClinicId()).pipe(
+              switchMap((clinicId) => {
+                const q = query(
+                  ref,
+                  where('clinicId', '==', clinicId),
+                  where('profesionalId', '==', user.uid)
+                );
 
-            const q = query(
-              ref,
-              where('profesionalId', '==', user.uid)
-            );
-
-            return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
-              map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+                return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
+                  map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+                );
+              })
             );
             }
 

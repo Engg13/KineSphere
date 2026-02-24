@@ -13,8 +13,8 @@ import {
   orderBy,
   serverTimestamp
 } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, of, from } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 @Injectable({
@@ -28,9 +28,17 @@ export class FirestoreService {
   // ==================== PACIENTES ====================
 
   getPacientes(): Observable<any[]> {
-    const ref = collection(this.firestore, 'pacientes');
-    const q = query(ref, orderBy('fechaCreacion', 'desc'));
-    return collectionData(q, { idField: 'id' }).pipe(
+    return from(this.authService.getCurrentClinicId()).pipe(
+      switchMap((clinicId) => {
+        const ref = collection(this.firestore, 'pacientes');
+        const q = query(
+          ref,
+          where('clinicId', '==', clinicId),
+          orderBy('fechaCreacion', 'desc')
+        );
+
+        return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+      }),
       catchError(err => {
         console.error('Error obteniendo pacientes de Firestore:', err);
         return of([]);
@@ -81,9 +89,18 @@ export class FirestoreService {
   // ==================== SESIONES ====================
 
   getSesionesByPaciente(pacienteId: string): Observable<any[]> {
-    const ref = collection(this.firestore, 'sesiones');
-    const q = query(ref, where('paciente_id', '==', pacienteId), orderBy('fecha', 'desc'));
-    return collectionData(q, { idField: 'id' }).pipe(
+    return from(this.authService.getCurrentClinicId()).pipe(
+      switchMap((clinicId) => {
+        const ref = collection(this.firestore, 'sesiones');
+        const q = query(
+          ref,
+          where('clinicId', '==', clinicId),
+          where('paciente_id', '==', pacienteId),
+          orderBy('fecha', 'desc')
+        );
+
+        return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+      }),
       catchError(err => {
         console.error('Error obteniendo sesiones:', err);
         return of([]);
