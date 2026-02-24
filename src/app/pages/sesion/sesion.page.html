@@ -172,7 +172,7 @@
             (ionChange)="seleccionarRutina($event)">
             <ion-select-option [value]="null">Ninguna</ion-select-option>
             <ion-select-option *ngFor="let r of rutinasDisponibles" [value]="r.id">
-              {{ r.nombre }} ({{ r.ejercicios.length }} ej.){{ r.completada ? ' - Completada' : '' }}
+              {{ r.nombre }} ({{ r.ejercicios.length }} ej.){{ r.estado === 'completed' ? ' - Completada' : '' }}
             </ion-select-option>
           </ion-select>
         </ion-item>

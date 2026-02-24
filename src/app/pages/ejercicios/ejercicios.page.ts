@@ -179,10 +179,10 @@ export class EjerciciosPage implements OnInit, OnDestroy {
           .subscribe((rutinas: any[]) => {
 
             this.rutinaActiva =
-              rutinas.find(r => !r.completada) || null;
+              rutinas.find(r => this.esRutinaActiva(r)) || null;
 
             this.rutinasAnteriores =
-              rutinas.filter(r => r.completada);
+              rutinas.filter(r => this.esRutinaCompletada(r));
 
           });
 
@@ -196,10 +196,10 @@ export class EjerciciosPage implements OnInit, OnDestroy {
         .subscribe((rutinas: any[]) => {
 
           this.rutinaActiva =
-            rutinas.find(r => !r.completada) || null;
+            rutinas.find(r => this.esRutinaActiva(r)) || null;
 
           this.rutinasAnteriores =
-            rutinas.filter(r => r.completada);
+            rutinas.filter(r => this.esRutinaCompletada(r));
 
         });
 
@@ -211,7 +211,7 @@ export class EjerciciosPage implements OnInit, OnDestroy {
 
   const alert = await this.alertCtrl.create({
     header: 'Finalizar rutina',
-    message: '¿Seguro que deseas marcar esta rutina como completada?',
+    message: '¿Seguro que deseas finalizar esta rutina?',
     buttons: [
       { text: 'Cancelar', role: 'cancel' },
       {
@@ -220,12 +220,12 @@ export class EjerciciosPage implements OnInit, OnDestroy {
           await this.rutinasService.actualizarRutina(
             this.rutinaActiva.id,
             {
-              completada: true,
+              estado: 'completed',
               fechaCompletada: new Date().toISOString()
             }
           );
 
-          this.mostrarToast('Rutina completada', 'success');
+          this.mostrarToast('Rutina finalizada', 'success');
         }
       }
     ]
@@ -259,6 +259,7 @@ export class EjerciciosPage implements OnInit, OnDestroy {
               pacienteId: this.pacienteId || null,   // 👈 clave
               pacienteNombre: this.pacienteNombre || null,
               nombre: data.nombre.trim(),
+              estado: 'active',
               ejercicios: []
             });
 
@@ -663,6 +664,7 @@ async guardarNuevoEjercicio() {
         pacienteId: null,
         pacienteNombre: null,
         nombre: plantilla.nombre,
+        estado: 'active',
         ejercicios: plantilla.ejercicios
       });
 
@@ -675,6 +677,7 @@ async guardarNuevoEjercicio() {
       pacienteId: this.pacienteId,
       pacienteNombre: this.pacienteNombre,
       nombre: plantilla.nombre,
+      estado: 'active',
       ejercicios: plantilla.ejercicios
     });
 
@@ -793,6 +796,7 @@ async eliminarRutina(id: string) {
               pacienteId: null,
               pacienteNombre: null,
               nombre: data.nombre.trim(),
+              estado: 'active',
               ejercicios: []
             });
 
@@ -817,8 +821,8 @@ async eliminarRutina(id: string) {
     const sub = this.rutinasService
       .getRutinasPorPacienteRealtime(this.pacienteId)
       .subscribe(rutinas => {
-        this.rutinaActiva = rutinas.find(r => !r.completada) || null;
-        this.rutinasAnteriores = rutinas.filter(r => r.completada);
+        this.rutinaActiva = rutinas.find(r => this.esRutinaActiva(r)) || null;
+        this.rutinasAnteriores = rutinas.filter(r => this.esRutinaCompletada(r));
       });
 
     this.subs.push(sub);
@@ -837,5 +841,14 @@ async eliminarRutina(id: string) {
 
 
 
+
+
+  private esRutinaCompletada(rutina: any): boolean {
+    return rutina?.estado === 'completed';
+  }
+
+  private esRutinaActiva(rutina: any): boolean {
+    return rutina?.estado === 'active';
+  }
 
 }

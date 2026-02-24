@@ -184,7 +184,7 @@ export class SesionPage {
     this.rutinasService
       .getRutinasPorPacienteRealtime(this.pacienteId)
       .subscribe(rutinas => {
-        this.rutinasDisponibles = rutinas.filter(r => !r.completada);
+        this.rutinasDisponibles = rutinas.filter(r => r.estado === 'active');
       });
   }
 
