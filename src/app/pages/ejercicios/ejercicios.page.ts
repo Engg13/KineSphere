@@ -14,6 +14,7 @@ import { Subscription } from 'rxjs';
 import { DatabaseService } from '../../services/database.service';
 import { EjerciciosFirestoreService } from '../../services/EjerciciosFirestoreService.service';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
+import { EjerciciosService } from '../../services/ejercicios.service';
 
 import {
   EjercicioLocal,
@@ -90,7 +91,8 @@ export class EjerciciosPage implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private databaseService: DatabaseService,
     private ejerciciosService: EjerciciosFirestoreService,
-    private rutinasService: RutinasFirestoreService
+    private rutinasService: RutinasFirestoreService,
+    private ejerciciosWhatsappService: EjerciciosService
   ) {}
 
   ngOnInit() {
@@ -377,7 +379,13 @@ export class EjerciciosPage implements OnInit, OnDestroy {
 
   async enviarWhatsappConNumero(rutina: RutinaEjercicios | null) {
     if (!rutina) return;
-    this.mostrarToast('Función WhatsApp lista para implementar', 'primary');
+
+    if (!rutina.ejercicios?.length) {
+      await this.mostrarToast('La rutina no tiene ejercicios para enviar.', 'warning');
+      return;
+    }
+
+    this.ejerciciosWhatsappService.enviarPorWhatsapp(rutina);
   }
 
   trackByEjercicio(index: number, item: EjercicioEnRutina) {
