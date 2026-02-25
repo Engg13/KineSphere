@@ -1,6 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AlertController,
+  ModalController,
   NavController,
   ToastController,
   IonicModule
@@ -31,9 +32,10 @@ import {
 })
 export class EjerciciosPage implements OnInit, OnDestroy {
 
-  pacienteId = '';
-  pacienteNombre = '';
+  @Input() pacienteId = '';
+  @Input() pacienteNombre = '';
   pacienteTelefono = '';
+  @Input() openedAsModal = false;
 
   vista: 'rutina' | 'rutinas' | 'biblioteca' | 'historial' = 'rutinas';
 
@@ -83,6 +85,7 @@ export class EjerciciosPage implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private navCtrl: NavController,
+    private modalCtrl: ModalController,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private databaseService: DatabaseService,
@@ -92,8 +95,9 @@ export class EjerciciosPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      this.pacienteId = params['pacienteId'] || '';
-      this.pacienteNombre = params['pacienteNombre'] || '';
+      this.pacienteId = params['pacienteId'] || this.pacienteId || '';
+      this.pacienteNombre = params['pacienteNombre'] || this.pacienteNombre || '';
+      this.openedAsModal = params['openedAsModal'] === 'true' || this.openedAsModal;
 
       this.cargarPacientes();
       this.cargarBiblioteca();
@@ -238,6 +242,14 @@ export class EjerciciosPage implements OnInit, OnDestroy {
     this.vista = v;
   }
 
+  private dismissModal(data?: { rutinaCreada?: boolean }): Promise<boolean> {
+    if (!this.openedAsModal) {
+      return Promise.resolve(false);
+    }
+
+    return this.modalCtrl.dismiss(data);
+  }
+
   async crearNuevaRutina() {
     const alert = await this.alertCtrl.create({
       header: 'Nueva Rutina',
@@ -264,6 +276,7 @@ export class EjerciciosPage implements OnInit, OnDestroy {
             });
 
             this.mostrarToast('Rutina creada', 'success');
+            await this.dismissModal({ rutinaCreada: true });
             return true;
           }
         }
@@ -393,9 +406,18 @@ export class EjerciciosPage implements OnInit, OnDestroy {
 
   volverAtras() {
     if (this.pacienteId) {
-      this.navCtrl.navigateRoot('/paciente-detalle', {
-        queryParams: { pacienteId: this.pacienteId }
-      });
+      if (this.openedAsModal) {
+        void this.dismissModal();
+      } else {
+        this.navCtrl.navigateRoot('/paciente-detalle', {
+          queryParams: { pacienteId: this.pacienteId }
+        });
+      }
+      return;
+    }
+
+    if (this.openedAsModal) {
+      void this.dismissModal();
       return;
     }
 
@@ -801,6 +823,7 @@ async eliminarRutina(id: string) {
             });
 
             this.mostrarToast('Rutina creada correctamente', 'success');
+            await this.dismissModal({ rutinaCreada: true });
 
             return true;
           }

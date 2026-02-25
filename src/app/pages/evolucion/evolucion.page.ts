@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { IonicModule, NavController, ToastController } from '@ionic/angular';
+import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
 import { ArticulacionRom, RomEntry, TipoEvolucion } from '../../models/evolucion.model';
@@ -11,6 +11,7 @@ import { DatabaseService } from '../../services/database.service';
 import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
+import { EjerciciosPage } from '../ejercicios/ejercicios.page';
 
 const ROM_CONFIG: Record<string, string[]> = {
   Hombro: ['Flexión', 'Extensión', 'Abducción', 'Aducción', 'Rotación interna', 'Rotación externa'],
@@ -36,6 +37,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private navCtrl = inject(NavController);
+  private modalCtrl = inject(ModalController);
   private toastCtrl = inject(ToastController);
   private evolucionesService = inject(EvolucionesFirestoreService);
   private databaseService = inject(DatabaseService);
@@ -185,6 +187,8 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
   cargarRutinasDisponibles(): void {
     if (!this.patientId) return;
+
+    this.rutinasSub?.unsubscribe();
 
     this.rutinasSub = this.rutinasService.getRutinasPorPacienteRealtime(this.patientId).subscribe((rutinas) => {
       this.rutinasDisponibles = rutinas.filter((r) => r.estado === 'active');
@@ -469,13 +473,24 @@ export class EvolucionPage implements OnInit, OnDestroy {
     }
   }
 
-  irACrearRutina(): void {
-    this.navCtrl.navigateRoot('/ejercicios', {
-      queryParams: {
+  async irACrearRutina(): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: EjerciciosPage,
+      componentProps: {
         pacienteId: this.patientId,
-        pacienteNombre: this.pacienteNombre
+        pacienteNombre: this.pacienteNombre,
+        openedAsModal: true
       }
     });
+
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss<{ rutinaCreada?: boolean }>();
+
+    if (data?.rutinaCreada) {
+      this.cargarRutinasDisponibles();
+      await this.mostrarToast('Rutinas actualizadas.', 'success');
+    }
   }
 
   volver(): void {
