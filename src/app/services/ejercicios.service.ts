@@ -22,15 +22,22 @@ export class EjerciciosService {
     let msg = `*${rutina.nombre}*\n`;
     msg += `Paciente: ${rutina.pacienteNombre || 'N/A'}\n`;
     msg += `Fecha: ${new Date(rutina.fecha).toLocaleDateString('es-CL')}\n`;
+    if (rutina.descripcion?.trim()) {
+      msg += `Indicaciones generales: ${rutina.descripcion.trim()}\n`;
+    }
     msg += `━━━━━━━━━━━━━━━\n\n`;
 
-    rutina.ejercicios.forEach(ej => {
+    (rutina.ejercicios || []).forEach(ej => {
       msg += `*${ej.letra}) ${ej.ejercicio.nombre}*\n\n`;
 
       ej.series.forEach(s => {
-        const check = s.completada ? '✅' : '⬜';
-        msg += `  Serie ${s.numero}: ${s.repeticiones || '-'} reps x ${s.peso || '-'} kg ${check}\n`;
+        const reps = s.repeticiones ?? '-';
+        msg += `  • Serie ${s.numero}: ${reps} reps\n`;
       });
+
+      if (ej.notas?.trim()) {
+        msg += `\n  Indicaciones: ${ej.notas.trim()}\n`;
+      }
 
       msg += '\n';
     });
