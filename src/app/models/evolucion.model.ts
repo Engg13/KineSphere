@@ -2,6 +2,19 @@ import { Timestamp } from '@angular/fire/firestore';
 
 export type TipoEvolucion = 'initial' | 'progress' | 'discharge';
 
+export interface RomEntry {
+  movimiento: string;
+  unidad: 'grados';
+  arom?: { valor: number | null; dolor?: number | null };
+  prom?: { valor: number | null; dolor?: number | null };
+  observacion?: string;
+}
+
+export interface ArticulacionRom {
+  articulacion: string;
+  movimientos: RomEntry[];
+}
+
 export interface EvolucionTest {
   testId: string;
   testNombre: string;
@@ -22,7 +35,7 @@ export interface Evolucion {
   plan: string;
   painScale: number | null;
   sleepQuality: number | null;
-  rom: string | null;
+  rom: ArticulacionRom[];
   zonaTratamiento: string | null;
   tecnicasAplicadas: string[];
   ejerciciosRealizados: boolean;
@@ -42,7 +55,7 @@ export interface EvolucionCreateInput {
   plan: string;
   painScale: number | null;
   sleepQuality: number | null;
-  rom: string | null;
+  rom: ArticulacionRom[];
   zonaTratamiento: string | null;
   tecnicasAplicadas: string[];
   ejerciciosRealizados: boolean;

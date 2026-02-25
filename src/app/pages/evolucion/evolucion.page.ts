@@ -1,16 +1,29 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
-import { TipoEvolucion } from '../../models/evolucion.model';
+import { ArticulacionRom, RomEntry, TipoEvolucion } from '../../models/evolucion.model';
 import { TestTemplate } from '../../models/test-template.model';
 import { DatabaseService } from '../../services/database.service';
 import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
+
+const ROM_CONFIG: Record<string, string[]> = {
+  Hombro: ['Flexión', 'Extensión', 'Abducción', 'Aducción', 'Rotación interna', 'Rotación externa'],
+  Codo: ['Flexión', 'Extensión', 'Pronación', 'Supinación'],
+  'Muñeca/Mano': ['Flexión', 'Extensión', 'Desviación radial', 'Desviación cubital'],
+  Cadera: ['Flexión', 'Extensión', 'Abducción', 'Aducción', 'Rotación interna', 'Rotación externa'],
+  Rodilla: ['Flexión', 'Extensión'],
+  'Tobillo/Pie': ['Dorsiflexión', 'Flexión plantar', 'Inversión', 'Eversión'],
+  'Columna cervical': ['Flexión', 'Extensión', 'Rotación derecha', 'Rotación izquierda', 'Inclinación derecha', 'Inclinación izquierda'],
+  'Columna dorsal': ['Flexión', 'Extensión', 'Rotación derecha', 'Rotación izquierda'],
+  'Columna lumbar': ['Flexión', 'Extensión', 'Rotación derecha', 'Rotación izquierda', 'Inclinación derecha', 'Inclinación izquierda'],
+  ATM: ['Apertura', 'Lateralidad derecha', 'Lateralidad izquierda', 'Protrusión']
+};
 
 @Component({
   selector: 'app-evolucion',
@@ -41,6 +54,8 @@ export class EvolucionPage implements OnInit, OnDestroy {
   testsDisponibles: TestTemplate[] = [];
   testSeleccionado: TestTemplate | null = null;
   respuestasTest: number[] = [];
+  pacienteActual: any | null = null;
+  articulacionNuevaControl = this.fb.control<string | null>(null);
 
   private rutinasSub?: Subscription;
 
@@ -77,7 +92,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     sleepQuality: this.fb.nonNullable.control(3),
     zonaTratamiento: this.fb.nonNullable.control(''),
     tecnicasAplicadas: this.fb.nonNullable.control<string[]>([]),
-    rom: this.fb.nonNullable.control(''),
+    rom: this.fb.array<FormGroup>([]),
     ejerciciosRealizados: this.fb.nonNullable.control(false),
     subjective: this.fb.nonNullable.control('', Validators.required),
     objective: this.fb.nonNullable.control('', Validators.required),
@@ -92,6 +107,19 @@ export class EvolucionPage implements OnInit, OnDestroy {
       resultado: this.fb.nonNullable.control('')
     })
   });
+
+  get romArray(): FormArray<FormGroup> {
+    return this.form.controls.rom;
+  }
+
+  get articulacionesDisponiblesParaAgregar(): string[] {
+    const usadas = new Set(this.romArray.controls.map((ctrl) => ctrl.controls['articulacion'].value));
+    return Object.keys(ROM_CONFIG).filter((art) => !usadas.has(art));
+  }
+
+  get zonaPrincipalBloqueada(): boolean {
+    return this.form.controls.tipoEvolucion.value !== 'initial';
+  }
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
@@ -121,14 +149,24 @@ export class EvolucionPage implements OnInit, OnDestroy {
   async cargarDatosPaciente(): Promise<void> {
     if (!this.patientId) return;
 
-    const pacientes = await this.databaseService.getPacientes();
-    const p = pacientes.find((pac: any) => String(pac.id) === String(this.patientId));
+    const p = await this.databaseService.getPaciente(this.patientId);
+    if (!p) return;
 
-    if (p) {
-      this.pacienteNombre = p.nombre || this.pacienteNombre;
-      this.pacienteDiagnostico = p.diagnostico || '';
-      this.sesionesPlanificadas = p.sesionesPlanificadas || 10;
+    this.pacienteActual = p;
+    this.pacienteNombre = p.nombre || this.pacienteNombre;
+    this.pacienteDiagnostico = p.diagnostico || '';
+    this.sesionesPlanificadas = p.sesionesPlanificadas || 10;
+
+    const zonaPrincipal = p.zonaPrincipal || '';
+    this.form.patchValue({ zonaTratamiento: zonaPrincipal });
+
+    this.romArray.clear();
+    if (zonaPrincipal) {
+      this.agregarArticulacionARom(zonaPrincipal);
     }
+
+    const secundarias: string[] = Array.isArray(p.articulacionesSecundarias) ? p.articulacionesSecundarias : [];
+    secundarias.forEach((art) => this.agregarArticulacionARom(art));
   }
 
   async cargarNumeroSesion(): Promise<void> {
@@ -148,6 +186,17 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.testsDisponibles = await this.testTemplatesService.getTests();
   }
 
+  onTipoEvolucionChange(event: Event): void {
+    const tipo = (event as CustomEvent).detail?.value as TipoEvolucion;
+    this.form.controls.tipoEvolucion.setValue(tipo);
+
+    if (tipo !== 'initial') {
+      this.form.controls.zonaTratamiento.disable({ emitEvent: false });
+    } else {
+      this.form.controls.zonaTratamiento.enable({ emitEvent: false });
+    }
+  }
+
   toggleTecnica(tecnica: string): void {
     const actuales = [...(this.form.controls.tecnicasAplicadas.value || [])];
     const existe = actuales.includes(tecnica);
@@ -161,6 +210,144 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
   actualizarSueno(valor: number): void {
     this.form.controls.sleepQuality.setValue(valor);
+  }
+
+  async onZonaPrincipalChange(event: Event): Promise<void> {
+    if (this.zonaPrincipalBloqueada) return;
+
+    const zona = (event as CustomEvent).detail?.value as string;
+    this.form.controls.zonaTratamiento.setValue(zona || '');
+
+    if (!zona) return;
+
+    if (!this.existeArticulacionEnRom(zona)) {
+      this.agregarArticulacionARom(zona);
+    }
+
+    await this.persistirArticulacionesPaciente();
+  }
+
+  async agregarArticulacionSeleccionada(): Promise<void> {
+    const articulacionNueva = this.articulacionNuevaControl.value;
+    if (!articulacionNueva) return;
+
+    if (this.existeArticulacionEnRom(articulacionNueva)) {
+      await this.mostrarToast('La articulación ya está agregada.', 'warning');
+      return;
+    }
+
+    this.agregarArticulacionARom(articulacionNueva);
+    this.articulacionNuevaControl.setValue(null);
+    await this.persistirArticulacionesPaciente();
+  }
+
+  async eliminarArticulacion(index: number): Promise<void> {
+    const artCtrl = this.romArray.at(index);
+    const articulacion = artCtrl.controls['articulacion'].value;
+
+    this.romArray.removeAt(index);
+
+    if (articulacion === this.form.controls.zonaTratamiento.value) {
+      this.form.controls.zonaTratamiento.setValue('');
+    }
+
+    await this.persistirArticulacionPacienteConVerificacion(articulacion);
+  }
+
+  private async persistirArticulacionPacienteConVerificacion(articulacion: string): Promise<void> {
+    if (!this.patientId) return;
+
+    const existeEnOtra = await this.evolucionesService.existsArticulacionEnOtrasEvoluciones(
+      this.patientId,
+      articulacion
+    );
+
+    if (existeEnOtra) {
+      await this.mostrarToast('La articulación se mantiene en paciente por historial clínico existente.', 'warning');
+      return;
+    }
+
+    await this.persistirArticulacionesPaciente();
+  }
+
+  private existeArticulacionEnRom(articulacion: string): boolean {
+    return this.romArray.controls.some((ctrl) => ctrl.controls['articulacion'].value === articulacion);
+  }
+
+  private agregarArticulacionARom(articulacion: string): void {
+    const movimientos = (ROM_CONFIG[articulacion] || ['Flexión']).map((mov) => this.crearMovimientoGroup(mov));
+
+    const articulacionGroup = this.fb.group({
+      articulacion: this.fb.nonNullable.control(articulacion),
+      movimientos: this.fb.array(movimientos)
+    });
+
+    this.romArray.push(articulacionGroup);
+  }
+
+  private crearMovimientoGroup(movimiento: string): FormGroup {
+    return this.fb.group({
+      movimiento: this.fb.nonNullable.control(movimiento),
+      unidad: this.fb.nonNullable.control<'grados'>('grados'),
+      aromValor: this.fb.control<number | null>(null),
+      aromDolor: this.fb.control<number | null>(null),
+      promValor: this.fb.control<number | null>(null),
+      promDolor: this.fb.control<number | null>(null),
+      observacion: this.fb.nonNullable.control('')
+    });
+  }
+
+  getMovimientosArray(articulacionIndex: number): FormArray<FormGroup> {
+    return this.romArray.at(articulacionIndex).controls['movimientos'] as FormArray<FormGroup>;
+  }
+
+  private construirRomPayload(): ArticulacionRom[] {
+    return this.romArray.controls.map((artCtrl) => {
+      const articulacion = artCtrl.controls['articulacion'].value;
+      const movimientosArray = artCtrl.controls['movimientos'] as FormArray<FormGroup>;
+
+      const movimientos: RomEntry[] = movimientosArray.controls.map((movCtrl) => {
+        const aromValor = movCtrl.controls['aromValor'].value;
+        const aromDolor = movCtrl.controls['aromDolor'].value;
+        const promValor = movCtrl.controls['promValor'].value;
+        const promDolor = movCtrl.controls['promDolor'].value;
+        const observacion = (movCtrl.controls['observacion'].value || '').trim();
+
+        return {
+          movimiento: movCtrl.controls['movimiento'].value,
+          unidad: 'grados',
+          arom: { valor: aromValor, dolor: aromDolor },
+          prom: { valor: promValor, dolor: promDolor },
+          observacion: observacion || undefined
+        };
+      });
+
+      return { articulacion, movimientos };
+    });
+  }
+
+  private sanitizarRom(rom: ArticulacionRom[]): ArticulacionRom[] {
+    return rom
+      .map((art) => ({
+        ...art,
+        movimientos: art.movimientos.filter((mov) =>
+          !((mov.arom?.valor ?? null) === null && (mov.prom?.valor ?? null) === null)
+        )
+      }))
+      .filter((art) => art.movimientos.length > 0);
+  }
+
+  private async persistirArticulacionesPaciente(): Promise<void> {
+    if (!this.patientId) return;
+
+    const zonaPrincipal = this.form.controls.zonaTratamiento.getRawValue() || '';
+    const todas = this.romArray.controls.map((ctrl) => ctrl.controls['articulacion'].value);
+    const secundarias = todas.filter((art) => art !== zonaPrincipal);
+
+    await this.databaseService.updatePaciente(this.patientId, {
+      zonaPrincipal,
+      articulacionesSecundarias: secundarias
+    });
   }
 
   seleccionarRutina(event: Event): void {
@@ -219,10 +406,6 @@ export class EvolucionPage implements OnInit, OnDestroy {
     return rango?.color || '#6b7280';
   }
 
-  getProgresoSesiones(): number {
-    return Math.min((this.numeroSesion / this.sesionesPlanificadas) * 100, 100);
-  }
-
   async guardarEvolucion(): Promise<void> {
     if (!this.patientId) {
       await this.mostrarToast('Falta patientId para guardar evolución.', 'danger');
@@ -237,6 +420,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     const value = this.form.getRawValue();
     const testValue = value.test;
+    const romPayload = this.sanitizarRom(this.construirRomPayload());
 
     this.guardando = true;
 
@@ -248,7 +432,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
         sleepQuality: value.sleepQuality,
         zonaTratamiento: value.zonaTratamiento || null,
         tecnicasAplicadas: value.tecnicasAplicadas,
-        rom: value.rom || null,
+        rom: romPayload,
         ejerciciosRealizados: value.ejerciciosRealizados,
         subjective: value.subjective.trim(),
         objective: value.objective.trim(),
