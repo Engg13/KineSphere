@@ -6,6 +6,7 @@ import {
   collectionData,
   doc,
   getDocs,
+  limit,
   orderBy,
   query,
   serverTimestamp,
@@ -15,6 +16,8 @@ import {
 import { Observable, from, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
 import { Evolucion, EvolucionCreateInput } from '../models/evolucion.model';
+
+type EvolucionUpdateInput = Partial<Omit<Evolucion, 'id' | 'sessionNumber' | 'clinicId' | 'professionalId' | 'createdAt'>>;
 
 @Injectable({
   providedIn: 'root'
@@ -83,7 +86,8 @@ export class EvolucionesFirestoreService {
       collection(this.firestore, 'evoluciones'),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
-      orderBy('sessionNumber', 'desc')
+      orderBy('sessionNumber', 'desc'),
+      limit(1)
     );
 
     const snapshot = await getDocs(evolucionesQuery);
@@ -92,10 +96,23 @@ export class EvolucionesFirestoreService {
     return Number(ultimaSesion) + 1;
   }
 
-  async updateEvolucion(evolucionId: string, cambios: Partial<Evolucion>): Promise<void> {
+  async updateEvolucion(evolucionId: string, cambios: EvolucionUpdateInput): Promise<void> {
     const evolucionDoc = doc(this.firestore, `evoluciones/${evolucionId}`);
+    const {
+      // inmutables por contrato de dominio
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      sessionNumber,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      clinicId,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      professionalId,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      createdAt,
+      ...safeChanges
+    } = cambios as Partial<Evolucion>;
+
     await updateDoc(evolucionDoc, {
-      ...cambios,
+      ...safeChanges,
       updatedAt: serverTimestamp()
     });
   }
