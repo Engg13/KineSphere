@@ -20,6 +20,8 @@ import { ArticulacionRom, Evolucion, EvolucionCreateInput } from '../models/evol
 
 type EvolucionUpdateInput = Partial<Omit<Evolucion, 'id' | 'sessionNumber' | 'clinicId' | 'professionalId' | 'createdAt'>>;
 
+type EvolucionUpdateInput = Partial<Omit<Evolucion, 'id' | 'sessionNumber' | 'clinicId' | 'professionalId' | 'createdAt'>>;
+
 @Injectable({
   providedIn: 'root'
 })
