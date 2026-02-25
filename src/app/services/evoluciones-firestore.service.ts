@@ -19,9 +19,6 @@ import { AuthService } from './auth.service';
 import { ArticulacionRom, Evolucion, EvolucionCreateInput } from '../models/evolucion.model';
 
 type EvolucionUpdateInput = Partial<Omit<Evolucion, 'id' | 'sessionNumber' | 'clinicId' | 'professionalId' | 'createdAt'>>;
-
-type EvolucionUpdateInput = Partial<Omit<Evolucion, 'id' | 'sessionNumber' | 'clinicId' | 'professionalId' | 'createdAt'>>;
-
 @Injectable({
   providedIn: 'root'
 })

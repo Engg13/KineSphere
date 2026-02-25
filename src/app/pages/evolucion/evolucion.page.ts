@@ -122,10 +122,19 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+
     const params = this.route.snapshot.queryParamMap;
+
     this.patientId = params.get('patientId') || params.get('pacienteId') || '';
     this.pacienteNombre = params.get('pacienteNombre') || 'Paciente';
     this.pacienteDiagnostico = params.get('diagnostico') || '';
+
+    // 👇 Bloqueo dinámico zona principal
+    this.setupZonaPrincipalLock();
+
+    // Aplicar estado inicial correctamente
+    const tipoActual = this.form.get('tipoEvolucion')?.value;
+    this.applyZonaLock(tipoActual);
 
     this.cargarContexto();
   }
@@ -500,5 +509,23 @@ export class EvolucionPage implements OnInit, OnDestroy {
     });
 
     await toast.present();
+  }
+
+  private setupZonaPrincipalLock(): void {
+  this.form.get('tipoEvolucion')?.valueChanges.subscribe(tipo => {
+    this.applyZonaLock(tipo);
+  });
+}
+
+  private applyZonaLock(tipo: TipoEvolucion | null): void {
+    const zonaControl = this.form.get('zonaTratamiento');
+
+    if (!zonaControl) return;
+
+    if (tipo !== 'initial') {
+      zonaControl.disable({ emitEvent: false });
+    } else {
+      zonaControl.enable({ emitEvent: false });
+    }
   }
 }

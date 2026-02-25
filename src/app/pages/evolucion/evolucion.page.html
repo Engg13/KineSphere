@@ -86,7 +86,6 @@
           formControlName="zonaTratamiento"
           placeholder="Seleccionar zona..."
           interface="action-sheet"
-          [disabled]="zonaPrincipalBloqueada"
           (ionChange)="onZonaPrincipalChange($event)">
           <ion-select-option *ngFor="let zona of zonasTratamiento" [value]="zona">{{ zona }}</ion-select-option>
         </ion-select>
