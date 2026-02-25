@@ -124,13 +124,22 @@ service cloud.firestore {
 
     match /evoluciones/{id} {
       allow create: if request.auth != null
+        && requesterHasProfile()
         && request.resource.data.clinicId == requesterClinicId()
         && request.resource.data.professionalId == request.auth.uid;
 
-      allow read: if resource.data.clinicId == requesterClinicId();
-
-      allow update: if resource.data.professionalId == request.auth.uid
+      allow read: if request.auth != null
+        && requesterHasProfile()
         && resource.data.clinicId == requesterClinicId();
+
+      allow update: if request.auth != null
+        && requesterHasProfile()
+        && resource.data.professionalId == request.auth.uid
+        && resource.data.clinicId == requesterClinicId()
+        && request.resource.data.sessionNumber == resource.data.sessionNumber
+        && request.resource.data.clinicId == resource.data.clinicId
+        && request.resource.data.professionalId == resource.data.professionalId
+        && request.resource.data.createdAt == resource.data.createdAt;
 
       allow delete: if false;
     }

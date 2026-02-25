@@ -20,6 +20,8 @@ export interface Paciente {
   fechaIngreso?: string;
   fechaCreacion?: string;
   observaciones?: string;
+  zonaPrincipal?: string;
+  articulacionesSecundarias?: string[];
   num_sesiones?: number;
 }
 

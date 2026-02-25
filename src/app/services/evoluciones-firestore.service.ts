@@ -5,7 +5,9 @@ import {
   collection,
   collectionData,
   doc,
+  getDoc,
   getDocs,
+  limit,
   orderBy,
   query,
   serverTimestamp,
@@ -14,7 +16,9 @@ import {
 } from '@angular/fire/firestore';
 import { Observable, from, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
-import { Evolucion, EvolucionCreateInput } from '../models/evolucion.model';
+import { ArticulacionRom, Evolucion, EvolucionCreateInput } from '../models/evolucion.model';
+
+type EvolucionUpdateInput = Partial<Omit<Evolucion, 'id' | 'sessionNumber' | 'clinicId' | 'professionalId' | 'createdAt'>>;
 
 @Injectable({
   providedIn: 'root'
@@ -83,7 +87,8 @@ export class EvolucionesFirestoreService {
       collection(this.firestore, 'evoluciones'),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
-      orderBy('sessionNumber', 'desc')
+      orderBy('sessionNumber', 'desc'),
+      limit(1)
     );
 
     const snapshot = await getDocs(evolucionesQuery);
@@ -92,10 +97,59 @@ export class EvolucionesFirestoreService {
     return Number(ultimaSesion) + 1;
   }
 
-  async updateEvolucion(evolucionId: string, cambios: Partial<Evolucion>): Promise<void> {
+  async existsArticulacionEnOtrasEvoluciones(
+    patientId: string,
+    articulacion: string,
+    evolucionIdExcluir?: string
+  ): Promise<boolean> {
+    const user = this.authService.getCurrentUser();
+    if (!user) throw new Error('No autenticado');
+
+    const clinicId = await this.authService.getCurrentClinicId();
+    const evolucionesQuery = query(
+      collection(this.firestore, 'evoluciones'),
+      where('clinicId', '==', clinicId),
+      where('patientId', '==', patientId)
+    );
+
+    const snapshot = await getDocs(evolucionesQuery);
+
+    return snapshot.docs.some((snapshotDoc) => {
+      if (evolucionIdExcluir && snapshotDoc.id === evolucionIdExcluir) return false;
+      const data = snapshotDoc.data() as Partial<Evolucion>;
+      const rom = (data.rom || []) as ArticulacionRom[];
+      return rom.some((romArt) => romArt.articulacion === articulacion);
+    });
+  }
+
+  async updateEvolucion(evolucionId: string, cambios: EvolucionUpdateInput): Promise<void> {
     const evolucionDoc = doc(this.firestore, `evoluciones/${evolucionId}`);
+
+    const {
+      // inmutables por contrato de dominio
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      sessionNumber,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      clinicId,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      professionalId,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      createdAt,
+      ...safeChanges
+    } = cambios as Partial<Evolucion>;
+
+    const snap = await getDoc(evolucionDoc);
+    if (!snap.exists()) throw new Error('Evolución no encontrada');
+
+    const evolucionActual = snap.data() as Evolucion;
+
+    if ('zonaTratamiento' in safeChanges && evolucionActual.tipoEvolucion !== 'initial') {
+      console.warn('Intento bloqueado: zonaPrincipal/zonaTratamiento solo editable en evoluciones initial.');
+      delete safeChanges.zonaTratamiento;
+    }
+
     await updateDoc(evolucionDoc, {
-      ...cambios,
+      ...safeChanges,
       updatedAt: serverTimestamp()
     });
   }
