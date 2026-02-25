@@ -228,20 +228,43 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.form.controls.sleepQuality.setValue(valor);
   }
 
+  private regenerarRomPrincipal(articulacion: string): void {
+
+    // Limpiar completamente el FormArray ROM
+    while (this.romArray.length) {
+      this.romArray.removeAt(0);
+    }
+
+    // Generar nueva articulación limpia
+    this.agregarArticulacionARom(articulacion);
+  }
+
   async onZonaPrincipalChange(event: Event): Promise<void> {
+
     if (this.zonaPrincipalBloqueada) return;
 
     const zona = (event as CustomEvent).detail?.value as string;
-    this.form.controls.zonaTratamiento.setValue(zona || '');
-
     if (!zona) return;
 
-    if (!this.existeArticulacionEnRom(zona)) {
-      this.agregarArticulacionARom(zona);
+    this.form.controls.zonaTratamiento.setValue(zona);
+
+    const tipo = this.form.get('tipoEvolucion')?.value;
+
+    // 🔥 SOLO en evaluación inicial reemplazamos completamente el ROM
+    if (tipo === 'initial') {
+
+      this.regenerarRomPrincipal(zona);
+
+    } else {
+
+      // Comportamiento actual para otros casos
+      if (!this.existeArticulacionEnRom(zona)) {
+        this.agregarArticulacionARom(zona);
+      }
+
     }
 
     await this.persistirArticulacionesPaciente();
-    this.actualizarModulosColapsablesAbiertos();
   }
 
   async agregarArticulacionSeleccionada(): Promise<void> {
