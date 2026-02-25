@@ -28,7 +28,7 @@ export interface Evolucion {
   patientId: string;
   professionalId: string;
   tipoEvolucion: TipoEvolucion;
-  sessionNumber: number;
+  sessionNumber?: number | null;
   subjective: string;
   objective: string;
   assessment: string;
