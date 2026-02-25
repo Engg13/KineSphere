@@ -92,90 +92,200 @@
       </ion-item>
     </div>
 
-    <div class="section-card">
-      <div class="section-header">
-        <ion-icon name="hand-left-outline" class="section-icon"></ion-icon>
-        <h3>Técnicas Aplicadas</h3>
-      </div>
-      <p class="section-desc">Selecciona las técnicas utilizadas en esta evolución</p>
-
-      <div class="tecnicas-grid">
-        <button
-          type="button"
-          *ngFor="let tecnica of tecnicasDisponibles"
-          class="tecnica-chip"
-          [class.tecnica-activa]="tecnicaActiva(tecnica)"
-          (click)="toggleTecnica(tecnica)">
-          <ion-icon [name]="tecnicaActiva(tecnica) ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
-          <span>{{ tecnica }}</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="section-card">
-      <div class="section-header">
-        <ion-icon name="resize-outline" class="section-icon"></ion-icon>
-        <h3>ROM Multi-articulación</h3>
-      </div>
-      <p class="section-desc">Registra AROM/PROM, dolor y observación por movimiento.</p>
-
-      <div class="rom-add-row">
-        <ion-item lines="none" class="select-item add-artic-select">
-          <ion-select placeholder="Seleccionar articulación" [formControl]="articulacionNuevaControl">
-            <ion-select-option *ngFor="let art of articulacionesDisponiblesParaAgregar" [value]="art">{{ art }}</ion-select-option>
-          </ion-select>
+    <ion-accordion-group class="modulos-accordion" multiple="true" [value]="modulosColapsablesAbiertos">
+      <ion-accordion value="tecnicas">
+        <ion-item slot="header" lines="none" class="accordion-header-item">
+          <ion-icon name="hand-left-outline" class="section-icon"></ion-icon>
+          <ion-label>Técnicas Aplicadas</ion-label>
         </ion-item>
-        <button type="button" class="btn-crear-rutina add-artic-btn" (click)="agregarArticulacionSeleccionada()">
-          <ion-icon name="add-circle-outline"></ion-icon>
-          <span>Agregar articulación</span>
-        </button>
-      </div>
-
-      <div formArrayName="rom" class="rom-articulaciones" *ngIf="romArray.controls.length > 0">
-        <div class="rom-art-card" *ngFor="let artCtrl of romArray.controls; let i = index" [formGroupName]="i">
-          <div class="rom-art-header">
-            <h4>{{ artCtrl.controls['articulacion'].value }}</h4>
-            <button type="button" class="rom-remove-btn" (click)="eliminarArticulacion(i)">
-              <ion-icon name="trash-outline"></ion-icon>
-              <span>Eliminar</span>
-            </button>
-          </div>
-
-          <div formArrayName="movimientos" class="rom-movimientos">
-            <div class="rom-mov-card" *ngFor="let movCtrl of getMovimientosArray(i).controls; let j = index" [formGroupName]="j">
-              <div class="rom-mov-title-row">
-                <h5>{{ movCtrl.controls['movimiento'].value }}</h5>
-                <span class="optional-badge">{{ movCtrl.controls['unidad'].value }}</span>
-              </div>
-
-              <div class="rom-grid">
-                <div class="rom-block">
-                  <p class="rom-block-title">AROM</p>
-                  <ion-item lines="none" class="select-item">
-                    <ion-input type="number" formControlName="aromValor" placeholder="Valor"></ion-input>
-                  </ion-item>
-                  <ion-item lines="none" class="select-item">
-                    <ion-input type="number" min="0" max="10" formControlName="aromDolor" placeholder="Dolor 0-10"></ion-input>
-                  </ion-item>
-                </div>
-
-                <div class="rom-block">
-                  <p class="rom-block-title">PROM</p>
-                  <ion-item lines="none" class="select-item">
-                    <ion-input type="number" formControlName="promValor" placeholder="Valor"></ion-input>
-                  </ion-item>
-                  <ion-item lines="none" class="select-item">
-                    <ion-input type="number" min="0" max="10" formControlName="promDolor" placeholder="Dolor 0-10"></ion-input>
-                  </ion-item>
-                </div>
-              </div>
-
-              <textarea class="obs-textarea rom-obs" formControlName="observacion" rows="2" placeholder="Observación por movimiento"></textarea>
+        <div slot="content" class="accordion-content-wrap">
+          <div class="section-card accordion-section-card">
+            <p class="section-desc">Selecciona las técnicas utilizadas en esta evolución</p>
+            <div class="tecnicas-grid">
+              <button
+                type="button"
+                *ngFor="let tecnica of tecnicasDisponibles"
+                class="tecnica-chip"
+                [class.tecnica-activa]="tecnicaActiva(tecnica)"
+                (click)="toggleTecnica(tecnica)">
+                <ion-icon [name]="tecnicaActiva(tecnica) ? 'checkmark-circle' : 'add-circle-outline'"></ion-icon>
+                <span>{{ tecnica }}</span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </ion-accordion>
+
+      <ion-accordion value="rom">
+        <ion-item slot="header" lines="none" class="accordion-header-item">
+          <ion-icon name="resize-outline" class="section-icon"></ion-icon>
+          <ion-label>ROM Multi-articulación</ion-label>
+        </ion-item>
+        <div slot="content" class="accordion-content-wrap">
+          <div class="section-card accordion-section-card">
+            <p class="section-desc">Registra AROM/PROM, dolor y observación por movimiento.</p>
+
+            <div class="rom-add-row">
+              <ion-item lines="none" class="select-item add-artic-select">
+                <ion-select placeholder="Seleccionar articulación" [formControl]="articulacionNuevaControl">
+                  <ion-select-option *ngFor="let art of articulacionesDisponiblesParaAgregar" [value]="art">{{ art }}</ion-select-option>
+                </ion-select>
+              </ion-item>
+              <button type="button" class="btn-crear-rutina add-artic-btn" (click)="agregarArticulacionSeleccionada()">
+                <ion-icon name="add-circle-outline"></ion-icon>
+                <span>Agregar articulación</span>
+              </button>
+            </div>
+
+            <div formArrayName="rom" class="rom-articulaciones" *ngIf="romArray.controls.length > 0">
+              <div class="rom-art-card" *ngFor="let artCtrl of romArray.controls; let i = index" [formGroupName]="i">
+                <div class="rom-art-header">
+                  <h4>{{ artCtrl.controls['articulacion'].value }}</h4>
+                  <button type="button" class="rom-remove-btn" (click)="eliminarArticulacion(i)">
+                    <ion-icon name="trash-outline"></ion-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </div>
+
+                <div formArrayName="movimientos" class="rom-movimientos">
+                  <div class="rom-mov-card" *ngFor="let movCtrl of getMovimientosArray(i).controls; let j = index" [formGroupName]="j">
+                    <div class="rom-mov-title-row">
+                      <h5>{{ movCtrl.controls['movimiento'].value }}</h5>
+                      <span class="optional-badge">{{ movCtrl.controls['unidad'].value }}</span>
+                    </div>
+
+                    <div class="rom-grid">
+                      <div class="rom-block">
+                        <p class="rom-block-title">AROM</p>
+                        <ion-item lines="none" class="select-item">
+                          <ion-input type="number" formControlName="aromValor" placeholder="Valor"></ion-input>
+                        </ion-item>
+                        <ion-item lines="none" class="select-item">
+                          <ion-input type="number" min="0" max="10" formControlName="aromDolor" placeholder="Dolor 0-10"></ion-input>
+                        </ion-item>
+                      </div>
+
+                      <div class="rom-block">
+                        <p class="rom-block-title">PROM</p>
+                        <ion-item lines="none" class="select-item">
+                          <ion-input type="number" formControlName="promValor" placeholder="Valor"></ion-input>
+                        </ion-item>
+                        <ion-item lines="none" class="select-item">
+                          <ion-input type="number" min="0" max="10" formControlName="promDolor" placeholder="Dolor 0-10"></ion-input>
+                        </ion-item>
+                      </div>
+                    </div>
+
+                    <textarea class="obs-textarea rom-obs" formControlName="observacion" rows="2" placeholder="Observación por movimiento"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ion-accordion>
+
+      <ion-accordion value="fuerza">
+        <ion-item slot="header" lines="none" class="accordion-header-item">
+          <ion-icon name="barbell-outline" class="section-icon"></ion-icon>
+          <ion-label>Fuerza</ion-label>
+        </ion-item>
+        <div slot="content" class="accordion-content-wrap">
+          <div class="section-card accordion-section-card">
+            <p class="section-desc fuerza-placeholder">Módulo en desarrollo.</p>
+          </div>
+        </div>
+      </ion-accordion>
+
+      <ion-accordion value="rutina">
+        <ion-item slot="header" lines="none" class="accordion-header-item">
+          <ion-icon name="barbell-outline" class="section-icon"></ion-icon>
+          <ion-label>Rutina Asociada</ion-label>
+          <span class="optional-badge">Opcional</span>
+        </ion-item>
+        <div slot="content" class="accordion-content-wrap">
+          <div class="section-card accordion-section-card">
+            <p class="section-desc">Asociar una rutina de ejercicios a esta evolución</p>
+
+            <div *ngIf="rutinasDisponibles.length > 0">
+              <ion-item lines="none" class="select-item">
+                <ion-select placeholder="Seleccionar rutina..." interface="action-sheet" (ionChange)="seleccionarRutina($event)">
+                  <ion-select-option [value]="null">Ninguna</ion-select-option>
+                  <ion-select-option *ngFor="let r of rutinasDisponibles" [value]="r.id">
+                    {{ r.nombre }} ({{ r.ejercicios.length }} ej.)
+                  </ion-select-option>
+                </ion-select>
+              </ion-item>
+
+              <div *ngIf="rutinaSeleccionada" class="rutina-preview">
+                <div *ngFor="let ej of rutinaSeleccionada.ejercicios" class="rutina-preview-item">
+                  <span class="preview-letra">{{ ej.letra }}</span>
+                  <span class="preview-nombre">{{ ej.ejercicio.nombre }}</span>
+                  <span class="preview-series">{{ ej.series.length }}x{{ ej.series[0]?.repeticiones || '-' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="rutinasDisponibles.length === 0" class="rutina-empty-hint">
+              <p>No hay rutinas creadas para este paciente</p>
+            </div>
+
+            <button class="btn-crear-rutina" type="button" (click)="irACrearRutina()">
+              <ion-icon name="add-circle-outline"></ion-icon>
+              <span>Crear rutina para hoy</span>
+            </button>
+          </div>
+        </div>
+      </ion-accordion>
+
+      <ion-accordion value="test" *ngIf="testsDisponibles.length > 0">
+        <ion-item slot="header" lines="none" class="accordion-header-item">
+          <ion-icon name="clipboard-outline" class="section-icon"></ion-icon>
+          <ion-label>Test de Evaluación</ion-label>
+          <span class="optional-badge">Opcional</span>
+        </ion-item>
+        <div slot="content" class="accordion-content-wrap" [formGroup]="form.controls.test">
+          <div class="section-card accordion-section-card">
+            <ion-item lines="none" class="select-item">
+              <ion-select placeholder="Seleccionar test..." interface="action-sheet" (ionChange)="seleccionarTest($event)">
+                <ion-select-option [value]="null">Ninguno</ion-select-option>
+                <ion-select-option *ngFor="let t of testsDisponibles" [value]="t.id">{{ t.nombre }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <div *ngIf="testSeleccionado" class="test-preguntas">
+              <div *ngFor="let pregunta of testSeleccionado.preguntas; let i = index" class="test-pregunta-item">
+                <span class="pregunta-texto">{{ i + 1 }}. {{ pregunta.texto }}</span>
+                <div class="pregunta-range-row">
+                  <ion-range
+                    [value]="respuestasTest[i]"
+                    [min]="pregunta.puntajeMin"
+                    [max]="pregunta.puntajeMax"
+                    step="1"
+                    snaps="true"
+                    ticks="true"
+                    (ionChange)="actualizarRespuestaTest(i, $event)">
+                    <ion-label slot="start">{{ pregunta.puntajeMin }}</ion-label>
+                    <ion-label slot="end">{{ pregunta.puntajeMax }}</ion-label>
+                  </ion-range>
+                  <span class="pregunta-badge">{{ respuestasTest[i] || 0 }}</span>
+                </div>
+              </div>
+
+              <div class="test-resultado">
+                <div class="resultado-puntaje">
+                  <span class="resultado-label">Puntaje Total:</span>
+                  <span class="resultado-valor" [style.color]="getResultadoColor()">{{ form.controls.test.controls.puntajeTotal.value }}</span>
+                </div>
+                <div class="resultado-clasificacion" [style.color]="getResultadoColor()">
+                  {{ form.controls.test.controls.resultado.value }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ion-accordion>
+    </ion-accordion-group>
 
     <div class="section-card ejercicio-card">
       <div class="ejercicio-row">
@@ -187,88 +297,6 @@
           </div>
         </div>
         <ion-toggle formControlName="ejerciciosRealizados" color="success"></ion-toggle>
-      </div>
-    </div>
-
-    <div class="section-card">
-      <div class="section-header">
-        <ion-icon name="barbell-outline" class="section-icon"></ion-icon>
-        <h3>Rutina Asociada</h3>
-        <span class="optional-badge">Opcional</span>
-      </div>
-      <p class="section-desc">Asociar una rutina de ejercicios a esta evolución</p>
-
-      <div *ngIf="rutinasDisponibles.length > 0">
-        <ion-item lines="none" class="select-item">
-          <ion-select placeholder="Seleccionar rutina..." interface="action-sheet" (ionChange)="seleccionarRutina($event)">
-            <ion-select-option [value]="null">Ninguna</ion-select-option>
-            <ion-select-option *ngFor="let r of rutinasDisponibles" [value]="r.id">
-              {{ r.nombre }} ({{ r.ejercicios.length }} ej.)
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <div *ngIf="rutinaSeleccionada" class="rutina-preview">
-          <div *ngFor="let ej of rutinaSeleccionada.ejercicios" class="rutina-preview-item">
-            <span class="preview-letra">{{ ej.letra }}</span>
-            <span class="preview-nombre">{{ ej.ejercicio.nombre }}</span>
-            <span class="preview-series">{{ ej.series.length }}x{{ ej.series[0]?.repeticiones || '-' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="rutinasDisponibles.length === 0" class="rutina-empty-hint">
-        <p>No hay rutinas creadas para este paciente</p>
-      </div>
-
-      <button class="btn-crear-rutina" type="button" (click)="irACrearRutina()">
-        <ion-icon name="add-circle-outline"></ion-icon>
-        <span>Crear rutina para hoy</span>
-      </button>
-    </div>
-
-    <div class="section-card" *ngIf="testsDisponibles.length > 0" [formGroup]="form.controls.test">
-      <div class="section-header">
-        <ion-icon name="clipboard-outline" class="section-icon"></ion-icon>
-        <h3>Test de Evaluación</h3>
-        <span class="optional-badge">Opcional</span>
-      </div>
-
-      <ion-item lines="none" class="select-item">
-        <ion-select placeholder="Seleccionar test..." interface="action-sheet" (ionChange)="seleccionarTest($event)">
-          <ion-select-option [value]="null">Ninguno</ion-select-option>
-          <ion-select-option *ngFor="let t of testsDisponibles" [value]="t.id">{{ t.nombre }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-
-      <div *ngIf="testSeleccionado" class="test-preguntas">
-        <div *ngFor="let pregunta of testSeleccionado.preguntas; let i = index" class="test-pregunta-item">
-          <span class="pregunta-texto">{{ i + 1 }}. {{ pregunta.texto }}</span>
-          <div class="pregunta-range-row">
-            <ion-range
-              [value]="respuestasTest[i]"
-              [min]="pregunta.puntajeMin"
-              [max]="pregunta.puntajeMax"
-              step="1"
-              snaps="true"
-              ticks="true"
-              (ionChange)="actualizarRespuestaTest(i, $event)">
-              <ion-label slot="start">{{ pregunta.puntajeMin }}</ion-label>
-              <ion-label slot="end">{{ pregunta.puntajeMax }}</ion-label>
-            </ion-range>
-            <span class="pregunta-badge">{{ respuestasTest[i] || 0 }}</span>
-          </div>
-        </div>
-
-        <div class="test-resultado">
-          <div class="resultado-puntaje">
-            <span class="resultado-label">Puntaje Total:</span>
-            <span class="resultado-valor" [style.color]="getResultadoColor()">{{ form.controls.test.controls.puntajeTotal.value }}</span>
-          </div>
-          <div class="resultado-clasificacion" [style.color]="getResultadoColor()">
-            {{ form.controls.test.controls.resultado.value }}
-          </div>
-        </div>
       </div>
     </div>
 

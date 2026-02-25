@@ -676,3 +676,43 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ===== ACCORDION MODULOS ===== */
+.modulos-accordion {
+  display: block;
+  margin-bottom: 14px;
+
+  ion-accordion {
+    margin-bottom: 10px;
+  }
+}
+
+.accordion-header-item {
+  --background: #ffffff;
+  --color: #1f2937;
+  --min-height: 56px;
+  border-radius: 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  ion-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+}
+
+.accordion-content-wrap {
+  padding-bottom: 4px;
+}
+
+.accordion-section-card {
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.fuerza-placeholder {
+  margin: 0;
+  font-weight: 600;
+  color: #6b7280;
+}

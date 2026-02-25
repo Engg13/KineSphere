@@ -50,6 +50,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   numeroSesion = 1;
   sesionesPlanificadas = 10;
   guardando = false;
+  modulosColapsablesAbiertos: string[] = [];
 
   rutinasDisponibles: any[] = [];
   rutinaSeleccionada: any = null;
@@ -155,6 +156,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     ]);
 
     this.cargarRutinasDisponibles();
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   async cargarDatosPaciente(): Promise<void> {
@@ -215,6 +217,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     const existe = actuales.includes(tecnica);
     const nuevas = existe ? actuales.filter((t) => t !== tecnica) : [...actuales, tecnica];
     this.form.controls.tecnicasAplicadas.setValue(nuevas);
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   tecnicaActiva(tecnica: string): boolean {
@@ -238,6 +241,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     }
 
     await this.persistirArticulacionesPaciente();
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   async agregarArticulacionSeleccionada(): Promise<void> {
@@ -252,6 +256,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.agregarArticulacionARom(articulacionNueva);
     this.articulacionNuevaControl.setValue(null);
     await this.persistirArticulacionesPaciente();
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   async eliminarArticulacion(index: number): Promise<void> {
@@ -265,6 +270,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     }
 
     await this.persistirArticulacionPacienteConVerificacion(articulacion);
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   private async persistirArticulacionPacienteConVerificacion(articulacion: string): Promise<void> {
@@ -281,6 +287,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     }
 
     await this.persistirArticulacionesPaciente();
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   private existeArticulacionEnRom(articulacion: string): boolean {
@@ -371,6 +378,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
       rutinaId: this.rutinaSeleccionada?.id || null,
       rutinaNombre: this.rutinaSeleccionada?.nombre || ''
     });
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   seleccionarTest(event: Event): void {
@@ -385,11 +393,13 @@ export class EvolucionPage implements OnInit, OnDestroy {
         puntajeTotal: 0,
         resultado: ''
       });
+      this.actualizarModulosColapsablesAbiertos();
       return;
     }
 
     this.respuestasTest = this.testSeleccionado.preguntas.map(() => 0);
     this.calcularPuntajeTest();
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   actualizarRespuestaTest(index: number, event: Event): void {
@@ -411,12 +421,48 @@ export class EvolucionPage implements OnInit, OnDestroy {
       puntajeTotal,
       resultado: rango?.nombre || 'Sin clasificación'
     });
+    this.actualizarModulosColapsablesAbiertos();
   }
 
   getResultadoColor(): string {
     const puntaje = this.form.controls.test.controls.puntajeTotal.value;
     const rango = this.testSeleccionado?.rangos.find((r) => puntaje >= r.min && puntaje <= r.max);
     return rango?.color || '#6b7280';
+  }
+
+
+  private tieneDatosRom(): boolean {
+    return this.romArray.controls.some((artCtrl) => {
+      const movimientosArray = artCtrl.controls['movimientos'] as FormArray<FormGroup>;
+      return movimientosArray.controls.some((movCtrl) =>
+        (movCtrl.controls['aromValor'].value ?? null) !== null ||
+        (movCtrl.controls['promValor'].value ?? null) !== null ||
+        !!(movCtrl.controls['observacion'].value || '').trim()
+      );
+    });
+  }
+
+  private tieneDatosTecnicas(): boolean {
+    return (this.form.controls.tecnicasAplicadas.value || []).length > 0;
+  }
+
+  private tieneDatosRutina(): boolean {
+    return !!this.form.controls.rutinaId.value;
+  }
+
+  private tieneDatosTest(): boolean {
+    return !!this.form.controls.test.controls.testId.value;
+  }
+
+  private actualizarModulosColapsablesAbiertos(): void {
+    const abiertos: string[] = [];
+
+    if (this.tieneDatosRom()) abiertos.push('rom');
+    if (this.tieneDatosTecnicas()) abiertos.push('tecnicas');
+    if (this.tieneDatosTest()) abiertos.push('test');
+    if (this.tieneDatosRutina()) abiertos.push('rutina');
+
+    this.modulosColapsablesAbiertos = abiertos;
   }
 
   async guardarEvolucion(): Promise<void> {
@@ -432,6 +478,15 @@ export class EvolucionPage implements OnInit, OnDestroy {
     }
 
     const value = this.form.getRawValue();
+
+    if (value.tipoEvolucion === 'progress') {
+      const existeInitial = await this.evolucionesService.existeEvaluacionInicial(this.patientId);
+      if (!existeInitial) {
+        await this.mostrarToast('Primero debes registrar una evaluación inicial para este paciente.', 'warning');
+        return;
+      }
+    }
+
     const testValue = value.test;
     const romPayload = this.sanitizarRom(this.construirRomPayload());
 
@@ -467,7 +522,10 @@ export class EvolucionPage implements OnInit, OnDestroy {
       this.volver();
     } catch (error) {
       console.error('Error guardando evolución:', error);
-      await this.mostrarToast('No se pudo guardar la evolución.', 'danger');
+      const message = error instanceof Error && error.message.includes('evaluación inicial')
+        ? 'Primero debes registrar una evaluación inicial para este paciente.'
+        : 'No se pudo guardar la evolución.';
+      await this.mostrarToast(message, 'danger');
     } finally {
       this.guardando = false;
     }
@@ -489,6 +547,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     if (data?.rutinaCreada) {
       this.cargarRutinasDisponibles();
+      this.actualizarModulosColapsablesAbiertos();
       await this.mostrarToast('Rutinas actualizadas.', 'success');
     }
   }
@@ -527,10 +586,10 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   private setupZonaPrincipalLock(): void {
-  this.form.get('tipoEvolucion')?.valueChanges.subscribe(tipo => {
-    this.applyZonaLock(tipo);
-  });
-}
+    this.form.get('tipoEvolucion')?.valueChanges.subscribe((tipo) => {
+      this.applyZonaLock(tipo);
+    });
+  }
 
   private applyZonaLock(tipo: TipoEvolucion | null): void {
     const zonaControl = this.form.get('zonaTratamiento');

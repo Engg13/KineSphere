@@ -31,6 +31,14 @@ export class EvolucionesFirestoreService {
     if (!user) throw new Error('No autenticado');
 
     const clinicId = await this.authService.getCurrentClinicId();
+
+    if (payload.tipoEvolucion === 'progress') {
+      const existeInitial = await this.existeEvaluacionInicial(payload.patientId);
+      if (!existeInitial) {
+        throw new Error('No se puede crear una evolución de progreso sin evaluación inicial.');
+      }
+    }
+
     const sessionNumber = await this.getNextSessionNumber(payload.patientId);
 
     const evolucionRef = await addDoc(collection(this.firestore, 'evoluciones'), {
@@ -57,6 +65,23 @@ export class EvolucionesFirestoreService {
     });
 
     return evolucionRef.id;
+  }
+
+  async existeEvaluacionInicial(patientId: string): Promise<boolean> {
+    const user = this.authService.getCurrentUser();
+    if (!user) throw new Error('No autenticado');
+
+    const clinicId = await this.authService.getCurrentClinicId();
+    const evolucionesQuery = query(
+      collection(this.firestore, 'evoluciones'),
+      where('clinicId', '==', clinicId),
+      where('patientId', '==', patientId),
+      where('tipoEvolucion', '==', 'initial'),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(evolucionesQuery);
+    return !snapshot.empty;
   }
 
   getEvolucionesByPacienteRealtime(patientId: string): Observable<Evolucion[]> {
