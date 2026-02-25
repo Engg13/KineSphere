@@ -39,7 +39,11 @@ export class EvolucionesFirestoreService {
       }
     }
 
-    const sessionNumber = await this.getNextSessionNumber(payload.patientId);
+    let sessionNumber: number | null = null;
+
+    if (payload.tipoEvolucion === 'progress') {
+      sessionNumber = await this.getNextSessionNumber(payload.patientId);
+    }
 
     const evolucionRef = await addDoc(collection(this.firestore, 'evoluciones'), {
       clinicId,
@@ -94,7 +98,7 @@ export class EvolucionesFirestoreService {
           collection(this.firestore, 'evoluciones'),
           where('clinicId', '==', clinicId),
           where('patientId', '==', patientId),
-          orderBy('sessionNumber', 'desc')
+          orderBy('createdAt', 'desc')
         );
 
         return collectionData(evolucionesQuery, { idField: 'id' }) as Observable<Evolucion[]>;
@@ -111,6 +115,7 @@ export class EvolucionesFirestoreService {
       collection(this.firestore, 'evoluciones'),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
+      where('tipoEvolucion', '==', 'progress'),
       orderBy('sessionNumber', 'desc'),
       limit(1)
     );

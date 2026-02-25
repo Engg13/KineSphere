@@ -5,11 +5,11 @@
         <ion-icon name="arrow-back"></ion-icon>
       </button>
       <div class="hero-info">
-        <h1 class="hero-title">Evolución {{ numeroSesion }}</h1>
+        <h1 class="hero-title">{{ heroTitulo }}</h1>
         <p class="hero-patient">{{ pacienteNombre }}</p>
         <p class="hero-diagnosis" *ngIf="pacienteDiagnostico">{{ pacienteDiagnostico }}</p>
       </div>
-      <div class="session-progress">
+      <div class="session-progress" *ngIf="esTipoProgress">
         <div class="progress-circle">
           <span class="progress-num">{{ numeroSesion }}</span>
           <span class="progress-total">/{{ sesionesPlanificadas }}</span>

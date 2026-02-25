@@ -124,6 +124,18 @@ export class EvolucionPage implements OnInit, OnDestroy {
     return this.form.controls.tipoEvolucion.value !== 'initial';
   }
 
+  get esTipoProgress(): boolean {
+    return this.form.controls.tipoEvolucion.value === 'progress';
+  }
+
+  get heroTitulo(): string {
+    const tipo = this.form.controls.tipoEvolucion.value;
+
+    if (tipo === 'initial') return 'Evaluación Inicial';
+    if (tipo === 'discharge') return 'Evaluación de Alta';
+    return `Sesión ${this.numeroSesion}`;
+  }
+
   ngOnInit(): void {
 
     const params = this.route.snapshot.queryParamMap;
@@ -184,7 +196,15 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
   async cargarNumeroSesion(): Promise<void> {
     if (!this.patientId) return;
-    this.numeroSesion = await this.evolucionesService.getNextSessionNumber(this.patientId);
+
+    const tipo = this.form.controls.tipoEvolucion.value;
+
+    if (tipo === 'progress') {
+      this.numeroSesion = await this.evolucionesService.getNextSessionNumber(this.patientId);
+      return;
+    }
+
+    this.numeroSesion = 0;
   }
 
   cargarRutinasDisponibles(): void {
@@ -201,7 +221,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.testsDisponibles = await this.testTemplatesService.getTests();
   }
 
-  onTipoEvolucionChange(event: Event): void {
+  async onTipoEvolucionChange(event: Event): Promise<void> {
     const tipo = (event as CustomEvent).detail?.value as TipoEvolucion;
     this.form.controls.tipoEvolucion.setValue(tipo);
 
@@ -210,6 +230,8 @@ export class EvolucionPage implements OnInit, OnDestroy {
     } else {
       this.form.controls.zonaTratamiento.enable({ emitEvent: false });
     }
+
+    await this.cargarNumeroSesion();
   }
 
   toggleTecnica(tecnica: string): void {
