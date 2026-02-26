@@ -90,8 +90,12 @@ export class PacienteDetallePage implements OnDestroy {
       if (paciente) {
         this.paciente = paciente;
         this.verificarYCorregirEdad();
-        this.cargarHistorialSesiones(id);
-        this.cargarRutinasCompletadas(id);
+
+        const pacienteIdReal = paciente.id ?? paciente.pacienteId;
+
+        
+        this.cargarHistorialSesiones(pacienteIdReal);
+        this.cargarRutinasCompletadas(pacienteIdReal);
       } else {
         this.paciente = null;
       }
