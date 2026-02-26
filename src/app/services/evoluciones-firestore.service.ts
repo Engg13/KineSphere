@@ -39,9 +39,51 @@ export class EvolucionesFirestoreService {
       }
     }
 
-    const sessionNumber = payload.tipoEvolucion === 'progress'
-      ? (await this.getNextSessionNumber(payload.patientId)) ?? null
-      : null;
+    const sessionNumber =
+      payload.tipoEvolucion === 'progress'
+        ? (await this.getNextSessionNumber(payload.patientId)) ?? null
+        : null;
+
+    // 🔐 Sanitización profunda de ROM según tu modelo tipado
+    const romSanitizado = Array.isArray(payload.rom)
+      ? payload.rom.map((art) => ({
+          articulacion: art.articulacion,
+          movimientos: Array.isArray(art.movimientos)
+            ? art.movimientos.map((mov) => {
+                const entry: any = {
+                  movimiento: mov.movimiento,
+                  unidad: 'grados'
+                };
+
+                if (mov.arom) {
+                  entry.arom = {
+                    valor: mov.arom.valor ?? null
+                  };
+
+                  if (mov.arom.dolor != null) {
+                    entry.arom.dolor = mov.arom.dolor;
+                  }
+                }
+
+                if (mov.prom) {
+                  entry.prom = {
+                    valor: mov.prom.valor ?? null
+                  };
+
+                  if (mov.prom.dolor != null) {
+                    entry.prom.dolor = mov.prom.dolor;
+                  }
+                }
+
+                if (mov.observacion) {
+                  entry.observacion = mov.observacion;
+                }
+
+                return entry;
+              })
+            : []
+        }))
+      : [];
 
     const evolucionRef = await addDoc(collection(this.firestore, 'evoluciones'), {
       clinicId,
@@ -58,10 +100,14 @@ export class EvolucionesFirestoreService {
       painScale: payload.painScale ?? null,
       sleepQuality: payload.sleepQuality ?? null,
 
-      rom: payload.rom ?? null,
+      rom: romSanitizado,
       zonaTratamiento: payload.zonaTratamiento ?? null,
-      tecnicasAplicadas: payload.tecnicasAplicadas ?? [],
-      ejerciciosRealizados: payload.ejerciciosRealizados ?? [],
+      tecnicasAplicadas: Array.isArray(payload.tecnicasAplicadas)
+        ? payload.tecnicasAplicadas
+        : [],
+
+      // 🔥 CORRECCIÓN: es boolean, no array
+      ejerciciosRealizados: payload.ejerciciosRealizados ?? false,
 
       rutinaId: payload.rutinaId ?? null,
       rutinaNombre: payload.rutinaNombre ?? null,
