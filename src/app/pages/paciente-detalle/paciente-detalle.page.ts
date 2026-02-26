@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
 import { RutinaEjercicios } from '../../models/interfaces';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
+import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -24,12 +25,14 @@ export class PacienteDetallePage implements OnDestroy {
   fechaActual = new Date().toISOString();
 
   private rutinasSub?: Subscription;
+  private evolucionesSub?: Subscription;
 
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
     private databaseService: DatabaseService,
-    private rutinasService: RutinasFirestoreService
+    private rutinasService: RutinasFirestoreService,
+    private evolucionesService: EvolucionesFirestoreService
   ) {}
 
   // ==============================
@@ -64,6 +67,11 @@ export class PacienteDetallePage implements OnDestroy {
       this.rutinasSub.unsubscribe();
       this.rutinasSub = undefined;
     }
+
+    if (this.evolucionesSub) {
+      this.evolucionesSub.unsubscribe();
+      this.evolucionesSub = undefined;
+    }
   }
 
   // ==============================
@@ -82,7 +90,7 @@ export class PacienteDetallePage implements OnDestroy {
       if (paciente) {
         this.paciente = paciente;
         this.verificarYCorregirEdad();
-        await this.cargarHistorialSesiones(id);
+        this.cargarHistorialSesiones(id);
         this.cargarRutinasCompletadas(id);
       } else {
         this.paciente = null;
@@ -125,19 +133,27 @@ export class PacienteDetallePage implements OnDestroy {
   // 📅 HISTORIAL SESIONES
   // ==============================
 
-  private async cargarHistorialSesiones(pacienteId: string) {
-    try {
-      const sesiones = await this.databaseService.getSesionesByPaciente(pacienteId);
-      this.historialSesiones = sesiones || [];
-
-      if (this.paciente) {
-        this.paciente.sesionesCompletadas = this.historialSesiones.length;
-      }
-
-    } catch (error) {
-      console.error('Error cargando historial:', error);
-      this.historialSesiones = [];
+  private cargarHistorialSesiones(pacienteId: string) {
+    if (this.evolucionesSub) {
+      this.evolucionesSub.unsubscribe();
     }
+
+    this.evolucionesSub = this.evolucionesService
+      .getEvolucionesByPacienteRealtime(pacienteId)
+      .subscribe({
+        next: (evoluciones) => {
+          this.historialSesiones = evoluciones || [];
+
+          if (this.paciente) {
+            this.paciente.sesionesCompletadas =
+              evoluciones.filter(e => e.tipoEvolucion === 'progress').length;
+          }
+        },
+        error: (error) => {
+          console.error('Error cargando historial:', error);
+          this.historialSesiones = [];
+        }
+      });
   }
 
   // ==============================
