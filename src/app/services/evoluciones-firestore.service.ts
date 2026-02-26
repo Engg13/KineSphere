@@ -48,20 +48,25 @@ export class EvolucionesFirestoreService {
       patientId: payload.patientId,
       professionalId: user.uid,
       tipoEvolucion: payload.tipoEvolucion,
-      sessionNumber,
-      subjective: payload.subjective,
-      objective: payload.objective,
-      assessment: payload.assessment,
-      plan: payload.plan,
-      painScale: payload.painScale,
-      sleepQuality: payload.sleepQuality,
-      rom: payload.rom,
-      zonaTratamiento: payload.zonaTratamiento,
-      tecnicasAplicadas: payload.tecnicasAplicadas,
-      ejerciciosRealizados: payload.ejerciciosRealizados,
-      rutinaId: payload.rutinaId || null,
-      rutinaNombre: payload.rutinaNombre || null,
-      test: payload.test || null,
+      sessionNumber: sessionNumber ?? null,
+
+      subjective: payload.subjective ?? '',
+      objective: payload.objective ?? '',
+      assessment: payload.assessment ?? '',
+      plan: payload.plan ?? '',
+
+      painScale: payload.painScale ?? null,
+      sleepQuality: payload.sleepQuality ?? null,
+
+      rom: payload.rom ?? null,
+      zonaTratamiento: payload.zonaTratamiento ?? null,
+      tecnicasAplicadas: payload.tecnicasAplicadas ?? [],
+      ejerciciosRealizados: payload.ejerciciosRealizados ?? [],
+
+      rutinaId: payload.rutinaId ?? null,
+      rutinaNombre: payload.rutinaNombre ?? null,
+      test: payload.test ?? null,
+
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
