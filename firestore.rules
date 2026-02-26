@@ -29,33 +29,33 @@ service cloud.firestore {
         requesterUserDoc().role == 'admin';
     }
 
-    function hasClinicAndProfesional(data) {
-      return data.keys().hasAll(['clinicId', 'profesionalId']);
+    function hasClinicAndProfessional(data) {
+      return data.keys().hasAll(['clinicId', 'professionalId']);
     }
 
     function canAccessClinicalDoc(data) {
       return isAdmin() || (
-        hasClinicAndProfesional(data) &&
+        hasClinicAndProfessional(data) &&
         data.clinicId == requesterClinicId() &&
-        data.profesionalId == request.auth.uid
+        data.professionalId == request.auth.uid
       );
     }
 
     function isValidClinicalCreate(data) {
       return requesterHasProfile() &&
-        hasClinicAndProfesional(data) &&
+        hasClinicAndProfessional(data) &&
         data.clinicId == requesterClinicId() &&
-        (isAdmin() || data.profesionalId == request.auth.uid);
+        (isAdmin() || data.professionalId == request.auth.uid);
     }
 
     function isValidClinicalUpdate() {
       return requesterHasProfile() && (
         isAdmin() || (
-        hasClinicAndProfesional(resource.data) &&
+        hasClinicAndProfessional(resource.data) &&
         resource.data.clinicId == requesterClinicId() &&
-        resource.data.profesionalId == request.auth.uid &&
+        resource.data.professionalId == request.auth.uid &&
         request.resource.data.clinicId == resource.data.clinicId &&
-        request.resource.data.profesionalId == resource.data.profesionalId
+        request.resource.data.professionalId == resource.data.professionalId
       ));
     }
 
