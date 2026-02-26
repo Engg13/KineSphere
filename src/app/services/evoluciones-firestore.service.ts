@@ -39,11 +39,9 @@ export class EvolucionesFirestoreService {
       }
     }
 
-    let sessionNumber: number | null = null;
-
-    if (payload.tipoEvolucion === 'progress') {
-      sessionNumber = await this.getNextSessionNumber(payload.patientId);
-    }
+    const sessionNumber = payload.tipoEvolucion === 'progress'
+      ? (await this.getNextSessionNumber(payload.patientId)) ?? null
+      : null;
 
     const evolucionRef = await addDoc(collection(this.firestore, 'evoluciones'), {
       clinicId,
