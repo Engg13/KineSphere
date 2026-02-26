@@ -145,15 +145,23 @@
         <h3 class="section-title">Historial de Sesiones</h3>
 
         @if (historialSesiones.length > 0) {
-          @for (sesion of historialSesiones; track sesion.id || $index; let i = $index) {
+          @for (sesion of historialSesiones; track sesion.id || $index) {
             <div class="session-item-wrapper">
               <div class="session-item clickable" (click)="toggleSesionExpandida(sesion.id)">
-                <div class="session-number">{{ sesion.numero_sesion || (historialSesiones.length - i) }}</div>
+                <div class="session-number">
+                  @if (sesion.tipoEvolucion === 'initial') {
+                    I
+                  } @else if (sesion.tipoEvolucion === 'discharge') {
+                    A
+                  } @else {
+                    {{ sesion.sessionNumber }}
+                  }
+                </div>
                 <div class="session-info">
-                  <span class="session-date">{{ sesion.fecha || 'Sin fecha' }}</span>
-                  <span class="session-eva">EVA: {{ sesion.eva ?? sesion.nivel_dolor ?? '-' }}/10</span>
-                  @if (sesion.observaciones && !isSesionExpandida(sesion.id)) {
-                    <span class="session-obs">{{ sesion.observaciones }}</span>
+                  <span class="session-date">{{ formatearFecha(sesion.createdAt) }}</span>
+                  <span class="session-eva">EVA: {{ sesion.painScale ?? '-' }}/10</span>
+                  @if (sesion.subjective && !isSesionExpandida(sesion.id)) {
+                    <span class="session-obs">{{ sesion.subjective }}</span>
                   }
                 </div>
                 <ion-icon [name]="isSesionExpandida(sesion.id) ? 'chevron-up-outline' : 'chevron-down-outline'" class="session-expand-icon"></ion-icon>
@@ -162,26 +170,26 @@
               <!-- DETALLE EXPANDIDO -->
               @if (isSesionExpandida(sesion.id)) {
                 <div class="session-detail">
-                  @if (sesion.zona_tratamiento) {
+                  @if (sesion.zonaTratamiento) {
                     <div class="detail-row">
                       <ion-icon name="body-outline"></ion-icon>
                       <span class="detail-label">Zona:</span>
-                      <span class="detail-value">{{ sesion.zona_tratamiento }}</span>
+                      <span class="detail-value">{{ sesion.zonaTratamiento }}</span>
                     </div>
                   }
-                  @if (sesion.sueno || sesion.calidad_sueno) {
+                  @if (sesion.sleepQuality) {
                     <div class="detail-row">
                       <ion-icon name="moon-outline"></ion-icon>
                       <span class="detail-label">Sueno:</span>
-                      <span class="detail-value">{{ sesion.sueno ?? sesion.calidad_sueno }}/5</span>
+                      <span class="detail-value">{{ sesion.sleepQuality }}/5</span>
                     </div>
                   }
-                  @if (sesion.tecnicas_aplicadas?.length > 0) {
+                  @if (sesion.tecnicasAplicadas?.length > 0) {
                     <div class="detail-row detail-row-wrap">
                       <ion-icon name="hand-left-outline"></ion-icon>
                       <span class="detail-label">Tecnicas:</span>
                       <div class="detail-chips">
-                        @for (tec of sesion.tecnicas_aplicadas; track tec) {
+                        @for (tec of sesion.tecnicasAplicadas; track tec) {
                           <span class="detail-chip">{{ tec }}</span>
                         }
                       </div>
@@ -218,18 +226,18 @@
                       </div>
                     }
                   }
-                  @if (sesion.observaciones) {
+                  @if (sesion.subjective) {
                     <div class="detail-row detail-row-block">
                       <ion-icon name="document-text-outline"></ion-icon>
                       <span class="detail-label">Observaciones:</span>
-                      <p class="detail-text">{{ sesion.observaciones }}</p>
+                      <p class="detail-text">{{ sesion.subjective }}</p>
                     </div>
                   }
-                  @if (sesion.objetivo_proxima) {
+                  @if (sesion.plan) {
                     <div class="detail-row detail-row-block">
                       <ion-icon name="flag-outline"></ion-icon>
                       <span class="detail-label">Objetivo proxima:</span>
-                      <p class="detail-text">{{ sesion.objetivo_proxima }}</p>
+                      <p class="detail-text">{{ sesion.plan }}</p>
                     </div>
                   }
                   @if (sesion.test) {
