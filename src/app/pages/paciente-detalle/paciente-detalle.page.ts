@@ -1,11 +1,12 @@
 import { Component, OnDestroy } from '@angular/core';
-import { NavController, IonicModule } from '@ionic/angular';
+import { AlertController, NavController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
 import { RutinaEjercicios } from '../../models/interfaces';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { Subscription } from 'rxjs';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-paciente-detalle',
@@ -22,7 +23,9 @@ export class PacienteDetallePage implements OnDestroy {
   rutinasCompletadas: RutinaEjercicios[] = [];
   sesionesExpandidas: Set<string | number> = new Set();
   pacienteId: string = '';
-  fechaActual = new Date().toISOString();
+  fechaActual = new Date;
+  esAdmin: boolean = false;
+  historialVisual: any[] = [];
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
@@ -32,7 +35,9 @@ export class PacienteDetallePage implements OnDestroy {
     private route: ActivatedRoute,
     private databaseService: DatabaseService,
     private rutinasService: RutinasFirestoreService,
-    private evolucionesService: EvolucionesFirestoreService
+    private evolucionesService: EvolucionesFirestoreService,
+    private alertCtrl: AlertController,
+    private authService: AuthService 
   ) {}
 
   // ==============================
@@ -40,6 +45,10 @@ export class PacienteDetallePage implements OnDestroy {
   // ==============================
 
   async ionViewDidEnter() {
+
+    await this.authService.refreshRole();
+    this.esAdmin = this.authService.isAdmin();
+
     const queryId = this.route.snapshot.queryParamMap.get('pacienteId')
       || this.route.snapshot.queryParamMap.get('id');
 
@@ -148,11 +157,40 @@ export class PacienteDetallePage implements OnDestroy {
       .getEvolucionesByPacienteRealtime(pacienteId)
       .subscribe({
         next: (evoluciones) => {
+
           this.historialSesiones = evoluciones || [];
 
+          let contadorProgress = 0;
+
+          this.historialVisual = this.historialSesiones.map(e => {
+
+            if (e.tipoEvolucion === 'progress') {
+              contadorProgress++;
+              return {
+                ...e,
+                numeroVisual: contadorProgress
+              };
+            }
+
+            if (e.tipoEvolucion === 'initial') {
+              return {
+                ...e,
+                numeroVisual: 'E'
+              };
+            }
+
+            if (e.tipoEvolucion === 'discharge') {
+              return {
+                ...e,
+                numeroVisual: 'A'
+              };
+            }
+
+            return e;
+          });
+
           if (this.paciente) {
-            this.paciente.sesionesCompletadas =
-              evoluciones.filter(e => e.tipoEvolucion === 'progress').length;
+            this.paciente.sesionesCompletadas = contadorProgress;
           }
         },
         error: (error) => {
@@ -232,30 +270,33 @@ export class PacienteDetallePage implements OnDestroy {
   formatearFecha(fechaInput: any): string {
     if (!fechaInput) return 'No registrada';
 
-    let fecha: Date;
-
-    // 🔥 Si es Timestamp de Firebase
+    // Firestore Timestamp
     if (fechaInput?.toDate) {
-      fecha = fechaInput.toDate();
+      return fechaInput.toDate().toLocaleDateString('es-CL');
     }
+
     // Si ya es Date
-    else if (fechaInput instanceof Date) {
-      fecha = fechaInput;
-    }
-    // Si es string
-    else {
-      fecha = new Date(fechaInput);
+    if (fechaInput instanceof Date) {
+      return fechaInput.toLocaleDateString('es-CL');
     }
 
-    if (isNaN(fecha.getTime())) return 'Fecha inválida';
+    // Si es string formato DD-MM-YYYY o DD/MM/YYYY
+    if (typeof fechaInput === 'string') {
+      const partes = fechaInput.split(/[-\/]/);
+      if (partes.length === 3) {
+        const [dia, mes, anio] = partes;
+        const fecha = new Date(Number(anio), Number(mes) - 1, Number(dia));
+        return fecha.toLocaleDateString('es-CL');
+      }
 
-    return fecha.toLocaleDateString('es-CL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+      const fecha = new Date(fechaInput);
+      if (!isNaN(fecha.getTime())) {
+        return fecha.toLocaleDateString('es-CL');
+      }
+    }
+
+    return 'No registrada';
   }
-
   // ==============================
   // 🧭 NAVEGACIÓN
   // ==============================
@@ -321,5 +362,56 @@ export class PacienteDetallePage implements OnDestroy {
     if (!this.paciente?.email) return;
     window.open(`mailto:${this.paciente.email}`, '_system');
   }
-  
+
+  async confirmarEliminacion(evolucionId: string) {
+    const alert = await this.alertCtrl.create({
+      header: 'Eliminar evolución',
+      message: 'Esta acción la quitará del historial. ¿Desea continuar?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              await this.evolucionesService.softDeleteEvolucion(evolucionId);
+            } catch (error) {
+              console.error('Error eliminando evolución:', error);
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async confirmarHardDelete(evolucionId: string) {
+    const alert = await this.alertCtrl.create({
+      header: 'Eliminar definitivamente',
+      message: 'Esta acción eliminará permanentemente la evolución. No se puede deshacer.',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'Eliminar definitivamente',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              await this.evolucionesService.hardDeleteEvolucion(evolucionId);
+            } catch (error) {
+              console.error('Error eliminando definitivamente:', error);
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
 }

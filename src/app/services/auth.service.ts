@@ -146,4 +146,12 @@ export class AuthService {
       message: 'Cambio de contraseña requiere reautenticación'
     };
   }
+
+  async refreshRole(): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) return;
+
+    const role = await this.getUserRole(user.uid);
+    this.currentRole = role;
+  }
 }

@@ -163,17 +163,24 @@ export class EvolucionesFirestoreService {
     if (!user) throw new Error('No autenticado');
 
     const clinicId = await this.authService.getCurrentClinicId();
+
     const evolucionesQuery = query(
       collection(this.firestore, 'evoluciones'),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
       where('tipoEvolucion', '==', 'progress'),
+      where('activo', '==', true),   // 👈 AGREGAR ESTO
       orderBy('sessionNumber', 'desc'),
       limit(1)
     );
 
     const snapshot = await getDocs(evolucionesQuery);
-    const ultimaSesion = snapshot.docs[0]?.data()?.['sessionNumber'] || 0;
+
+    if (snapshot.empty) {
+      return 1;   // 👈 Si no hay ninguna activa, empieza en 1
+    }
+
+    const ultimaSesion = snapshot.docs[0].data()['sessionNumber'] || 0;
 
     return Number(ultimaSesion) + 1;
   }

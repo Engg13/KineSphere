@@ -145,49 +145,72 @@
         <h3 class="section-title">Historial de Sesiones</h3>
 
         @if (historialSesiones.length > 0) {
-          @for (sesion of historialSesiones; track sesion.id || $index) {
+
+          @for (sesion of historialVisual; track sesion.id || $index) {
+
             <div class="session-item-wrapper">
-              <div class="session-item clickable" (click)="toggleSesionExpandida(sesion.id)">
+
+              <div class="session-item clickable"
+                  (click)="toggleSesionExpandida(sesion.id)">
+
                 <div class="session-number">
-                  @if (sesion.tipoEvolucion === 'initial') {
-                    I
-                  } @else if (sesion.tipoEvolucion === 'discharge') {
-                    A
-                  } @else {
-                    {{ sesion.sessionNumber }}
-                  }
+                  {{ sesion.numeroVisual }}
                 </div>
+
                 <div class="session-info">
-                  <span class="session-date">{{ formatearFecha(sesion.createdAt) }}</span>
-                  <span class="session-eva">EVA: {{ sesion.painScale ?? '-' }}/10</span>
+                  <span class="session-date">
+                    {{ formatearFecha(sesion.createdAt) }}
+                  </span>
+
+                  <span class="session-eva">
+                    EVA: {{ sesion.painScale ?? '-' }}/10
+                  </span>
+
                   @if (sesion.subjective && !isSesionExpandida(sesion.id)) {
-                    <span class="session-obs">{{ sesion.subjective }}</span>
+                    <span class="session-obs">
+                      {{ sesion.subjective }}
+                    </span>
                   }
                 </div>
-                <ion-icon [name]="isSesionExpandida(sesion.id) ? 'chevron-up-outline' : 'chevron-down-outline'" class="session-expand-icon"></ion-icon>
+
+                <ion-icon
+                  [name]="isSesionExpandida(sesion.id)
+                    ? 'chevron-up-outline'
+                    : 'chevron-down-outline'"
+                  class="session-expand-icon">
+                </ion-icon>
+
               </div>
 
               <!-- DETALLE EXPANDIDO -->
               @if (isSesionExpandida(sesion.id)) {
+
                 <div class="session-detail">
+
                   @if (sesion.zonaTratamiento) {
                     <div class="detail-row">
                       <ion-icon name="body-outline"></ion-icon>
                       <span class="detail-label">Zona:</span>
-                      <span class="detail-value">{{ sesion.zonaTratamiento }}</span>
+                      <span class="detail-value">
+                        {{ sesion.zonaTratamiento }}
+                      </span>
                     </div>
                   }
-                  @if (sesion.sleepQuality) {
+
+                  @if (sesion.sleepQuality !== null && sesion.sleepQuality !== undefined) {
                     <div class="detail-row">
                       <ion-icon name="moon-outline"></ion-icon>
-                      <span class="detail-label">Sueno:</span>
-                      <span class="detail-value">{{ sesion.sleepQuality }}/5</span>
+                      <span class="detail-label">Sueño:</span>
+                      <span class="detail-value">
+                        {{ sesion.sleepQuality }}/5
+                      </span>
                     </div>
                   }
+
                   @if (sesion.tecnicasAplicadas?.length > 0) {
                     <div class="detail-row detail-row-wrap">
                       <ion-icon name="hand-left-outline"></ion-icon>
-                      <span class="detail-label">Tecnicas:</span>
+                      <span class="detail-label">Técnicas:</span>
                       <div class="detail-chips">
                         @for (tec of sesion.tecnicasAplicadas; track tec) {
                           <span class="detail-chip">{{ tec }}</span>
@@ -195,80 +218,99 @@
                       </div>
                     </div>
                   }
-                  @if (sesion.rom) {
-                    <div class="detail-row">
+
+                  @if (sesion.rom?.length > 0) {
+                    <div class="detail-row detail-row-block">
                       <ion-icon name="resize-outline"></ion-icon>
                       <span class="detail-label">ROM:</span>
-                      <span class="detail-value">{{ sesion.rom }}</span>
-                    </div>
-                  }
-                  @if (sesion.ejercicios) {
-                    <div class="detail-row">
-                      <ion-icon name="fitness-outline"></ion-icon>
-                      <span class="detail-label">Ejercicios:</span>
-                      <span class="detail-value">{{ sesion.ejercicios }}</span>
-                    </div>
-                  }
-                  @if (sesion.rutina) {
-                    <div class="detail-row detail-row-wrap">
-                      <ion-icon name="barbell-outline"></ion-icon>
-                      <span class="detail-label">Rutina:</span>
-                      <span class="detail-value">{{ sesion.rutina.rutinaNombre }}</span>
-                    </div>
-                    @if (sesion.rutina.ejercicios?.length > 0) {
-                      <div class="detail-rutina-list">
-                        @for (ej of sesion.rutina.ejercicios; track ej.nombre) {
-                          <div class="detail-rutina-item">
-                            <span>{{ ej.nombre }}</span>
-                            <span class="detail-rutina-series">{{ ej.seriesCompletadas }}/{{ ej.series }} series</span>
-                          </div>
-                        }
+                      <div class="detail-text">
+                        {{ sesion.rom.length }} articulaciones evaluadas
                       </div>
-                    }
+                    </div>
                   }
+
                   @if (sesion.subjective) {
                     <div class="detail-row detail-row-block">
                       <ion-icon name="document-text-outline"></ion-icon>
-                      <span class="detail-label">Observaciones:</span>
+                      <span class="detail-label">Subjetivo:</span>
                       <p class="detail-text">{{ sesion.subjective }}</p>
                     </div>
                   }
+
                   @if (sesion.plan) {
                     <div class="detail-row detail-row-block">
                       <ion-icon name="flag-outline"></ion-icon>
-                      <span class="detail-label">Objetivo proxima:</span>
+                      <span class="detail-label">Plan:</span>
                       <p class="detail-text">{{ sesion.plan }}</p>
                     </div>
                   }
+
                   @if (sesion.test) {
                     <div class="detail-row">
                       <ion-icon name="clipboard-outline"></ion-icon>
                       <span class="detail-label">Test:</span>
-                      <span class="detail-value">{{ sesion.test.testNombre }} - {{ sesion.test.resultado }} ({{ sesion.test.puntajeTotal }}pts)</span>
+                      <span class="detail-value">
+                        {{ sesion.test.testNombre }} -
+                        {{ sesion.test.resultado }}
+                        ({{ sesion.test.puntajeTotal }} pts)
+                      </span>
                     </div>
                   }
+
+                  <!-- ACCIONES -->
+                  <div class="detail-actions">
+                    <button class="delete-btn"
+                            (click)="confirmarEliminacion(sesion.id)">
+                      <ion-icon name="trash-outline"></ion-icon>
+                      Eliminar
+                    </button>
+
+                    @if (esAdmin) {
+                      <button class="delete-btn hard"
+                              (click)="confirmarHardDelete(sesion.id)">
+                        <ion-icon name="warning-outline"></ion-icon>
+                        Eliminar definitivo
+                      </button>
+                    }
+                  </div>
+
                 </div>
+
               }
+
             </div>
-          }
+
+          } 
+
         } @else {
+
           <div class="empty-sessions">
             <ion-icon name="clipboard-outline"></ion-icon>
             <p>Sin sesiones registradas</p>
-            <button class="empty-action" (click)="nuevaSesion()">Agregar primera evolución</button>
+            <button class="empty-action"
+                    (click)="nuevaSesion()">
+              Agregar primera evolución
+            </button>
           </div>
-        }
-      </div>
-    }
 
-    <!-- ERROR STATE -->
-    @if (!estaCargando && !paciente) {
-      <div class="error-state">
-        <ion-icon name="alert-circle-outline"></ion-icon>
-        <h3>Paciente no encontrado</h3>
-        <p>No se pudo cargar la informacion</p>
-        <button class="back-link" (click)="volverALista()">Volver a la lista</button>
+        } 
+
       </div>
-    }
-  </div>
-</ion-content>
+
+      } 
+
+      <!-- ERROR STATE -->
+      @if (!estaCargando && !paciente) {
+        <div class="error-state">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <h3>Paciente no encontrado</h3>
+          <p>No se pudo cargar la informacion</p>
+          <button class="back-link"
+                  (click)="volverALista()">
+            Volver a la lista
+          </button>
+        </div>
+      }
+
+      </div>
+      </ion-content>
