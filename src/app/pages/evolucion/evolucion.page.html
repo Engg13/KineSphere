@@ -63,6 +63,19 @@
       </div>
     </div>
 
+    <!-- 🔥 Evolución EVA longitudinal -->
+    <div
+      *ngIf="esDischarge && evaData.length > 1"
+      class="section-card">
+
+      <div class="section-header">
+        <ion-icon name="trending-down-outline" class="section-icon"></ion-icon>
+        <h3>Evolución del Dolor (EVA)</h3>
+      </div>
+
+      <canvas id="evaChart"></canvas>
+    </div>
+
     <div class="section-card">
       <div class="section-header">
         <ion-icon name="moon-outline" class="section-icon"></ion-icon>
@@ -279,6 +292,50 @@
                 </div>
                 <div class="resultado-clasificacion" [style.color]="getResultadoColor()">
                   {{ form.controls.test.controls.resultado.value }}
+                </div>
+              </div>
+
+              <!-- 🔥 Comparación automática Initial vs Final -->
+              <div
+                class="test-comparacion"
+                *ngIf="esDischarge && testInicial != null && testFinal != null">
+
+                <h4 class="comparacion-title">
+                  <ion-icon name="analytics-outline"></ion-icon>
+                  Comparación Inicial vs Alta
+                </h4>
+
+                <div class="comparacion-grid">
+                  <div class="comparacion-col">
+                    <span class="comparacion-label">Inicial</span>
+                    <span class="comparacion-valor">
+                      {{ testInicial }}
+                    </span>
+                    <span class="comparacion-sub">
+                      {{ resultadoTestInicial }}
+                    </span>
+                  </div>
+
+                  <div class="comparacion-col">
+                    <span class="comparacion-label">Final</span>
+                    <span class="comparacion-valor">
+                      {{ testFinal }}
+                    </span>
+                    <span class="comparacion-sub">
+                      {{ resultadoTestFinal }}
+                    </span>
+                  </div>
+
+                  <div class="comparacion-col comparacion-diferencia">
+                    <span class="comparacion-label">Cambio</span>
+                    <span
+                      class="comparacion-valor"
+                      [class.mejoria]="diferenciaTest! < 0"
+                      [class.empeora]="diferenciaTest! > 0">
+
+                      {{ diferenciaTest > 0 ? '+' : '' }}{{ diferenciaTest }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

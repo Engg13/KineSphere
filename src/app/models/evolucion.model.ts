@@ -22,6 +22,13 @@ export interface EvolucionTest {
   resultado: string;
 }
 
+export interface ObjetivoClinico {
+  descripcion: string;
+  indicador?: string;
+  tiempoEstimado?: string;
+  logrado?: boolean;
+}
+
 export interface Evolucion {
   id?: string;
   clinicId: string;
@@ -33,6 +40,7 @@ export interface Evolucion {
   objective: string;
   assessment: string;
   plan: string;
+  objetivos?: ObjetivoClinico[];
   painScale: number | null;
   sleepQuality: number | null;
   rom: ArticulacionRom[];
@@ -56,6 +64,7 @@ export interface EvolucionCreateInput {
   objective: string;
   assessment: string;
   plan: string;
+  objetivos?: ObjetivoClinico[];
   painScale: number | null;
   sleepQuality: number | null;
   rom: ArticulacionRom[];

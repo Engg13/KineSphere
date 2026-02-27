@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
 import { ArticulacionRom, RomEntry, TipoEvolucion } from '../../models/evolucion.model';
 import { TestTemplate } from '../../models/test-template.model';
@@ -12,6 +12,7 @@ import { EvolucionesFirestoreService } from '../../services/evoluciones-firestor
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
 import { EjerciciosPage } from '../ejercicios/ejercicios.page';
+import { Chart, ChartConfiguration } from 'chart.js/auto';
 
 const ROM_CONFIG: Record<string, string[]> = {
   Hombro: ['Flexión', 'Extensión', 'Abducción', 'Aducción', 'Rotación interna', 'Rotación externa'],
@@ -43,6 +44,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private databaseService = inject(DatabaseService);
   private rutinasService = inject(RutinasFirestoreService);
   private testTemplatesService = inject(TestTemplatesFirestoreService);
+  private usarDatosDemo = true; // 🔥 poner en false en producción
 
   patientId = '';
   pacienteNombre = 'Paciente';
@@ -58,7 +60,14 @@ export class EvolucionPage implements OnInit, OnDestroy {
   testSeleccionado: TestTemplate | null = null;
   respuestasTest: number[] = [];
   pacienteActual: any | null = null;
+  testInicial?: number;
+  testFinal?: number;
+  resultadoTestInicial?: string;
+  resultadoTestFinal?: string;
   articulacionNuevaControl = this.fb.control<string | null>(null);
+  evaChart?: Chart;
+  evaData: number[] = [];
+  evaLabels: string[] = [];
 
   private rutinasSub?: Subscription;
 
@@ -103,11 +112,12 @@ export class EvolucionPage implements OnInit, OnDestroy {
     plan: this.fb.nonNullable.control(''),
     rutinaId: this.fb.control<string | null>(null),
     rutinaNombre: this.fb.nonNullable.control(''),
+    objetivos: this.fb.array<FormGroup>([]),
     test: this.fb.group({
-      testId: this.fb.nonNullable.control(''),
-      testNombre: this.fb.nonNullable.control(''),
-      puntajeTotal: this.fb.nonNullable.control(0),
-      resultado: this.fb.nonNullable.control('')
+    testId: this.fb.nonNullable.control(''),
+    testNombre: this.fb.nonNullable.control(''),
+    puntajeTotal: this.fb.nonNullable.control(0),
+    resultado: this.fb.nonNullable.control('')
     })
   });
 
@@ -136,6 +146,25 @@ export class EvolucionPage implements OnInit, OnDestroy {
     return `Sesión ${this.numeroSesion}`;
   }
 
+  get objetivosArray(): FormArray<FormGroup> {
+  return this.form.controls.objetivos as FormArray<FormGroup>;
+  }
+
+  get esInitial(): boolean {
+    return this.form.controls.tipoEvolucion.value === 'initial';
+  }
+
+  get esDischarge(): boolean {
+    return this.form.controls.tipoEvolucion.value === 'discharge';
+  }
+
+  get diferenciaTest(): number | null {
+    if (this.testInicial != null && this.testFinal != null) {
+      return this.testFinal - this.testInicial;
+      }
+  return null;
+  }
+
   ngOnInit(): void {
 
     const params = this.route.snapshot.queryParamMap;
@@ -150,6 +179,39 @@ export class EvolucionPage implements OnInit, OnDestroy {
     // Aplicar estado inicial correctamente
     const tipoActual = this.form.get('tipoEvolucion')?.value;
     this.applyZonaLock(tipoActual);
+    this.actualizarEstadoObjetivos();
+
+    // 🔥 Una sola suscripción limpia
+    this.form.get('tipoEvolucion')?.valueChanges.subscribe(async (tipo) => {
+
+      // Bloqueo zona
+      this.applyZonaLock(tipo);
+
+      // Estado objetivos
+      this.actualizarEstadoObjetivos();
+
+      if (tipo === 'discharge') {
+        await this.cargarEvaluacionInicial();
+
+        // 🔥 Cargar evoluciones y construir gráfico EVA
+        const evoluciones = await firstValueFrom(
+          this.evolucionesService.getEvolucionesByPacienteRealtime(this.patientId)
+        );
+
+        this.construirDatosEva(evoluciones);
+
+        // Esperar render DOM
+        setTimeout(() => this.crearGraficoEva(), 0);
+      }
+    });
+
+    this.form.get('test')?.valueChanges.subscribe((test) => {
+      if (this.esDischarge && test?.puntajeTotal != null) {
+        this.testFinal = test.puntajeTotal;
+        this.resultadoTestFinal = test.resultado;
+      }
+    });
+
 
     this.cargarContexto();
   }
@@ -205,6 +267,52 @@ export class EvolucionPage implements OnInit, OnDestroy {
     }
 
     this.numeroSesion = 0;
+  }
+
+  async cargarEvaluacionInicial(): Promise<void> {
+    const initial = await this.evolucionesService.getEvaluacionInicial(this.patientId);
+
+    if (!initial) return;
+
+    // 👇 Guardar baseline del test
+    if (initial.test) {
+      this.testInicial = initial.test.puntajeTotal;
+      this.resultadoTestInicial = initial.test.resultado;
+    }
+
+    if (!initial.objetivos) return;
+
+    this.objetivosArray.clear();
+
+    initial.objetivos.forEach((obj) => {
+      this.objetivosArray.push(
+        this.fb.group({
+          descripcion: [obj.descripcion],
+          indicador: [obj.indicador],
+          tiempoEstimado: [obj.tiempoEstimado],
+          logrado: [false]
+        })
+      );
+    });
+
+    this.actualizarEstadoObjetivos();
+  }
+
+  private crearObjetivoGroup(): FormGroup {
+    return this.fb.group({
+      descripcion: this.fb.nonNullable.control('', Validators.required),
+      indicador: this.fb.nonNullable.control(''),
+      tiempoEstimado: this.fb.nonNullable.control(''),
+      logrado: this.fb.nonNullable.control(false)
+    });
+  }
+
+  agregarObjetivo(): void {
+    this.objetivosArray.push(this.crearObjetivoGroup());
+  }
+
+  eliminarObjetivo(index: number): void {
+    this.objetivosArray.removeAt(index);
   }
 
   cargarRutinasDisponibles(): void {
@@ -647,4 +755,76 @@ export class EvolucionPage implements OnInit, OnDestroy {
       zonaControl.enable({ emitEvent: false });
     }
   }
+
+  private actualizarEstadoObjetivos(): void {
+    const esInitial = this.esInitial;
+    const esDischarge = this.esDischarge;
+
+    this.objetivosArray.controls.forEach(ctrl => {
+      if (esInitial) {
+        ctrl.get('logrado')?.disable({ emitEvent: false });
+      } else if (esDischarge) {
+        ctrl.get('logrado')?.enable({ emitEvent: false });
+      } else {
+        ctrl.get('logrado')?.disable({ emitEvent: false });
+      }
+    });
+  }
+
+  private construirDatosEva(evoluciones: any[]): void {
+
+    if (this.usarDatosDemo && evoluciones.length < 3) {
+      // 🔥 Datos simulados
+      this.evaLabels = ['Inicial', 'S1', 'S2', 'S3', 'S4', 'Alta'];
+      this.evaData = [8, 7, 6, 4, 3, 1];
+      return;
+    }
+
+    const ordenadas = evoluciones
+      .filter(e => e.painScale != null)
+      .sort((a, b) => a.createdAt?.seconds - b.createdAt?.seconds);
+
+    this.evaData = ordenadas.map(e => e.painScale);
+
+    this.evaLabels = ordenadas.map((e, index) =>
+      e.tipoEvolucion === 'initial'
+        ? 'Inicial'
+        : e.tipoEvolucion === 'discharge'
+          ? 'Alta'
+          : `S${index}`
+    );
+  }
+
+  private crearGraficoEva(): void {
+    const ctx = document.getElementById('evaChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    if (this.evaChart) {
+      this.evaChart.destroy();
+    }
+
+    this.evaChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: this.evaLabels,
+        datasets: [{
+          label: 'EVA',
+          data: this.evaData,
+          tension: 0.3,
+          borderWidth: 2,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            min: 0,
+            max: 10
+          }
+        }
+      }
+    });
+  }
+  
 }

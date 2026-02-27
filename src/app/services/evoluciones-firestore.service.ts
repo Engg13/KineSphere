@@ -260,4 +260,32 @@ export class EvolucionesFirestoreService {
     const evolucionDoc = doc(this.firestore, `evoluciones/${evolucionId}`);
     await deleteDoc(evolucionDoc);
   }
+
+  async getEvaluacionInicial(patientId: string): Promise<Evolucion | null> {
+    const user = this.authService.getCurrentUser();
+    if (!user) throw new Error('No autenticado');
+
+    const clinicId = await this.authService.getCurrentClinicId();
+
+    const evolucionesQuery = query(
+      collection(this.firestore, 'evoluciones'),
+      where('activo', '==', true),
+      where('clinicId', '==', clinicId),
+      where('patientId', '==', patientId),
+      where('tipoEvolucion', '==', 'initial'),
+      orderBy('createdAt', 'asc'),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(evolucionesQuery);
+
+    if (snapshot.empty) return null;
+
+    const docSnap = snapshot.docs[0];
+
+    return {
+      id: docSnap.id,
+      ...docSnap.data()
+    } as Evolucion;
+  }
 }

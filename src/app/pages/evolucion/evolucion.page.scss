@@ -716,3 +716,62 @@
   font-weight: 600;
   color: #6b7280;
 }
+
+.test-comparacion {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.comparacion-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: #334155;
+}
+
+.comparacion-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  text-align: center;
+}
+
+.comparacion-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.comparacion-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.comparacion-valor {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.comparacion-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.comparacion-diferencia .comparacion-valor {
+  font-weight: 700;
+}
+
+.mejoria {
+  color: #16a34a;
+}
+
+.empeora {
+  color: #dc2626;
+}
+
+canvas {
+  max-height: 260px;
+}

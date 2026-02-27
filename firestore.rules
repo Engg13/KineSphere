@@ -121,6 +121,18 @@ service cloud.firestore {
       allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
     }
 
+    match /testTemplates/{testId} {
+
+      allow read: if request.auth != null
+        && requesterHasProfile()
+        && resource.data.clinicId == requesterClinicId();
+
+      allow create, update, delete: if request.auth != null
+        && requesterHasProfile()
+        && isAdmin()
+        && request.resource.data.clinicId == requesterClinicId();
+    }
+
 
     match /evoluciones/{id} {
 
