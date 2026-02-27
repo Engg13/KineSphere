@@ -229,11 +229,25 @@ export class PacienteDetallePage implements OnDestroy {
     return this.sesionesExpandidas.has(sesionId);
   }
 
-  formatearFecha(fechaString: string): string {
-    if (!fechaString) return 'No registrada';
+  formatearFecha(fechaInput: any): string {
+    if (!fechaInput) return 'No registrada';
 
-    const fecha = new Date(fechaString);
-    if (isNaN(fecha.getTime())) return fechaString;
+    let fecha: Date;
+
+    // 🔥 Si es Timestamp de Firebase
+    if (fechaInput?.toDate) {
+      fecha = fechaInput.toDate();
+    }
+    // Si ya es Date
+    else if (fechaInput instanceof Date) {
+      fecha = fechaInput;
+    }
+    // Si es string
+    else {
+      fecha = new Date(fechaInput);
+    }
+
+    if (isNaN(fecha.getTime())) return 'Fecha inválida';
 
     return fecha.toLocaleDateString('es-CL', {
       day: '2-digit',
@@ -307,4 +321,5 @@ export class PacienteDetallePage implements OnDestroy {
     if (!this.paciente?.email) return;
     window.open(`mailto:${this.paciente.email}`, '_system');
   }
+  
 }

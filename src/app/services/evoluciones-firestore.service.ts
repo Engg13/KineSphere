@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  deleteDoc,
   limit,
   orderBy,
   query,
@@ -106,13 +107,14 @@ export class EvolucionesFirestoreService {
         ? payload.tecnicasAplicadas
         : [],
 
-      // 🔥 CORRECCIÓN: es boolean, no array
       ejerciciosRealizados: payload.ejerciciosRealizados ?? false,
 
       rutinaId: payload.rutinaId ?? null,
       rutinaNombre: payload.rutinaNombre ?? null,
       test: payload.test ?? null,
-
+      activo: true,
+      deletedAt: null,
+      deletedBy: null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
@@ -145,6 +147,7 @@ export class EvolucionesFirestoreService {
       switchMap((clinicId) => {
         const evolucionesQuery = query(
           collection(this.firestore, 'evoluciones'),
+          where('activo', '==', true),
           where('clinicId', '==', clinicId),
           where('patientId', '==', patientId),
           orderBy('createdAt', 'desc')
@@ -230,5 +233,24 @@ export class EvolucionesFirestoreService {
       ...safeChanges,
       updatedAt: serverTimestamp()
     });
+  }
+
+  async softDeleteEvolucion(evolucionId: string): Promise<void> {
+    const user = this.authService.getCurrentUser();
+    if (!user) throw new Error('No autenticado');
+
+    const evolucionDoc = doc(this.firestore, `evoluciones/${evolucionId}`);
+
+    await updateDoc(evolucionDoc, {
+      activo: false,
+      deletedAt: serverTimestamp(),
+      deletedBy: user.uid,
+      updatedAt: serverTimestamp()
+    });
+  }
+
+  async hardDeleteEvolucion(evolucionId: string): Promise<void> {
+    const evolucionDoc = doc(this.firestore, `evoluciones/${evolucionId}`);
+    await deleteDoc(evolucionDoc);
   }
 }

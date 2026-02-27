@@ -42,6 +42,9 @@ export interface Evolucion {
   rutinaId?: string;
   rutinaNombre?: string;
   test?: EvolucionTest;
+  activo: boolean;
+  deletedAt?: Timestamp | null;
+  deletedBy?: string | null;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

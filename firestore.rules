@@ -123,6 +123,7 @@ service cloud.firestore {
 
 
     match /evoluciones/{id} {
+
       allow create: if request.auth != null
         && requesterHasProfile()
         && request.resource.data.clinicId == requesterClinicId()
@@ -134,18 +135,27 @@ service cloud.firestore {
 
       allow update: if request.auth != null
         && requesterHasProfile()
-        && resource.data.professionalId == request.auth.uid
         && resource.data.clinicId == requesterClinicId()
-        && request.resource.data.sessionNumber == resource.data.sessionNumber
-        && request.resource.data.clinicId == resource.data.clinicId
-        && request.resource.data.professionalId == resource.data.professionalId
-        && request.resource.data.createdAt == resource.data.createdAt;
+        && (
+            
+            isAdmin()
+            ||
+            
+            (
+              resource.data.professionalId == request.auth.uid
+              // Inmutables protegidos
+              && request.resource.data.clinicId == resource.data.clinicId
+              && request.resource.data.professionalId == resource.data.professionalId
+              && request.resource.data.createdAt == resource.data.createdAt
+              && request.resource.data.sessionNumber == resource.data.sessionNumber
+            )
+        );
 
-      allow delete: if false;
+      
+      allow delete: if request.auth != null
+        && requesterHasProfile()
+        && resource.data.clinicId == requesterClinicId()
+        && isAdmin();
+      }
     }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
 }
