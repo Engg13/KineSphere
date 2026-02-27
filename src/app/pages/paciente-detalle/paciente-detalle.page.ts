@@ -114,7 +114,9 @@ export class PacienteDetallePage implements OnDestroy {
 
   private cargarRutinasCompletadas(pacienteId: string) {
 
-    this.cancelarSuscripciones();
+    if (this.rutinasSub) {
+      this.rutinasSub.unsubscribe();
+    }
 
     this.rutinasSub = this.rutinasService
       .getRutinasPorPacienteRealtime(pacienteId)
