@@ -11,8 +11,9 @@ import { DatabaseService } from '../../services/database.service';
 import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
+import { TreatmentService } from '../../services/treatment.service';
 import { EjerciciosPage } from '../ejercicios/ejercicios.page';
-import { Chart, ChartConfiguration } from 'chart.js/auto';
+import { Chart } from 'chart.js/auto';
 
 const ROM_CONFIG: Record<string, string[]> = {
   Hombro: ['Flexión', 'Extensión', 'Abducción', 'Aducción', 'Rotación interna', 'Rotación externa'],
@@ -44,6 +45,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private databaseService = inject(DatabaseService);
   private rutinasService = inject(RutinasFirestoreService);
   private testTemplatesService = inject(TestTemplatesFirestoreService);
+  private treatmentService = inject(TreatmentService);
   private usarDatosDemo = true; // 🔥 poner en false en producción
 
   patientId = '';
@@ -53,6 +55,8 @@ export class EvolucionPage implements OnInit, OnDestroy {
   sesionesPlanificadas = 10;
   guardando = false;
   modulosColapsablesAbiertos: string[] = [];
+  treatmentId: string | null = null;
+  mode: TipoEvolucion = 'progress';
 
   rutinasDisponibles: any[] = [];
   rutinaSeleccionada: any = null;
@@ -172,6 +176,11 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.patientId = params.get('patientId') || params.get('pacienteId') || '';
     this.pacienteNombre = params.get('pacienteNombre') || 'Paciente';
     this.pacienteDiagnostico = params.get('diagnostico') || '';
+    this.mode = (params.get('mode') as TipoEvolucion) || 'progress';
+    this.treatmentId = params.get('treatmentId');
+
+    this.form.controls.tipoEvolucion.setValue(this.mode, { emitEvent: false });
+    this.form.controls.tipoEvolucion.disable({ emitEvent: false });
 
     // 👇 Bloqueo dinámico zona principal
     this.setupZonaPrincipalLock();
@@ -193,10 +202,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
       if (tipo === 'discharge') {
         await this.cargarEvaluacionInicial();
 
-        // 🔥 Cargar evoluciones y construir gráfico EVA
-        const evoluciones = await firstValueFrom(
-          this.evolucionesService.getEvolucionesByPacienteRealtime(this.patientId)
-        );
+        const evoluciones = await this.cargarEvolucionesParaGrafico();
 
         this.construirDatosEva(evoluciones);
 
@@ -257,16 +263,14 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   async cargarNumeroSesion(): Promise<void> {
-    if (!this.patientId) return;
-
-    const tipo = this.form.controls.tipoEvolucion.value;
-
-    if (tipo === 'progress') {
-      this.numeroSesion = await this.evolucionesService.getNextSessionNumber(this.patientId);
+    const tipo = this.form.controls.tipoEvolucion.getRawValue();
+    if (tipo !== 'progress') {
+      this.numeroSesion = 0;
       return;
     }
 
-    this.numeroSesion = 0;
+    const totalSesiones = await this.obtenerTotalSesionesTratamiento();
+    this.numeroSesion = totalSesiones + 1;
   }
 
   async cargarEvaluacionInicial(): Promise<void> {
@@ -330,16 +334,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   async onTipoEvolucionChange(event: Event): Promise<void> {
-    const tipo = (event as CustomEvent).detail?.value as TipoEvolucion;
-    this.form.controls.tipoEvolucion.setValue(tipo);
-
-    if (tipo !== 'initial') {
-      this.form.controls.zonaTratamiento.disable({ emitEvent: false });
-    } else {
-      this.form.controls.zonaTratamiento.enable({ emitEvent: false });
-    }
-
-    await this.cargarNumeroSesion();
+    this.form.controls.tipoEvolucion.setValue(this.mode, { emitEvent: false });
   }
 
   toggleTecnica(tecnica: string): void {
@@ -631,53 +626,69 @@ export class EvolucionPage implements OnInit, OnDestroy {
     }
 
     const value = this.form.getRawValue();
-
-    if (value.tipoEvolucion === 'progress') {
-      const existeInitial = await this.evolucionesService.existeEvaluacionInicial(this.patientId);
-      if (!existeInitial) {
-        await this.mostrarToast('Primero debes registrar una evaluación inicial para este paciente.', 'warning');
-        return;
-      }
-    }
-
-    const testValue = value.test;
     const romPayload = this.sanitizarRom(this.construirRomPayload());
+    const payload = {
+      painScale: value.painScale,
+      sleepQuality: value.sleepQuality,
+      zonaTratamiento: value.zonaTratamiento || null,
+      tecnicasAplicadas: value.tecnicasAplicadas,
+      rom: romPayload,
+      ejerciciosRealizados: value.ejerciciosRealizados,
+      subjective: value.subjective.trim(),
+      objective: value.objective.trim(),
+      assessment: value.assessment.trim(),
+      plan: value.plan.trim(),
+      rutinaId: value.rutinaId || undefined,
+      rutinaNombre: value.rutinaNombre || undefined,
+      objetivos: this.objetivosArray.getRawValue(),
+      test: value.test?.testId
+        ? {
+            testId: value.test.testId,
+            testNombre: value.test.testNombre,
+            puntajeTotal: value.test.puntajeTotal,
+            resultado: value.test.resultado
+          }
+        : undefined
+    };
+
+    if (this.mode !== 'initial' && !this.treatmentId) {
+      await this.mostrarToast('Falta treatmentId para registrar la evolución.', 'danger');
+      return;
+    }
 
     this.guardando = true;
 
     try {
-      await this.evolucionesService.createEvolucion({
-        patientId: this.patientId,
-        tipoEvolucion: value.tipoEvolucion,
-        painScale: value.painScale,
-        sleepQuality: value.sleepQuality,
-        zonaTratamiento: value.zonaTratamiento || null,
-        tecnicasAplicadas: value.tecnicasAplicadas,
-        rom: romPayload,
-        ejerciciosRealizados: value.ejerciciosRealizados,
-        subjective: value.subjective.trim(),
-        objective: value.objective.trim(),
-        assessment: value.assessment.trim(),
-        plan: value.plan.trim(),
-        rutinaId: value.rutinaId || undefined,
-        rutinaNombre: value.rutinaNombre || undefined,
-        test: testValue.testId
-          ? {
-              testId: testValue.testId,
-              testNombre: testValue.testNombre,
-              puntajeTotal: testValue.puntajeTotal,
-              resultado: testValue.resultado
-            }
-          : undefined
-      });
+      if (this.mode === 'initial') {
+        await this.treatmentService.crearEvaluacionInicial(
+          this.patientId,
+          this.databaseService.clinicId,
+          this.databaseService.uid,
+          payload
+        );
+      } else if (this.mode === 'progress') {
+        await this.treatmentService.crearSesionProgreso(
+          this.treatmentId!,
+          this.patientId,
+          this.databaseService.clinicId,
+          this.databaseService.uid,
+          payload
+        );
+      } else {
+        await this.treatmentService.finalizarTratamiento(
+          this.treatmentId!,
+          this.patientId,
+          this.databaseService.clinicId,
+          this.databaseService.uid,
+          payload
+        );
+      }
 
       await this.mostrarToast('Evolución guardada correctamente.', 'success');
       this.volver();
     } catch (error) {
       console.error('Error guardando evolución:', error);
-      const message = error instanceof Error && error.message.includes('evaluación inicial')
-        ? 'Primero debes registrar una evaluación inicial para este paciente.'
-        : 'No se pudo guardar la evolución.';
+      const message = error instanceof Error ? error.message : 'No se pudo guardar la evolución.';
       await this.mostrarToast(message, 'danger');
     } finally {
       this.guardando = false;
@@ -739,9 +750,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   private setupZonaPrincipalLock(): void {
-    this.form.get('tipoEvolucion')?.valueChanges.subscribe((tipo) => {
-      this.applyZonaLock(tipo);
-    });
+    this.applyZonaLock(this.form.get('tipoEvolucion')?.getRawValue() ?? this.mode);
   }
 
   private applyZonaLock(tipo: TipoEvolucion | null): void {
@@ -793,6 +802,30 @@ export class EvolucionPage implements OnInit, OnDestroy {
           ? 'Alta'
           : `S${index}`
     );
+  }
+
+  private async obtenerTotalSesionesTratamiento(): Promise<number> {
+    if (!this.treatmentId) {
+      const totalDesdeParams = Number(this.route.snapshot.queryParamMap.get('totalSesiones') || 0);
+      return Number.isFinite(totalDesdeParams) ? totalDesdeParams : 0;
+    }
+
+    const treatmentServiceAny = this.treatmentService as any;
+    const tratamiento = await (treatmentServiceAny.getTratamientoById?.(this.treatmentId)
+      ?? treatmentServiceAny.getTratamiento?.(this.treatmentId)
+      ?? Promise.resolve(null));
+
+    return Number(tratamiento?.totalSesiones || 0);
+  }
+
+  private async cargarEvolucionesParaGrafico(): Promise<any[]> {
+    const evolucionesServiceAny = this.evolucionesService as any;
+
+    if (this.treatmentId && evolucionesServiceAny.getEvolucionesByTratamientoRealtime) {
+      return firstValueFrom(evolucionesServiceAny.getEvolucionesByTratamientoRealtime(this.treatmentId));
+    }
+
+    return firstValueFrom(this.evolucionesService.getEvolucionesByPacienteRealtime(this.patientId));
   }
 
   private crearGraficoEva(): void {
