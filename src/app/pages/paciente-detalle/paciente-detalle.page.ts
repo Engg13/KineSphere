@@ -7,6 +7,7 @@ import { RutinasFirestoreService } from '../../services/rutinas-firestore.servic
 import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
+import { TreatmentService } from 'src/app/services/treatment.service';
 
 @Component({
   selector: 'app-paciente-detalle',
@@ -26,6 +27,7 @@ export class PacienteDetallePage implements OnDestroy {
   fechaActual = new Date;
   esAdmin: boolean = false;
   historialVisual: any[] = [];
+  tratamientoActivo: any | null = null;
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
@@ -37,7 +39,8 @@ export class PacienteDetallePage implements OnDestroy {
     private rutinasService: RutinasFirestoreService,
     private evolucionesService: EvolucionesFirestoreService,
     private alertCtrl: AlertController,
-    private authService: AuthService 
+    private authService: AuthService,
+    private treatmentService: TreatmentService
   ) {}
 
   // ==============================
@@ -57,7 +60,13 @@ export class PacienteDetallePage implements OnDestroy {
     }
 
     if (this.pacienteId) {
+
       await this.cargarPaciente(this.pacienteId);
+
+      // 🔥 NUEVO: cargar tratamiento activo
+      this.tratamientoActivo =
+        await this.treatmentService.getTratamientoActivo(this.pacienteId);
+
     } else {
       this.estaCargando = false;
     }
@@ -188,10 +197,6 @@ export class PacienteDetallePage implements OnDestroy {
 
             return e;
           });
-
-          if (this.paciente) {
-            this.paciente.sesionesCompletadas = contadorProgress;
-          }
         },
         error: (error) => {
           console.error('Error cargando historial:', error);
@@ -302,16 +307,14 @@ export class PacienteDetallePage implements OnDestroy {
   // ==============================
 
   nuevaSesion() {
-    if (!this.paciente) return;
 
-    const proximaSesion = (this.paciente.sesionesCompletadas || 0) + 1;
+    if (!this.tratamientoActivo) return;
 
-    this.navCtrl.navigateRoot('/evolucion', {
+    this.navCtrl.navigateForward('/evolucion', {
       queryParams: {
-        patientId: this.paciente.id,
-        pacienteId: this.paciente.id,
-        pacienteNombre: this.paciente.nombre,
-        numeroSesion: proximaSesion
+        patientId: this.pacienteId,
+        treatmentId: this.tratamientoActivo.id,
+        mode: 'progress'
       }
     });
   }
@@ -413,5 +416,26 @@ export class PacienteDetallePage implements OnDestroy {
     });
 
     await alert.present();
+  }
+
+  iniciarTratamiento() {
+    this.navCtrl.navigateForward('/evolucion', {
+      queryParams: {
+        patientId: this.pacienteId,
+        mode: 'initial'
+      }
+    });
+  }
+
+  finalizarTratamiento() {
+    if (!this.tratamientoActivo) return;
+
+    this.navCtrl.navigateForward('/evolucion', {
+      queryParams: {
+        patientId: this.pacienteId,
+        treatmentId: this.tratamientoActivo.id,
+        mode: 'discharge'
+      }
+    });
   }
 }

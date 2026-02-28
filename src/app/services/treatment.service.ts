@@ -7,6 +7,9 @@ import {
   getDoc,
   increment,
   serverTimestamp,
+  query,
+  getDocs,
+  where,
   updateDoc
 } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
@@ -159,5 +162,24 @@ export class TreatmentService {
     });
 
     return evolucionRef.id;
+  }
+
+  async getTratamientoActivo(patientId: string) {
+    const q = query(
+      collection(this.firestore, 'tratamientos'),
+      where('patientId', '==', patientId),
+      where('estado', '==', 'activo')
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) return null;
+
+    const docSnap = snapshot.docs[0];
+
+    return {
+      id: docSnap.id,
+      ...docSnap.data()
+    };
   }
 }

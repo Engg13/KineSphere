@@ -31,7 +31,13 @@
       <!-- STATS ROW -->
       <div class="stats-row">
         <div class="stat-item">
-          <span class="stat-value">{{ paciente.sesionesCompletadas || 0 }}</span>
+          <span class="stat-value">
+            @if (tratamientoActivo) {
+              {{ tratamientoActivo.totalSesiones }}
+            } @else {
+              -
+            }
+          </span>
           <span class="stat-label">Sesiones</span>
         </div>
         <div class="stat-divider"></div>
@@ -101,10 +107,26 @@
 
       <!-- QUICK ACTIONS -->
       <div class="actions-grid animated-item">
-        <button class="action-card primary" (click)="nuevaSesion()">
-          <ion-icon name="add-circle-outline"></ion-icon>
-          <span>Nueva Evolución</span>
-        </button>
+        <!-- SI NO hay tratamiento activo -->
+        @if (!tratamientoActivo) {
+          <button class="action-card primary" (click)="iniciarTratamiento()">
+            <ion-icon name="play-outline"></ion-icon>
+            <span>Iniciar Tratamiento</span>
+          </button>
+        }
+
+        <!-- SI hay tratamiento activo -->
+        @if (tratamientoActivo) {
+          <button class="action-card primary" (click)="nuevaSesion()">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            <span>Nueva Sesión</span>
+          </button>
+
+          <button class="action-card danger" (click)="finalizarTratamiento()">
+            <ion-icon name="flag-outline"></ion-icon>
+            <span>Finalizar Tratamiento</span>
+          </button>
+        }
         <button class="action-card" (click)="editarPaciente()">
           <ion-icon name="create-outline"></ion-icon>
           <span>Editar</span>
@@ -287,10 +309,19 @@
           <div class="empty-sessions">
             <ion-icon name="clipboard-outline"></ion-icon>
             <p>Sin sesiones registradas</p>
+            @if (!tratamientoActivo) {
+            <button class="empty-action"
+                    (click)="iniciarTratamiento()">
+              Iniciar tratamiento
+            </button>
+          }
+
+          @if (tratamientoActivo) {
             <button class="empty-action"
                     (click)="nuevaSesion()">
-              Agregar primera evolución
+              Agregar sesión
             </button>
+          }
           </div>
 
         } 
