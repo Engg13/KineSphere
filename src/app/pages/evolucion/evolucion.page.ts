@@ -14,6 +14,9 @@ import { TestTemplatesFirestoreService } from '../../services/test-templates-fir
 import { TreatmentService } from '../../services/treatment.service';
 import { EjerciciosPage } from '../ejercicios/ejercicios.page';
 import { Chart } from 'chart.js/auto';
+import { AuthService } from 'src/app/services/auth.service';
+import { ObjetivoClinico } from '../../models/evolucion.model';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 const ROM_CONFIG: Record<string, string[]> = {
   Hombro: ['Flexión', 'Extensión', 'Abducción', 'Aducción', 'Rotación interna', 'Rotación externa'],
@@ -32,8 +35,9 @@ const ROM_CONFIG: Record<string, string[]> = {
   selector: 'app-evolucion',
   templateUrl: './evolucion.page.html',
   styleUrls: ['./evolucion.page.scss'],
+  imports: [IonicModule, CommonModule, ReactiveFormsModule, SleepQualityComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   standalone: true,
-  imports: [IonicModule, CommonModule, ReactiveFormsModule, SleepQualityComponent]
 })
 export class EvolucionPage implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
@@ -46,6 +50,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private rutinasService = inject(RutinasFirestoreService);
   private testTemplatesService = inject(TestTemplatesFirestoreService);
   private treatmentService = inject(TreatmentService);
+  private authService = inject(AuthService);
   private usarDatosDemo = true; // 🔥 poner en false en producción
 
   patientId = '';
@@ -72,6 +77,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   evaChart?: Chart;
   evaData: number[] = [];
   evaLabels: string[] = [];
+  cargando = true;
 
   private rutinasSub?: Subscription;
 
@@ -169,7 +175,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   return null;
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
 
     const params = this.route.snapshot.queryParamMap;
 
@@ -182,31 +188,20 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.form.controls.tipoEvolucion.setValue(this.mode, { emitEvent: false });
     this.form.controls.tipoEvolucion.disable({ emitEvent: false });
 
-    // 👇 Bloqueo dinámico zona principal
     this.setupZonaPrincipalLock();
 
-    // Aplicar estado inicial correctamente
     const tipoActual = this.form.get('tipoEvolucion')?.value;
     this.applyZonaLock(tipoActual);
     this.actualizarEstadoObjetivos();
 
-    // 🔥 Una sola suscripción limpia
     this.form.get('tipoEvolucion')?.valueChanges.subscribe(async (tipo) => {
-
-      // Bloqueo zona
       this.applyZonaLock(tipo);
-
-      // Estado objetivos
       this.actualizarEstadoObjetivos();
 
       if (tipo === 'discharge') {
         await this.cargarEvaluacionInicial();
-
         const evoluciones = await this.cargarEvolucionesParaGrafico();
-
         this.construirDatosEva(evoluciones);
-
-        // Esperar render DOM
         setTimeout(() => this.crearGraficoEva(), 0);
       }
     });
@@ -217,9 +212,17 @@ export class EvolucionPage implements OnInit, OnDestroy {
         this.resultadoTestFinal = test.resultado;
       }
     });
+    console.log('EvolucionPage INIT');
 
-
-    this.cargarContexto();
+    try {
+      await this.cargarContexto();
+    } catch (error) {
+      console.error('Error en cargarContexto:', error);
+    } finally {
+      
+      this.cargando = false;
+      console.log('Cargando terminó:', this.cargando);
+    }
   }
 
   ngOnDestroy(): void {
@@ -627,6 +630,12 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     const value = this.form.getRawValue();
     const romPayload = this.sanitizarRom(this.construirRomPayload());
+    const objetivosPayload: ObjetivoClinico[] = this.objetivosArray.controls.map(ctrl => ({
+      descripcion: (ctrl.get('descripcion')?.value || '').trim(),
+      indicador: ctrl.get('indicador')?.value || undefined,
+      tiempoEstimado: ctrl.get('tiempoEstimado')?.value || undefined,
+      logrado: ctrl.get('logrado')?.value ?? false
+    }));
     const payload = {
       painScale: value.painScale,
       sleepQuality: value.sleepQuality,
@@ -640,7 +649,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
       plan: value.plan.trim(),
       rutinaId: value.rutinaId || undefined,
       rutinaNombre: value.rutinaNombre || undefined,
-      objetivos: this.objetivosArray.getRawValue(),
+      objetivos: objetivosPayload,
       test: value.test?.testId
         ? {
             testId: value.test.testId,
@@ -662,24 +671,18 @@ export class EvolucionPage implements OnInit, OnDestroy {
       if (this.mode === 'initial') {
         await this.treatmentService.crearEvaluacionInicial(
           this.patientId,
-          this.databaseService.clinicId,
-          this.databaseService.uid,
           payload
         );
       } else if (this.mode === 'progress') {
         await this.treatmentService.crearSesionProgreso(
           this.treatmentId!,
           this.patientId,
-          this.databaseService.clinicId,
-          this.databaseService.uid,
           payload
         );
       } else {
         await this.treatmentService.finalizarTratamiento(
           this.treatmentId!,
           this.patientId,
-          this.databaseService.clinicId,
-          this.databaseService.uid,
           payload
         );
       }

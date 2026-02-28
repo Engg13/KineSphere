@@ -109,7 +109,7 @@
       <div class="actions-grid animated-item">
         <!-- SI NO hay tratamiento activo -->
         @if (!tratamientoActivo) {
-          <button class="action-card primary" (click)="iniciarTratamiento()">
+          <button class="action-card primary" (click)="iniciarTratamiento($event)">
             <ion-icon name="play-outline"></ion-icon>
             <span>Iniciar Tratamiento</span>
           </button>
@@ -311,7 +311,7 @@
             <p>Sin sesiones registradas</p>
             @if (!tratamientoActivo) {
             <button class="empty-action"
-                    (click)="iniciarTratamiento()">
+                    (click)="iniciarTratamiento($event)">
               Iniciar tratamiento
             </button>
           }
@@ -344,4 +344,4 @@
       }
 
       </div>
-      </ion-content>
+    </ion-content>

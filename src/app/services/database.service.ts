@@ -40,7 +40,7 @@ export class DatabaseService {
             const q = query(
               collection(this.firestore, 'pacientes'),
               where('clinicId', '==', clinicId),
-              where('profesionalId', '==', user.uid)
+              where('professionalId', '==', user.uid)
             );
 
             return collectionData(q, { idField: 'id' }) as Observable<any[]>;
@@ -64,7 +64,7 @@ export class DatabaseService {
             const q = query(
               collection(this.firestore, 'sesiones'),
               where('clinicId', '==', clinicId),
-              where('profesionalId', '==', user.uid)
+              where('professionalId', '==', user.uid)
             );
 
             return collectionData(q, { idField: 'id' }) as Observable<any[]>;
@@ -87,7 +87,7 @@ export class DatabaseService {
     const q = query(
       collection(this.firestore, 'pacientes'),
       where('clinicId', '==', clinicId),
-      where('profesionalId', '==', user.uid)
+      where('professionalId', '==', user.uid)
     );
 
     const snapshot = await getDocs(q);
@@ -119,7 +119,7 @@ export class DatabaseService {
     return addDoc(collection(this.firestore, 'pacientes'), {
       ...paciente,
       clinicId,
-      profesionalId: user.uid,
+      professionalId: user.uid,
       activo: true,
       createdAt: serverTimestamp()
     });
@@ -146,7 +146,7 @@ export class DatabaseService {
     return addDoc(collection(this.firestore, 'sesiones'), {
       ...sesion,
       clinicId,
-      profesionalId: user.uid,
+      professionalId: user.uid,
       createdAt: serverTimestamp()
     });
   }
@@ -161,7 +161,7 @@ export class DatabaseService {
       collection(this.firestore, 'sesiones'),
       where('clinicId', '==', clinicId),
       where('pacienteId', '==', pacienteId),
-      where('profesionalId', '==', user.uid)
+      where('professionalId', '==', user.uid)
     );
 
     const snapshot = await getDocs(q);

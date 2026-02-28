@@ -28,7 +28,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "profesionalId",
+          "fieldPath": "professionalId",
           "order": "ASCENDING"
         },
         {

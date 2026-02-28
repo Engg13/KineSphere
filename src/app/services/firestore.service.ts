@@ -68,7 +68,7 @@ export class FirestoreService {
       fechaCreacion: paciente.fechaCreacion || new Date().toISOString(),
       num_sesiones: paciente.num_sesiones || 0,
       clinicId,
-      profesionalId: user.uid,
+      professionalId: user.uid,
       createdAt: serverTimestamp()
     };
 
@@ -117,7 +117,7 @@ export class FirestoreService {
     const data = {
       ...sesion,
       clinicId,
-      profesionalId: user.uid,
+      professionalId: user.uid,
       fecha: sesion.fecha || new Date().toISOString(),
       createdAt: serverTimestamp()
     };

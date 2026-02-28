@@ -37,7 +37,7 @@
 
 1. **Reglas de Firestore muy amplias en lógica de app**
    - La app usa varias colecciones (`pacientes`, `sesiones`, `documentos`, `rutinas`, etc.) con lecturas/escrituras autenticadas generales.
-   - Antes de producción conviene restringir por `profesionalId`/rol para evitar acceso cruzado.
+   - Antes de producción conviene restringir por `professionalId`/rol para evitar acceso cruzado.
 
 2. **Inconsistencia de campos en sesiones**
    - Hay consultas usando `paciente_id` y otras usando `pacienteId`.

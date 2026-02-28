@@ -10,7 +10,7 @@ Fecha: 2026-02-23
    - Riesgo: acceso cruzado entre profesionales, modificación/borrado de datos ajenos y dependencia total del frontend para aislamiento.
 
 2. **Filtrado de seguridad en frontend (sobrelectura + fuga de datos en tránsito)**
-   - En rutinas/ejercicios se hace `collectionData` de la colección completa y luego `filter` en cliente por `profesionalId`.
+   - En rutinas/ejercicios se hace `collectionData` de la colección completa y luego `filter` en cliente por `professionalId`.
    - Riesgo: descarga de documentos de otros profesionales (aunque no se muestren), alto costo y mayor latencia.
 
 3. **Control de rol no reforzado en guard/ruteo**
@@ -31,7 +31,7 @@ Fecha: 2026-02-23
    - Riesgo: memory leaks y listeners duplicados al reingresar a vistas.
 
 7. **Modelo de identidad/tenant incompleto para SaaS multi-clínica**
-   - Se usa `profesionalId` en documentos, pero no aparece un `clinicId/tenantId` transversal.
+   - Se usa `professionalId` en documentos, pero no aparece un `clinicId/tenantId` transversal.
    - Riesgo: migración costosa al escalar a múltiples clínicas/equipos.
 
 ### Baja
@@ -47,12 +47,12 @@ Fecha: 2026-02-23
 ## Qué corregir primero (orden recomendado)
 
 1. **Blindaje de Firestore Rules**
-   - Aplicar `resource.data.profesionalId == request.auth.uid` para profesional.
+   - Aplicar `resource.data.professionalId == request.auth.uid` para profesional.
    - Permitir bypass solo para admin con función `isAdmin()`.
-   - En `create`, validar `request.resource.data.profesionalId == request.auth.uid` (o lógica admin explícita).
+   - En `create`, validar `request.resource.data.professionalId == request.auth.uid` (o lógica admin explícita).
 
 2. **Eliminar sobrelectura en queries**
-   - Reemplazar lecturas globales + filtro cliente por queries con `where('profesionalId','==',uid)`.
+   - Reemplazar lecturas globales + filtro cliente por queries con `where('professionalId','==',uid)`.
    - Mantener reglas como última línea de defensa.
 
 3. **Agregar Authorization Guard por rol**

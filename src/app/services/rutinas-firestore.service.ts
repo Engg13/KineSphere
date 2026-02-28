@@ -41,7 +41,7 @@ export class RutinasFirestoreService {
         const plantillasQ = query(
           ref,
           where('clinicId', '==', clinicId),
-          where('profesionalId', '==', user.uid),
+          where('professionalId', '==', user.uid),
           where('esPlantilla', '==', true)
         );
 
@@ -54,7 +54,7 @@ export class RutinasFirestoreService {
         const pacienteQ = query(
           ref,
           where('clinicId', '==', clinicId),
-          where('profesionalId', '==', user.uid),
+          where('professionalId', '==', user.uid),
           where('pacienteId', '==', pacienteId)
         );
 
@@ -105,7 +105,7 @@ export class RutinasFirestoreService {
             estado: data.estado,
             enviadaWhatsapp: false,
             esPlantilla,          
-            profesionalId: user.uid,
+            professionalId: user.uid,
             createdAt: serverTimestamp()
         });
 }
@@ -230,7 +230,7 @@ export class RutinasFirestoreService {
         const q = query(
           ref,
           where('clinicId', '==', clinicId),
-          where('profesionalId', '==', user.uid),
+          where('professionalId', '==', user.uid),
           where('pacienteId', '==', null)
         );
 
@@ -261,7 +261,7 @@ export class RutinasFirestoreService {
             estado: 'active',
             enviadaWhatsapp: false,
             esPlantilla: false,
-            profesionalId: user.uid,
+            professionalId: user.uid,
             createdAt: serverTimestamp()
         };
 
@@ -279,7 +279,7 @@ export class RutinasFirestoreService {
                 const q = query(
                   ref,
                   where('clinicId', '==', clinicId),
-                  where('profesionalId', '==', user.uid)
+                  where('professionalId', '==', user.uid)
                 );
 
                 return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(

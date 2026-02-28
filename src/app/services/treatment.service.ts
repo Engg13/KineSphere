@@ -34,11 +34,29 @@ export class TreatmentService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
 
-  async crearTratamiento(patientId: string, clinicId: string, professionalId: string): Promise<string> {
+  async crearTratamiento(patientId: string): Promise<string> {
+    const user = this.authService.getCurrentUser();
+    if (!user) throw new Error('No autenticado');
+
+    // 🔥 Buscar el user document
+    const userDocRef = doc(this.firestore, `users/${user.uid}`);
+    const userSnap = await getDoc(userDocRef);
+
+    if (!userSnap.exists()) {
+      throw new Error('Documento de usuario no encontrado');
+    }
+
+    const userData = userSnap.data();
+    const clinicId = userData['clinicId'];
+
+    if (!clinicId) {
+      throw new Error('Usuario sin clinicId asignado');
+    }
+
     const tratamientoRef = await addDoc(collection(this.firestore, 'tratamientos'), {
       clinicId,
       patientId,
-      professionalId,
+      professionalId: user.uid,
       estado: 'active',
       totalSesiones: 0,
       createdAt: serverTimestamp(),
@@ -51,26 +69,28 @@ export class TreatmentService {
 
   async crearEvaluacionInicial(
     patientId: string,
-    clinicId: string,
-    professionalId: string,
     payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
   ): Promise<string> {
-    const treatmentId = await this.crearTratamiento(patientId, clinicId, professionalId);
-    return this.crearEvolucionConTratamiento(treatmentId, patientId, clinicId, professionalId, 'initial', payload);
+
+    const treatmentId = await this.crearTratamiento(patientId);
+
+    return this.crearEvolucionConTratamiento(
+      treatmentId,
+      patientId,
+      'initial',
+      payload
+    );
   }
 
   async crearSesionProgreso(
     treatmentId: string,
     patientId: string,
-    clinicId: string,
-    professionalId: string,
     payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
   ): Promise<string> {
+
     const evolucionId = await this.crearEvolucionConTratamiento(
       treatmentId,
       patientId,
-      clinicId,
-      professionalId,
       'progress',
       payload
     );
@@ -86,15 +106,12 @@ export class TreatmentService {
   async finalizarTratamiento(
     treatmentId: string,
     patientId: string,
-    clinicId: string,
-    professionalId: string,
     payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
   ): Promise<string> {
+
     const evolucionId = await this.crearEvolucionConTratamiento(
       treatmentId,
       patientId,
-      clinicId,
-      professionalId,
       'discharge',
       payload
     );
@@ -122,8 +139,6 @@ export class TreatmentService {
   private async crearEvolucionConTratamiento(
     treatmentId: string,
     patientId: string,
-    clinicId: string,
-    professionalId: string,
     tipoEvolucion: TipoEvolucion,
     payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
   ): Promise<string> {
@@ -134,10 +149,8 @@ export class TreatmentService {
     const sessionNumber = tipoEvolucion === 'progress' ? Number(tratamiento?.totalSesiones || 0) + 1 : null;
 
     const evolucionRef = await addDoc(collection(this.firestore, 'evoluciones'), {
-      clinicId,
       treatmentId,
       patientId,
-      professionalId,
       tipoEvolucion,
       sessionNumber,
       painScale: payload.painScale ?? null,
@@ -168,7 +181,7 @@ export class TreatmentService {
     const q = query(
       collection(this.firestore, 'tratamientos'),
       where('patientId', '==', patientId),
-      where('estado', '==', 'activo')
+      where('estado', '==', 'active')
     );
 
     const snapshot = await getDocs(q);
