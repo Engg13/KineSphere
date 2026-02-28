@@ -1,6 +1,6 @@
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { AlertController, NavController, IonicModule } from '@ionic/angular';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { DatabaseService } from '../../services/database.service';
 import { RutinaEjercicios } from '../../models/interfaces';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
@@ -31,8 +31,6 @@ export class PacienteDetallePage implements OnDestroy {
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
-  private router = inject(Router);
-
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
@@ -420,22 +418,15 @@ export class PacienteDetallePage implements OnDestroy {
   }
 
   iniciarTratamiento(event: Event) {
-
     const button = event.currentTarget as HTMLElement;
-
-    // 🔥 Quitar foco
     button?.blur();
 
-    // 🔥 Forzar ciclo de render antes de navegar
-    requestAnimationFrame(() => {
-      this.router.navigate(['/evolucion'], {
-        queryParams: {
-          patientId: this.pacienteId,
-          mode: 'initial'
-        }
-      });
+    this.navCtrl.navigateForward('/evolucion', {
+      queryParams: {
+        patientId: this.pacienteId,
+        mode: 'initial'
+      }
     });
-
   }
 
   finalizarTratamiento() {
