@@ -421,7 +421,7 @@ export class PacienteDetallePage implements OnDestroy {
     const button = event.currentTarget as HTMLElement;
     button?.blur();
 
-    this.navCtrl.navigateForward('/evolucion', {
+    this.navCtrl.navigateRoot('/evolucion', {
       queryParams: {
         patientId: this.pacienteId,
         mode: 'initial'
@@ -432,7 +432,7 @@ export class PacienteDetallePage implements OnDestroy {
   finalizarTratamiento() {
     if (!this.tratamientoActivo) return;
 
-    this.navCtrl.navigateForward('/evolucion', {
+    this.navCtrl.navigateRoot('/evolucion', {
       queryParams: {
         patientId: this.pacienteId,
         treatmentId: this.tratamientoActivo.id,

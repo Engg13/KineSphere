@@ -1,4 +1,5 @@
-<ion-content (click)="onContentClick($event)">
+<ion-page>
+<ion-content fullscreen="true" (click)="onContentClick($event)">
   <div *ngIf="cargando" style="display:flex;justify-content:center;align-items:center;height:60vh">
     <ion-spinner name="crescent"></ion-spinner>
   </div>
@@ -391,18 +392,15 @@
       </div>
       <textarea class="obs-textarea" formControlName="plan" placeholder="Plan para próxima sesión, ajustes terapéuticos y recomendaciones..." rows="2"></textarea>
     </div>
+  </div>
 
-    <div class="botones-spacer"></div>
+  <div class="footer-fake">
+    <button
+      class="btn-guardar"
+      [disabled]="guardando || form.invalid"
+      (click)="guardarEvolucion()">
+      Guardar Evolución
+    </button>
   </div>
 
   </ion-content>
-
-  <ion-footer>
-    <ion-toolbar>
-      <button class="btn-guardar"
-        [disabled]="guardando || form.invalid"
-        (click)="guardarEvolucion()">
-        Guardar Evolución
-      </button>
-    </ion-toolbar>
-  </ion-footer>

@@ -17,11 +17,12 @@ service cloud.firestore {
     function requesterHasProfile() {
       return isSignedIn() &&
         requesterUserDocExists() &&
-        requesterUserDoc().keys().hasAll(['clinicId', 'role']);
+        requesterUserDoc().keys().hasAll(['role']);
     }
 
-    function requesterClinicId() {
-      return requesterUserDoc().clinicId;
+    function isSuperAdmin() {
+      return requesterHasProfile() &&
+        requesterUserDoc().role == 'superadmin';
     }
 
     function isAdmin() {
@@ -29,145 +30,106 @@ service cloud.firestore {
         requesterUserDoc().role == 'admin';
     }
 
-    function hasClinicAndProfessional(data) {
-      return data.keys().hasAll(['clinicId', 'professionalId']);
+    function requesterClinicId() {
+      return requesterUserDoc().clinicId;
     }
 
-    function canAccessClinicalDoc(data) {
-      return isAdmin() || (
-        hasClinicAndProfessional(data) &&
-        data.clinicId == requesterClinicId() &&
-        data.professionalId == request.auth.uid
-      );
+    function belongsToSameClinic(data) {
+      return requesterHasProfile() &&
+        requesterUserDoc().keys().hasAny(['clinicId']) &&
+        data.clinicId == requesterClinicId();
+    }
+
+    function canReadClinicalDoc(data) {
+      return belongsToSameClinic(data);
+    }
+
+    function protectImmutableFields() {
+      return request.resource.data.clinicId == resource.data.clinicId &&
+        request.resource.data.professionalId == resource.data.professionalId &&
+        request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function canEditClinicalDoc() {
+      return requesterHasProfile() &&
+        belongsToSameClinic(resource.data) &&
+        (
+          isAdmin() ||
+          (
+            resource.data.professionalId == request.auth.uid &&
+            protectImmutableFields()
+          )
+        );
     }
 
     function isValidClinicalCreate(data) {
       return requesterHasProfile() &&
-        hasClinicAndProfessional(data) &&
+        data.keys().hasAll(['clinicId','professionalId','createdAt','updatedAt']) &&
         data.clinicId == requesterClinicId() &&
-        (isAdmin() || data.professionalId == request.auth.uid);
+        data.professionalId == request.auth.uid &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
     }
 
-    function isValidClinicalUpdate() {
-      return requesterHasProfile() && (
-        isAdmin() || (
-        hasClinicAndProfessional(resource.data) &&
-        resource.data.clinicId == requesterClinicId() &&
-        resource.data.professionalId == request.auth.uid &&
-        request.resource.data.clinicId == resource.data.clinicId &&
-        request.resource.data.professionalId == resource.data.professionalId
-      ));
-    }
-
-    function hasNoLegacyCompletada(data) {
-      return !data.keys().hasAny(['completada']);
-    }
-
-    function isValidRutinaEstado(estado) {
-      return estado in ['draft', 'active', 'completed', 'archived'];
-    }
-
-    function isValidRutinaCreate() {
-      return isValidClinicalCreate(request.resource.data) &&
-        request.resource.data.keys().hasAll(['estado']) &&
-        isValidRutinaEstado(request.resource.data.estado) &&
-        hasNoLegacyCompletada(request.resource.data);
-    }
-
-    function isValidRutinaUpdate() {
-      return isValidClinicalUpdate() &&
-        hasNoLegacyCompletada(request.resource.data) &&
-        (
-          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['estado']) ||
-          isValidRutinaEstado(request.resource.data.estado)
-        );
+    function isActive(data) {
+      return !data.keys().hasAny(['isDeleted']) || data.isDeleted == false;
     }
 
     match /clinics/{clinicId} {
-      allow read: if isSignedIn() &&
-        (isAdmin() || clinicId == requesterClinicId());
-      allow create, update, delete: if isAdmin();
+      allow read: if isSuperAdmin() ||
+        (requesterHasProfile() && clinicId == requesterClinicId());
+
+      allow create, update, delete: if isSuperAdmin();
     }
+
+
 
     match /users/{userId} {
-      allow read: if isSignedIn() && request.auth.uid == userId;
-      allow create: if isSignedIn() &&
-        request.auth.uid == userId &&
-        request.resource.data.keys().hasAll(['clinicId', 'role']);
-      allow update: if isSignedIn() &&
-        request.auth.uid == userId &&
-        request.resource.data.clinicId == resource.data.clinicId;
-      allow delete: if false;
+
+      allow read: if isSuperAdmin() ||
+        request.auth.uid == userId;
+
+      allow create: if isSuperAdmin();
+
+      allow update: if isSuperAdmin() ||
+        request.auth.uid == userId;
+
+      allow delete: if isSuperAdmin();
     }
 
-    match /pacientes/{pacienteId} {
-      allow read: if isSignedIn() && canAccessClinicalDoc(resource.data);
-      allow create: if isSignedIn() && isValidClinicalCreate(request.resource.data);
-      allow update: if isSignedIn() && isValidClinicalUpdate();
-      allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
+    match /pacientes/{id} {
+      allow read: if canReadClinicalDoc(resource.data) && isActive(resource.data);
+      allow create: if isValidClinicalCreate(request.resource.data);
+      allow update: if canEditClinicalDoc();
+      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
     }
 
-    match /sesiones/{sesionId} {
-      allow read: if isSignedIn() && canAccessClinicalDoc(resource.data);
-      allow create: if isSignedIn() && isValidClinicalCreate(request.resource.data);
-      allow update: if isSignedIn() && isValidClinicalUpdate();
-      allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
+    match /sesiones/{id} {
+      allow read: if canReadClinicalDoc(resource.data) && isActive(resource.data);
+      allow create: if isValidClinicalCreate(request.resource.data);
+      allow update: if canEditClinicalDoc();
+      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
     }
 
-    match /rutinas/{rutinaId} {
-      allow read: if isSignedIn() && canAccessClinicalDoc(resource.data);
-      allow create: if isSignedIn() && isValidRutinaCreate();
-      allow update: if isSignedIn() && isValidRutinaUpdate();
-      allow delete: if isSignedIn() && canAccessClinicalDoc(resource.data);
+    match /rutinas/{id} {
+      allow read: if canReadClinicalDoc(resource.data) && isActive(resource.data);
+      allow create: if isValidClinicalCreate(request.resource.data);
+      allow update: if canEditClinicalDoc();
+      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
     }
 
-    match /testTemplates/{testId} {
-
-      allow read: if request.auth != null
-        && requesterHasProfile()
-        && resource.data.clinicId == requesterClinicId();
-
-      allow create, update, delete: if request.auth != null
-        && requesterHasProfile()
-        && isAdmin()
-        && request.resource.data.clinicId == requesterClinicId();
+    match /testTemplates/{id} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSuperAdmin();
     }
 
 
     match /evoluciones/{id} {
-
-      allow create: if request.auth != null
-        && requesterHasProfile()
-        && request.resource.data.clinicId == requesterClinicId()
-        && request.resource.data.professionalId == request.auth.uid;
-
-      allow read: if request.auth != null
-        && requesterHasProfile()
-        && resource.data.clinicId == requesterClinicId();
-
-      allow update: if request.auth != null
-        && requesterHasProfile()
-        && resource.data.clinicId == requesterClinicId()
-        && (
-            
-            isAdmin()
-            ||
-            
-            (
-              resource.data.professionalId == request.auth.uid
-              // Inmutables protegidos
-              && request.resource.data.clinicId == resource.data.clinicId
-              && request.resource.data.professionalId == resource.data.professionalId
-              && request.resource.data.createdAt == resource.data.createdAt
-              && request.resource.data.sessionNumber == resource.data.sessionNumber
-            )
-        );
-
-      
-      allow delete: if request.auth != null
-        && requesterHasProfile()
-        && resource.data.clinicId == requesterClinicId()
-        && isAdmin();
-      }
+      allow read: if canReadClinicalDoc(resource.data) && isActive(resource.data);
+      allow create: if isValidClinicalCreate(request.resource.data);
+      allow update: if
+        canEditClinicalDoc() &&
+        request.resource.data.sessionNumber == resource.data.sessionNumber;
+      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
     }
 }

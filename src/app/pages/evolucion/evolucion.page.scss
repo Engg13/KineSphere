@@ -776,11 +776,15 @@ canvas {
   max-height: 260px;
 }
 
-ion-footer {
-  padding: 8px 16px;
-}
 
 .btn-guardar {
   width: 100%;
   border-radius: 12px;
+}
+
+.footer-fake {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 16px;
 }

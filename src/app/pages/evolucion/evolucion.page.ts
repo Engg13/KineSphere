@@ -175,7 +175,9 @@ export class EvolucionPage implements OnInit, OnDestroy {
   return null;
   }
 
-  async ngOnInit(): Promise<void> {
+  async ngOnInit(): Promise<void> {setTimeout(() => {
+  document.body.style.background = 'red';
+}, 500);
 
     const params = this.route.snapshot.queryParamMap;
 
