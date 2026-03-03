@@ -10,7 +10,9 @@ import {
   doc,
   getDoc,
   updateDoc,
-  serverTimestamp
+  serverTimestamp,
+  orderBy,
+  limit
 } from '@angular/fire/firestore';
 import { Observable, from, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -115,20 +117,67 @@ export class DatabaseService {
 
     const clinicId = await this.authService.getCurrentClinicId();
 
+    const {
+      nombre,
+      rut,
+      telefono,
+      email,
+      direccion,
+      fechaNacimiento
+    } = paciente;
+
+    if (!rut) throw new Error('RUT obligatorio');
+
+    // 🔹 Normalizar RUT (clave)
+    const rutNormalizado = rut.replace(/\./g, '').toUpperCase();
+
+    const q = query(
+      collection(this.firestore, 'pacientes'),
+      where('clinicId', '==', clinicId),
+      where('rut', '==', rutNormalizado),
+      where('isDeleted', '==', false)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      throw new Error('Paciente ya existe en esta clínica');
+    }
+
     return addDoc(collection(this.firestore, 'pacientes'), {
-      ...paciente,
+      nombre,
+      rut: rutNormalizado,
+      telefono,
+      email,
+      direccion,
+      fechaNacimiento,
+
       clinicId,
       professionalId: user.uid,
       activo: true,
+      isDeleted: false,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      isDeleted: false
+      updatedAt: serverTimestamp()
     });
   }
 
   async updatePaciente(id: string, data: any) {
+    const {
+      nombre,
+      telefono,
+      email,
+      direccion,
+      fechaNacimiento,
+      activo
+    } = data;
+
     return updateDoc(doc(this.firestore, `pacientes/${id}`), {
-      ...data,
+      nombre,
+      telefono,
+      email,
+      direccion,
+      fechaNacimiento,
+      activo,
       updatedAt: serverTimestamp()
     });
   }
@@ -151,19 +200,54 @@ export class DatabaseService {
 
     const clinicId = await this.authService.getCurrentClinicId();
 
+    const {
+      pacienteId,
+      tipoEvolucion,
+      notas,
+      fecha
+    } = sesion;
+
+    if (!pacienteId) throw new Error('Paciente requerido');
+
+    // 🔹 Buscar última sesión
+    const q = query(
+      collection(this.firestore, 'sesiones'),
+      where('clinicId', '==', clinicId),
+      where('pacienteId', '==', pacienteId),
+      where('isDeleted', '==', false),
+      orderBy('sessionNumber', 'desc'),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(q);
+
+    let nextSessionNumber = 1;
+
+    if (!snapshot.empty) {
+      const lastData = snapshot.docs[0].data() as any;
+      nextSessionNumber = (lastData.sessionNumber ?? 0) + 1;
+    }
+
     return addDoc(collection(this.firestore, 'sesiones'), {
-      ...sesion,
+      pacienteId,
+      tipoEvolucion,
+      notas,
+      fecha,
+
+      sessionNumber: nextSessionNumber,
+
       clinicId,
       professionalId: user.uid,
+      isDeleted: false,
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      isDeleted: false
+      updatedAt: serverTimestamp()
     });
   }
 
   async getSesionesByPaciente(pacienteId: string): Promise<any[]> {
     const q = await this.buildClinicScopedQuery('sesiones', [
-      where('pacienteId', '==', pacienteId)
+      where('pacienteId', '==', pacienteId),
+      orderBy('sessionNumber', 'asc')
     ]);
 
     const snapshot = await getDocs(q);

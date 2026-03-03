@@ -10,7 +10,8 @@ import {
   query,
   getDocs,
   where,
-  updateDoc
+  updateDoc,
+  runTransaction
 } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { EvolucionCreateInput, TipoEvolucion } from '../models/evolucion.model';
@@ -88,16 +89,61 @@ export class TreatmentService {
     payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
   ): Promise<string> {
 
-    const evolucionId = await this.crearEvolucionConTratamiento(
-      treatmentId,
-      patientId,
-      'progress',
-      payload
-    );
+    const user = this.authService.getCurrentUser();
+    if (!user) throw new Error('No autenticado');
 
-    await updateDoc(doc(this.firestore, `tratamientos/${treatmentId}`), {
-      totalSesiones: increment(1),
-      updatedAt: serverTimestamp()
+    const evolucionId = await runTransaction(this.firestore, async (transaction) => {
+
+      const tratamientoRef = doc(this.firestore, `tratamientos/${treatmentId}`);
+      const tratamientoSnap = await transaction.get(tratamientoRef);
+
+      if (!tratamientoSnap.exists()) {
+        throw new Error('Tratamiento no encontrado');
+      }
+
+      const tratamientoData = tratamientoSnap.data();
+      const totalActual = Number(tratamientoData?.['totalSesiones'] || 0);
+      const nextSessionNumber = totalActual + 1;
+
+      const evolucionRef = doc(collection(this.firestore, 'evoluciones'));
+
+      transaction.set(evolucionRef, {
+        treatmentId,
+        patientId,
+        tipoEvolucion: 'progress',
+        sessionNumber: nextSessionNumber,
+
+        painScale: payload.painScale ?? null,
+        sleepQuality: payload.sleepQuality ?? null,
+        zonaTratamiento: payload.zonaTratamiento ?? null,
+        tecnicasAplicadas: payload.tecnicasAplicadas ?? [],
+        rom: payload.rom ?? [],
+        ejerciciosRealizados: payload.ejerciciosRealizados ?? false,
+        subjective: payload.subjective ?? '',
+        objective: payload.objective ?? '',
+        assessment: payload.assessment ?? '',
+        plan: payload.plan ?? '',
+        objetivos: payload.objetivos ?? [],
+        rutinaId: payload.rutinaId ?? null,
+        rutinaNombre: payload.rutinaNombre ?? null,
+        test: payload.test ?? null,
+
+        clinicId: tratamientoData?.['clinicId'],
+        professionalId: user.uid,
+
+        activo: true,
+        deletedAt: null,
+        deletedBy: null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      transaction.update(tratamientoRef, {
+        totalSesiones: nextSessionNumber,
+        updatedAt: serverTimestamp()
+      });
+
+      return evolucionRef.id;
     });
 
     return evolucionId;
@@ -142,17 +188,28 @@ export class TreatmentService {
     tipoEvolucion: TipoEvolucion,
     payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
   ): Promise<string> {
+
     const user = this.authService.getCurrentUser();
     if (!user) throw new Error('No autenticado');
 
+    if (tipoEvolucion === 'progress') {
+      throw new Error('Las sesiones de progreso deben crearse mediante crearSesionProgreso()');
+    }
+
     const tratamiento = await this.getTratamientoById(treatmentId);
-    const sessionNumber = tipoEvolucion === 'progress' ? Number(tratamiento?.totalSesiones || 0) + 1 : null;
+    if (!tratamiento) {
+      throw new Error('Tratamiento no encontrado');
+    }
 
     const evolucionRef = await addDoc(collection(this.firestore, 'evoluciones'), {
       treatmentId,
       patientId,
       tipoEvolucion,
-      sessionNumber,
+      sessionNumber: null,
+
+      clinicId: tratamiento.clinicId,
+      professionalId: user.uid,
+
       painScale: payload.painScale ?? null,
       sleepQuality: payload.sleepQuality ?? null,
       zonaTratamiento: payload.zonaTratamiento ?? null,
@@ -167,6 +224,7 @@ export class TreatmentService {
       rutinaId: payload.rutinaId ?? null,
       rutinaNombre: payload.rutinaNombre ?? null,
       test: payload.test ?? null,
+
       activo: true,
       deletedAt: null,
       deletedBy: null,

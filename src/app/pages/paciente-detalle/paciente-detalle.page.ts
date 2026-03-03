@@ -173,10 +173,9 @@ export class PacienteDetallePage implements OnDestroy {
           this.historialVisual = this.historialSesiones.map(e => {
 
             if (e.tipoEvolucion === 'progress') {
-              contadorProgress++;
               return {
                 ...e,
-                numeroVisual: contadorProgress
+                numeroVisual: e.sessionNumber ?? '-'
               };
             }
 
