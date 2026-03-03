@@ -77,7 +77,7 @@ export class AuthService {
   }
 
   isProfesional(): boolean {
-    return this.currentRole === 'profesional';
+    return this.currentRole === 'professional';
   }
 
   // =========================
@@ -114,8 +114,13 @@ export class AuthService {
     return snap.data();
   }
 
-  async getCurrentClinicId(): Promise<string> {
+  async getCurrentClinicId(): Promise<string | null> {
     const data = await this.getCurrentUserData();
+
+    // Si es superadmin, no pertenece a clínica
+    if (data.role === 'superadmin') {
+      return null;
+    }
 
     if (!data?.clinicId) {
       throw new Error('Usuario sin clinicId');

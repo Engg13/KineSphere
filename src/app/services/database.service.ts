@@ -13,7 +13,7 @@ import {
   deleteDoc,
   serverTimestamp
 } from '@angular/fire/firestore';
-import { Observable, from } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
@@ -35,12 +35,20 @@ export class DatabaseService {
       switchMap(user => {
         if (!user) throw new Error('Usuario no autenticado');
 
+        const role = this.authService.getRole();
+
+        // Superadmin no debe acceder a pacientes
+        if (role === 'superadmin') {
+          return of([]); // o lanzar error si prefieres
+        }
+
         return from(this.authService.getCurrentClinicId()).pipe(
           switchMap(clinicId => {
+            if (!clinicId) return of([]);
+
             const q = query(
               collection(this.firestore, 'pacientes'),
-              where('clinicId', '==', clinicId),
-              where('professionalId', '==', user.uid)
+              where('clinicId', '==', clinicId)
             );
 
             return collectionData(q, { idField: 'id' }) as Observable<any[]>;
@@ -63,8 +71,7 @@ export class DatabaseService {
           switchMap(clinicId => {
             const q = query(
               collection(this.firestore, 'sesiones'),
-              where('clinicId', '==', clinicId),
-              where('professionalId', '==', user.uid)
+              where('clinicId', '==', clinicId)
             );
 
             return collectionData(q, { idField: 'id' }) as Observable<any[]>;
@@ -86,8 +93,7 @@ export class DatabaseService {
 
     const q = query(
       collection(this.firestore, 'pacientes'),
-      where('clinicId', '==', clinicId),
-      where('professionalId', '==', user.uid)
+      where('clinicId', '==', clinicId)
     );
 
     const snapshot = await getDocs(q);
@@ -160,8 +166,7 @@ export class DatabaseService {
     const q = query(
       collection(this.firestore, 'sesiones'),
       where('clinicId', '==', clinicId),
-      where('pacienteId', '==', pacienteId),
-      where('professionalId', '==', user.uid)
+      where('pacienteId', '==', pacienteId)
     );
 
     const snapshot = await getDocs(q);

@@ -46,8 +46,13 @@ export class LoginPage {
 
       if (role === 'admin') {
         await this.mostrarExito('Bienvenido Administrador');
-      } else if (role === 'profesional') {
+
+      } else if (role === 'professional') {
         await this.mostrarExito('Bienvenido Profesional');
+
+      } else if (role === 'superadmin') {
+        await this.mostrarExito('Bienvenido Super Administrador');
+
       } else {
         await this.mostrarError('Rol no válido');
         return;

@@ -132,4 +132,5 @@ service cloud.firestore {
         request.resource.data.sessionNumber == resource.data.sessionNumber;
       allow delete: if isAdmin() && belongsToSameClinic(resource.data);
     }
+  }
 }
