@@ -41,7 +41,7 @@ service cloud.firestore {
     }
 
     function canReadClinicalDoc(data) {
-      return belongsToSameClinic(data);
+      return isSuperAdmin() || belongsToSameClinic(data);
     }
 
     function protectImmutableFields() {

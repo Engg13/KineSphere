@@ -10,7 +10,6 @@ import {
   doc,
   getDoc,
   updateDoc,
-  deleteDoc,
   serverTimestamp
 } from '@angular/fire/firestore';
 import { Observable, from, of } from 'rxjs';
@@ -26,35 +25,47 @@ export class DatabaseService {
   private authService = inject(AuthService);
 
 
+  private async buildClinicScopedQuery(
+    collectionName: string,
+    extraConstraints: any[] = []
+  ) {
+    const role = this.authService.getRole();
+
+    const baseConstraints = [
+      where('isDeleted', '==', false),
+      ...extraConstraints
+    ];
+
+    if (role === 'superadmin') {
+      return query(
+        collection(this.firestore, collectionName),
+        ...baseConstraints
+      );
+    }
+
+    const clinicId = await this.authService.getCurrentClinicId();
+
+    return query(
+      collection(this.firestore, collectionName),
+      where('clinicId', '==', clinicId),
+      ...baseConstraints
+    );
+  }
+
+
   // =====================================================
   // 🔥 REALTIME PACIENTES
   // =====================================================
 
   getPacientesRealtime(): Observable<any[]> {
     return this.authService.user$.pipe(
-      switchMap(user => {
-        if (!user) throw new Error('Usuario no autenticado');
-
-        const role = this.authService.getRole();
-
-        // Superadmin no debe acceder a pacientes
-        if (role === 'superadmin') {
-          return of([]); // o lanzar error si prefieres
-        }
-
-        return from(this.authService.getCurrentClinicId()).pipe(
-          switchMap(clinicId => {
-            if (!clinicId) return of([]);
-
-            const q = query(
-              collection(this.firestore, 'pacientes'),
-              where('clinicId', '==', clinicId)
-            );
-
-            return collectionData(q, { idField: 'id' }) as Observable<any[]>;
-          })
-        );
-      })
+      switchMap(() =>
+        from(this.buildClinicScopedQuery('pacientes')).pipe(
+          switchMap(q =>
+            collectionData(q, { idField: 'id' }) as Observable<any[]>
+          )
+        )
+      )
     );
   }
 
@@ -64,20 +75,13 @@ export class DatabaseService {
 
   getSesionesRealtime(): Observable<any[]> {
     return this.authService.user$.pipe(
-      switchMap(user => {
-        if (!user) throw new Error('Usuario no autenticado');
-
-        return from(this.authService.getCurrentClinicId()).pipe(
-          switchMap(clinicId => {
-            const q = query(
-              collection(this.firestore, 'sesiones'),
-              where('clinicId', '==', clinicId)
-            );
-
-            return collectionData(q, { idField: 'id' }) as Observable<any[]>;
-          })
-        );
-      })
+      switchMap(() =>
+        from(this.buildClinicScopedQuery('sesiones')).pipe(
+          switchMap(q =>
+            collectionData(q, { idField: 'id' }) as Observable<any[]>
+          )
+        )
+      )
     );
   }
 
@@ -86,25 +90,14 @@ export class DatabaseService {
   // =====================================================
 
   async getPacientes(): Promise<any[]> {
-    const user = this.authService.getCurrentUser();
-    if (!user) return [];
-
-    const clinicId = await this.authService.getCurrentClinicId();
-
-    const q = query(
-      collection(this.firestore, 'pacientes'),
-      where('clinicId', '==', clinicId)
-    );
+    const q = await this.buildClinicScopedQuery('pacientes');
 
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => {
-      const data = doc.data() as any;
-      return {
-        id: doc.id,
-        ...data
-      };
-    });
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
   }
 
   async getPaciente(id: string): Promise<any> {
@@ -127,16 +120,25 @@ export class DatabaseService {
       clinicId,
       professionalId: user.uid,
       activo: true,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      isDeleted: false
     });
   }
 
   async updatePaciente(id: string, data: any) {
-    return updateDoc(doc(this.firestore, `pacientes/${id}`), data);
+    return updateDoc(doc(this.firestore, `pacientes/${id}`), {
+      ...data,
+      updatedAt: serverTimestamp()
+    });
   }
 
   async deletePaciente(id: string) {
-    return deleteDoc(doc(this.firestore, `pacientes/${id}`));
+    return updateDoc(doc(this.firestore, `pacientes/${id}`), {
+      isDeleted: true,
+      deletedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
   }
 
   // =====================================================
@@ -153,31 +155,23 @@ export class DatabaseService {
       ...sesion,
       clinicId,
       professionalId: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      isDeleted: false
     });
   }
 
   async getSesionesByPaciente(pacienteId: string): Promise<any[]> {
-    const user = this.authService.getCurrentUser();
-    if (!user) return [];
-
-    const clinicId = await this.authService.getCurrentClinicId();
-
-    const q = query(
-      collection(this.firestore, 'sesiones'),
-      where('clinicId', '==', clinicId),
+    const q = await this.buildClinicScopedQuery('sesiones', [
       where('pacienteId', '==', pacienteId)
-    );
+    ]);
 
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => {
-      const data = doc.data() as any;
-      return {
-        id: doc.id,
-        ...data
-      };
-    });
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
   }
 
   async getNumeroSesionesByPaciente(pacienteId: string): Promise<number> {
