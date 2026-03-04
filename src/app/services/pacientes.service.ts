@@ -19,12 +19,23 @@ export interface PacienteDocument {
   id: string;
   clinicId: string;
   professionalId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+
+  nombre: string;
+  rut?: string;
+  fechaNacimiento?: string;
+  edad?: number;
+  email?: string;
+  telefono?: string;
+  diagnostico?: string;
+  sesionesPlanificadas?: number;
+  sesionesCompletadas?: number;
+
   activo: boolean;
   isDeleted: boolean;
-  rut?: string;
-  [key: string]: unknown;
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  deletedAt?: Timestamp;
 }
 
 export type PacienteCreateInput = Omit<Partial<PacienteDocument>, 'id' | 'clinicId' | 'professionalId' | 'createdAt' | 'updatedAt' | 'activo' | 'isDeleted'>;

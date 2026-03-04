@@ -132,5 +132,12 @@ service cloud.firestore {
         request.resource.data.sessionNumber == resource.data.sessionNumber;
       allow delete: if isAdmin() && belongsToSameClinic(resource.data);
     }
+
+    match /tratamientos/{id} {
+      allow read: if canReadClinicalDoc(resource.data);
+      allow create: if isValidClinicalCreate(request.resource.data);
+      allow update: if canEditClinicalDoc();
+      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
+    }
   }
 }

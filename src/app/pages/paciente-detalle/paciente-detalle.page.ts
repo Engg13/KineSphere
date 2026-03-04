@@ -7,7 +7,7 @@ import { RutinasFirestoreService } from '../../services/rutinas-firestore.servic
 import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
-import { TreatmentService } from 'src/app/services/treatment.service';
+import { TreatmentService } from 'src/app/services/flujoclinico.service';
 
 @Component({
   selector: 'app-paciente-detalle',

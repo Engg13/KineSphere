@@ -128,7 +128,6 @@ export class DatabaseService {
 
     if (!rut) throw new Error('RUT obligatorio');
 
-    // 🔹 Normalizar RUT (clave)
     const rutNormalizado = rut.replace(/\./g, '').toUpperCase();
 
     const q = query(
@@ -144,21 +143,23 @@ export class DatabaseService {
       throw new Error('Paciente ya existe en esta clínica');
     }
 
-    return addDoc(collection(this.firestore, 'pacientes'), {
+    const pacienteData: any = {
       nombre,
       rut: rutNormalizado,
-      telefono,
-      email,
-      direccion,
-      fechaNacimiento,
-
       clinicId,
       professionalId: user.uid,
       activo: true,
       isDeleted: false,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    });
+    };
+
+    if (telefono) pacienteData.telefono = telefono;
+    if (email) pacienteData.email = email;
+    if (direccion) pacienteData.direccion = direccion;
+    if (fechaNacimiento) pacienteData.fechaNacimiento = fechaNacimiento;
+
+    return addDoc(collection(this.firestore, 'pacientes'), pacienteData);
   }
 
   async updatePaciente(id: string, data: any) {

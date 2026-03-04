@@ -1,10 +1,13 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { NavController, IonicModule } from '@ionic/angular';
-import { DatabaseService } from '../../services/database.service';
-import { AuthService } from '../../services/auth.service';
-import { Subscription, combineLatest } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { EjerciciosSeederService } from 'src/app/services/ejercicios-seeder.service';
+
+import { PacientesService } from '../../services/pacientes.service';
+import { TratamientosService } from '../../services/tratamientos.service';
+import { EvolucionesService } from '../../services/evoluciones.service';
+import { AuthService } from '../../services/auth.service';
+import { PacienteDocument } from '../../services/pacientes.service';
+import { TratamientoDocument } from '../../services/tratamientos.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,106 +16,124 @@ import { EjerciciosSeederService } from 'src/app/services/ejercicios-seeder.serv
   standalone: true,
   imports: [IonicModule, CommonModule]
 })
-export class DashboardPage implements OnDestroy {
+export class DashboardPage {
 
-  usuarioNombre: string = '';
+  usuarioNombre = '';
   totalPacientes = 0;
   pacientesActivos = 0;
+  tratamientosActivos = 0;
   sesionesHoy = 0;
-  evaluacionesPendientes = 0;
-  pacientesRecientes: any[] = [];
+  pacientesSinEvaluacion = 0;
+  pacientesRecientes: PacienteDocument[] = [];
   estaCargando = true;
-
-  private sub?: Subscription;
-
-  user$ = this.authService.user$;
 
   constructor(
     private navCtrl: NavController,
-    private databaseService: DatabaseService,
-    private authService: AuthService,
-    private ejerciciosSeeder: EjerciciosSeederService,
+    private pacientesService: PacientesService,
+    private tratamientosService: TratamientosService,
+    private evolucionesService: EvolucionesService,
+    private authService: AuthService
   ) {}
 
-  ionViewDidEnter() {
+  async ionViewDidEnter() {
     this.usuarioNombre = this.authService.getNombreCompleto();
+    await this.cargarDashboard();
+  }
 
-    this.sub = combineLatest([
-      this.databaseService.getPacientesRealtime(),
-      this.databaseService.getSesionesRealtime()
-    ]).subscribe(([pacientes, sesiones]) => {
+  private dashboardCache: {
+    pacientes: PacienteDocument[];
+    tratamientosActivos: TratamientoDocument[];
+    evolucionesHoy: any[];
+    evolucionesIniciales: any[];
+  } | null = null;
 
-      this.totalPacientes = pacientes.length;
-      this.pacientesActivos = pacientes.filter(p => p.activo).length;
+  private async cargarDashboard() {
 
-      const hoy = new Date().toDateString();
+    if (this.dashboardCache) {
+      this.aplicarDatos(this.dashboardCache);
+    }
 
-      this.sesionesHoy = sesiones.filter(s =>
-        s.fecha && new Date(s.fecha).toDateString() === hoy
-      ).length;
+    this.estaCargando = !this.dashboardCache;
 
-      this.evaluacionesPendientes = pacientes.filter(p =>
-        p.necesitaEvaluacion && !p.evaluacionCompletada
-      ).length;
+    try {
 
-      this.pacientesRecientes = [...pacientes]
-        .sort((a, b) =>
-          (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
-        )
-        .slice(0, 5);
+      const [
+        pacientes,
+        tratamientosActivos,
+        evolucionesHoy,
+        evolucionesIniciales
+      ] = await Promise.all([
+        this.pacientesService.list(),
+        this.tratamientosService.listActivos(),
+        this.evolucionesService.listHoy(),
+        this.evolucionesService.listIniciales()
+      ]);
 
+      const nuevosDatos = {
+        pacientes,
+        tratamientosActivos,
+        evolucionesHoy,
+        evolucionesIniciales
+      };
+
+      this.dashboardCache = nuevosDatos;
+      this.aplicarDatos(nuevosDatos);
+
+    } catch (error) {
+      console.error('Error cargando dashboard:', error);
+    } finally {
       this.estaCargando = false;
-    });
+    }
   }
 
-  ionViewWillLeave() {
-    this.sub?.unsubscribe();
+  private aplicarDatos(data: {
+    pacientes: PacienteDocument[];
+    tratamientosActivos: TratamientoDocument[];
+    evolucionesHoy: any[];
+    evolucionesIniciales: any[];
+  }) {
+
+    const { pacientes, tratamientosActivos, evolucionesHoy, evolucionesIniciales } = data;
+
+    this.totalPacientes = pacientes.length;
+    this.pacientesActivos = pacientes.filter(p => p.activo === true).length;
+    this.tratamientosActivos = tratamientosActivos.length;
+
+    this.sesionesHoy = evolucionesHoy.filter(e =>
+      e.tipoEvolucion === 'progress'
+    ).length;
+
+    const pacientesConInicial = new Set(
+      evolucionesIniciales.map(e => e.patientId)
+    );
+
+    this.pacientesSinEvaluacion = tratamientosActivos.filter(t =>
+      !pacientesConInicial.has(t.patientId)
+    ).length;
+
+    this.pacientesRecientes = [...pacientes]
+      .sort((a, b) =>
+        (b.createdAt?.toMillis?.() ?? 0) -
+        (a.createdAt?.toMillis?.() ?? 0)
+      )
+      .slice(0, 5);
   }
 
-  ngOnDestroy() {
-    this.sub?.unsubscribe();
-  }
-
-  // 🔄 Si el HTML tiene refresher
-  recargarDashboard(event: any) {
-    event.target.complete();
-  }
-
-  // ======================
   // NAV
-  // ======================
 
   irAPacientes() {
     this.navCtrl.navigateRoot('/pacientes-lista');
-  }
-
-  irASesion() {
-    this.navCtrl.navigateRoot('/sesion');
-  }
-
-  irAEvaluaciones() {
-    this.navCtrl.navigateRoot('/evaluacion-final');
-  }
-
-  irAEjercicios() {
-    this.navCtrl.navigateRoot('/ejercicios');
   }
 
   agregarPaciente() {
     this.navCtrl.navigateRoot('/agregar-paciente');
   }
 
-  irAPerfil() {
-    this.navCtrl.navigateRoot('/perfil-profesional');
-  }
-
-  verDetallePaciente(paciente: any) {
+    verDetallePaciente(paciente: PacienteDocument) {
     this.navCtrl.navigateRoot('/paciente-detalle', {
       queryParams: { pacienteId: paciente.id }
     });
   }
 
-  irAEvaluacionesClinicas() {
-  this.navCtrl.navigateRoot('/tests-config');
-  }
+
 }

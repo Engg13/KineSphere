@@ -1,7 +1,7 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { NavController, ToastController, Platform, ViewWillEnter, IonicModule } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatabaseService } from '../../services/database.service';
+import { PacientesService } from '../../services/pacientes.service';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -39,7 +39,7 @@ export class AgregarPacientePage implements ViewWillEnter {
     private platform: Platform,
     private route: ActivatedRoute,
     private router: Router,
-    private databaseService: DatabaseService
+    private pacientesService: PacientesService
   ) {}
 
   // === LIFECYCLE ===
@@ -78,10 +78,7 @@ export class AgregarPacientePage implements ViewWillEnter {
 
   private async cargarPacienteParaEditar(id: string) {
     try {
-      const todosPacientes = await this.databaseService.getPacientes();
-      const paciente = todosPacientes.find(p =>
-        String(p.id) === String(id) || p.pacienteId === id
-      );
+      const paciente = await this.pacientesService.getById(id);
 
       if (paciente) {
         this.paciente = { ...paciente };
@@ -233,27 +230,31 @@ export class AgregarPacientePage implements ViewWillEnter {
 
     try {
       const edadCalculada = this.calcularEdad();
-      this.paciente.edad = edadCalculada;
+
+      const payload = {
+        nombre: this.paciente.nombre,
+        rut: this.paciente.rut,
+        fechaNacimiento: this.paciente.fechaNacimiento,
+        edad: edadCalculada,
+        email: this.paciente.email,
+        telefono: this.paciente.telefono,
+        diagnostico: this.paciente.diagnostico,
+        sesionesPlanificadas: this.paciente.sesionesPlanificadas
+      };
 
       if (this.modoEdicion) {
-        // MODO EDICION: actualizar paciente existente en Firestore
-        await this.actualizarPacienteEnFirestore();
+        await this.pacientesService.update(this.pacienteIdOriginal, payload);
         this.mostrarToast('Paciente actualizado exitosamente', 'success');
       } else {
-        // MODO NUEVO: crear paciente
-        const pacienteCompleto = {
-          ...this.paciente,
-          fechaCreacion: new Date().toISOString(),
-          fechaIngreso: new Date().toLocaleDateString('es-CL')
-        };
-
-        await this.databaseService.addPaciente(pacienteCompleto);
+        await this.pacientesService.create(payload);
         this.mostrarToast('Paciente guardado exitosamente', 'success');
       }
 
       setTimeout(() => {
         if (this.modoEdicion) {
-          this.navCtrl.navigateRoot('/paciente-detalle', { queryParams: { pacienteId: this.pacienteIdOriginal } });
+          this.navCtrl.navigateRoot('/paciente-detalle', {
+            queryParams: { pacienteId: this.pacienteIdOriginal }
+          });
         } else {
           this.navCtrl.navigateRoot('/pacientes-lista');
         }
@@ -261,23 +262,11 @@ export class AgregarPacientePage implements ViewWillEnter {
 
     } catch (error) {
       console.error('Error guardando paciente:', error);
-      this.mostrarToast('Error al guardar el paciente', 'danger');
+      this.mostrarToast(
+        error instanceof Error ? error.message : 'Error al guardar el paciente',
+        'danger'
+      );
     }
-  }
-
-  private async actualizarPacienteEnFirestore() {
-    const data = {
-      nombre: this.paciente.nombre,
-      rut: this.paciente.rut,
-      fechaNacimiento: this.paciente.fechaNacimiento,
-      edad: this.paciente.edad,
-      email: this.paciente.email,
-      telefono: this.paciente.telefono,
-      diagnostico: this.paciente.diagnostico,
-      sesionesPlanificadas: this.paciente.sesionesPlanificadas
-    };
-
-    await this.databaseService.updatePaciente(this.pacienteIdOriginal, data);
   }
 
   // === MÉTODOS AUXILIARES ===
@@ -354,24 +343,5 @@ export class AgregarPacientePage implements ViewWillEnter {
     
     const telefonoLimpio = this.paciente.telefono.replace(/[^0-9]/g, '');
     return telefonoLimpio.length === 9 || telefonoLimpio.length === 11;
-  }
-
-  // === MÉTODO DE DEPURACIÓN (OPCIONAL) ===
-  
-  async verificarGuardado() {
-    try {
-      console.log('🔍 Verificando guardado en Firestore...');
-      const pacientes = await this.databaseService.getPacientes();
-      console.log(`📊 Total pacientes en Firestore: ${pacientes.length}`);
-      
-      if (pacientes.length > 0) {
-        console.log('📋 Últimos 3 pacientes:');
-        pacientes.slice(-3).forEach((p, i) => {
-          console.log(`${i+1}. ${p.nombre} - Edad: ${p.edad} - ID: ${p.id}`);
-        });
-      }
-    } catch (error) {
-      console.error('❌ Error verificando Firestore:', error);
-    }
   }
 }

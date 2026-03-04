@@ -7,16 +7,17 @@ import { Subscription, firstValueFrom } from 'rxjs';
 import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
 import { ArticulacionRom, RomEntry, TipoEvolucion } from '../../models/evolucion.model';
 import { TestTemplate } from '../../models/test-template.model';
-import { DatabaseService } from '../../services/database.service';
 import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
-import { TreatmentService } from '../../services/treatment.service';
+import { FlujoClinicoService} from '../../services/flujoclinico.service';
+import { PacientesService} from '../../services/pacientes.service';
 import { EjerciciosPage } from '../ejercicios/ejercicios.page';
 import { Chart } from 'chart.js/auto';
 import { AuthService } from 'src/app/services/auth.service';
 import { ObjetivoClinico } from '../../models/evolucion.model';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { TratamientosService } from '../../services/tratamientos.service';
 
 const ROM_CONFIG: Record<string, string[]> = {
   Hombro: ['Flexión', 'Extensión', 'Abducción', 'Aducción', 'Rotación interna', 'Rotación externa'],
@@ -46,12 +47,14 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private modalCtrl = inject(ModalController);
   private toastCtrl = inject(ToastController);
   private evolucionesService = inject(EvolucionesFirestoreService);
-  private databaseService = inject(DatabaseService);
+  private pacientesService = inject(PacientesService);
   private rutinasService = inject(RutinasFirestoreService);
   private testTemplatesService = inject(TestTemplatesFirestoreService);
-  private treatmentService = inject(TreatmentService);
+  private flujoClinicoService = inject(FlujoClinicoService);
   private authService = inject(AuthService);
-  private usarDatosDemo = true; // 🔥 poner en false en producción
+  private tratamientosService = inject(TratamientosService);
+  private usarDatosDemo = true;
+   // 🔥 poner en false en producción
 
   patientId = '';
   pacienteNombre = 'Paciente';
@@ -247,23 +250,29 @@ export class EvolucionPage implements OnInit, OnDestroy {
   async cargarDatosPaciente(): Promise<void> {
     if (!this.patientId) return;
 
-    const p = await this.databaseService.getPaciente(this.patientId);
-    if (!p) return;
+    // 1️⃣ Cargar paciente (identidad)
+    const paciente = await this.pacientesService.getById(this.patientId);
+    if (!paciente) return;
 
-    this.pacienteActual = p;
-    this.pacienteNombre = p.nombre || this.pacienteNombre;
-    this.pacienteDiagnostico = p.diagnostico || '';
-    this.sesionesPlanificadas = p.sesionesPlanificadas || 10;
+    this.pacienteActual = paciente;
+    this.pacienteNombre = paciente.nombre || this.pacienteNombre;
+    this.pacienteDiagnostico = paciente.diagnostico || '';
 
-    const zonaPrincipal = p.zonaPrincipal || '';
+    // 2️⃣ Cargar tratamiento activo
+    const tratamiento = await this.tratamientosService.getActivoByPaciente(this.patientId);
+    if (!tratamiento) return;
+
+    const zonaPrincipal = tratamiento.zonaPrincipal || '';
+    const secundarias = tratamiento.articulacionesSecundarias || [];
+
     this.form.patchValue({ zonaTratamiento: zonaPrincipal });
 
     this.romArray.clear();
+
     if (zonaPrincipal) {
       this.agregarArticulacionARom(zonaPrincipal);
     }
 
-    const secundarias: string[] = Array.isArray(p.articulacionesSecundarias) ? p.articulacionesSecundarias : [];
     secundarias.forEach((art) => this.agregarArticulacionARom(art));
   }
 
@@ -426,21 +435,8 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.actualizarModulosColapsablesAbiertos();
   }
 
-  private async persistirArticulacionPacienteConVerificacion(articulacion: string): Promise<void> {
-    if (!this.patientId) return;
-
-    const existeEnOtra = await this.evolucionesService.existsArticulacionEnOtrasEvoluciones(
-      this.patientId,
-      articulacion
-    );
-
-    if (existeEnOtra) {
-      await this.mostrarToast('La articulación se mantiene en paciente por historial clínico existente.', 'warning');
-      return;
-    }
-
+  private async persistirArticulacionPacienteConVerificacion(_: string): Promise<void> {
     await this.persistirArticulacionesPaciente();
-    this.actualizarModulosColapsablesAbiertos();
   }
 
   private existeArticulacionEnRom(articulacion: string): boolean {
@@ -511,13 +507,13 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   private async persistirArticulacionesPaciente(): Promise<void> {
-    if (!this.patientId) return;
+    if (!this.treatmentId) return;
 
     const zonaPrincipal = this.form.controls.zonaTratamiento.getRawValue() || '';
     const todas = this.romArray.controls.map((ctrl) => ctrl.controls['articulacion'].value);
     const secundarias = todas.filter((art) => art !== zonaPrincipal);
 
-    await this.databaseService.updatePaciente(this.patientId, {
+    await this.tratamientosService.update(this.treatmentId, {
       zonaPrincipal,
       articulacionesSecundarias: secundarias
     });
@@ -671,20 +667,18 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     try {
       if (this.mode === 'initial') {
-        await this.treatmentService.crearEvaluacionInicial(
+        await this.flujoClinicoService.crearEvaluacionInicial(
           this.patientId,
           payload
         );
       } else if (this.mode === 'progress') {
-        await this.treatmentService.crearSesionProgreso(
+        await this.flujoClinicoService.crearSesionProgreso(
           this.treatmentId!,
-          this.patientId,
           payload
         );
       } else {
-        await this.treatmentService.finalizarTratamiento(
+        await this.flujoClinicoService.finalizarTratamiento(
           this.treatmentId!,
-          this.patientId,
           payload
         );
       }
@@ -810,16 +804,9 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   private async obtenerTotalSesionesTratamiento(): Promise<number> {
-    if (!this.treatmentId) {
-      const totalDesdeParams = Number(this.route.snapshot.queryParamMap.get('totalSesiones') || 0);
-      return Number.isFinite(totalDesdeParams) ? totalDesdeParams : 0;
-    }
+    if (!this.treatmentId) return 0;
 
-    const treatmentServiceAny = this.treatmentService as any;
-    const tratamiento = await (treatmentServiceAny.getTratamientoById?.(this.treatmentId)
-      ?? treatmentServiceAny.getTratamiento?.(this.treatmentId)
-      ?? Promise.resolve(null));
-
+    const tratamiento = await this.tratamientosService.getById(this.treatmentId);
     return Number(tratamiento?.totalSesiones || 0);
   }
 
