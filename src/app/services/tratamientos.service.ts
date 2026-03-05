@@ -10,7 +10,8 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-  Timestamp
+  Timestamp,
+  limit
 } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 
@@ -22,7 +23,7 @@ export interface TratamientoDocument {
   estado: 'active' | 'completed';
   totalSesiones: number;
   zonaPrincipal: string | null;
-  articulacionesSecundarias: string[];
+  zonasSecundarias: string[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
   closedAt: Timestamp | null;
@@ -41,7 +42,7 @@ export class TratamientosService {
     patientId: string,
     data?: {
         zonaPrincipal?: string | null;
-        articulacionesSecundarias?: string[];
+        zonasSecundarias?: string[];
     }
     ): Promise<TratamientoDocument> {
 
@@ -58,7 +59,7 @@ export class TratamientosService {
         totalSesiones: 0,
 
         zonaPrincipal: data?.zonaPrincipal ?? null,
-        articulacionesSecundarias: data?.articulacionesSecundarias ?? [],
+        zonasSecundarias: data?.zonasSecundarias ?? [],
 
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -178,7 +179,7 @@ export class TratamientosService {
         id: string,
         changes: {
             zonaPrincipal?: string | null;
-            articulacionesSecundarias?: string[];
+            zonasSecundarias?: string[];
         }
         ): Promise<void> {
 
@@ -205,5 +206,29 @@ export class TratamientosService {
             ...changes,
             updatedAt: serverTimestamp()
         });
+    }
+
+    async getTratamientoActivo(patientId: string) {
+
+      const { clinicId } = await this.getAuthContext();
+
+      const q = query(
+        collection(this.firestore, this.collectionName),
+        where('clinicId', '==', clinicId),
+        where('patientId', '==', patientId),
+        where('activo', '==', true),
+        limit(1)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) return null;
+
+      const docSnap = snapshot.docs[0];
+
+      return {
+        id: docSnap.id,
+        ...(docSnap.data())
+      };
     }
 }

@@ -1,11 +1,29 @@
 import { Component } from '@angular/core';
 import { NavController, ViewWillEnter, ToastController, IonicModule } from '@ionic/angular';
-import { DatabaseService } from '../../services/database.service';
+import { EvolucionesService, EvolucionDocument } from '../../services/evoluciones.service';
+import { PacientesService, PacienteDocument } from '../../services/pacientes.service';
 import { PdfService } from '../../services/pdf.services';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
 import { TestTemplate } from '../../models/test-template.model';
+import { Timestamp } from '@angular/fire/firestore';
+
+type ResumenPaciente = {
+  totalSesiones: number;
+  fechaInicio: string;
+  fechaFin: string;
+  evaPrimera: number | null;
+  evaUltima: number | null;
+  cambioEva: number | null;
+  suenoPrimero: number | null;
+  suenoUltimo: number | null;
+  cambioSueno: number | null;
+  totalEjercicios: number;
+  porcentajeEjercicios: number;
+  planificadas: number;
+};
+
 
 @Component({
     selector: 'app-evaluacion-final',
@@ -15,12 +33,12 @@ import { TestTemplate } from '../../models/test-template.model';
     imports: [IonicModule, NgFor, NgIf, FormsModule]
 })
 export class EvaluacionFinalPage implements ViewWillEnter {
-  pacientes: any[] = [];
-  pacienteSeleccionado: any = null;
-  sesiones: any[] = [];
+  pacientes: PacienteDocument[] = [];
+  pacienteSeleccionado: PacienteDocument | null = null;
+  sesiones: EvolucionDocument[] = [];
   cargando = false;
-  resumen: any = null;
-  testResults: any[] = [];
+  resumen: ResumenPaciente | null = null;
+  testResults: EvolucionDocument[] = [];
   testTemplates: TestTemplate[] = [];
 
   // Clinical narrative fields for PDF
@@ -30,10 +48,11 @@ export class EvaluacionFinalPage implements ViewWillEnter {
 
   constructor(
     private navCtrl: NavController,
-    private databaseService: DatabaseService,
-    private pdfService: PdfService,
+    private toastCtrl: ToastController,
+    private pacientesService: PacientesService,
+    private evolucionesService: EvolucionesService,
     private testTemplatesService: TestTemplatesFirestoreService,
-    private toastCtrl: ToastController
+    private pdfService: PdfService
   ) {}
 
   async ionViewWillEnter() {
@@ -50,7 +69,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
 
   async cargarPacientes() {
     try {
-      this.pacientes = await this.databaseService.getPacientes();
+      this.pacientes = await this.pacientesService.list();
     } catch (error) {
       console.error('Error cargando pacientes:', error);
       this.pacientes = [];
@@ -68,13 +87,13 @@ export class EvaluacionFinalPage implements ViewWillEnter {
 
     this.cargando = true;
     try {
-      this.pacienteSeleccionado = this.pacientes.find(
-        p => String(p.id) === String(pacienteId)
-      );
+      this.pacienteSeleccionado =
+      this.pacientes.find(p => p.id === pacienteId) ?? null;
+      if (!this.pacienteSeleccionado) return;
 
-      const sesiones = await this.databaseService.getSesionesByPaciente(pacienteId);
-      this.sesiones = sesiones.sort((a: any, b: any) =>
-        (a.numero_sesion || 0) - (b.numero_sesion || 0)
+      const sesiones = await this.evolucionesService.listByPaciente(pacienteId);
+      this.sesiones = sesiones.sort((a, b) =>
+        (a.sessionNumber ?? 0) - (b.sessionNumber ?? 0)
       );
 
       this.calcularResumen();
@@ -99,22 +118,29 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     const primera = this.sesiones[0];
     const ultima = this.sesiones[this.sesiones.length - 1];
 
-    const evaPrimera = primera.eva ?? primera.nivelDolor ?? null;
-    const evaUltima = ultima.eva ?? ultima.nivelDolor ?? null;
+    const evaPrimera = primera.painScale ?? null;
+    const evaUltima = ultima.painScale ?? null;
     const cambioEva = (evaPrimera !== null && evaUltima !== null) ? evaPrimera - evaUltima : null;
 
-    const suenoPrimero = primera['sue\u00f1o'] ?? primera.calidadSueno ?? primera.sueno ?? null;
-    const suenoUltimo = ultima['sue\u00f1o'] ?? ultima.calidadSueno ?? ultima.sueno ?? null;
+    const suenoPrimero = primera.sleepQuality ?? null;
+    const suenoUltimo = ultima.sleepQuality ?? null;
     const cambioSueno = (suenoPrimero !== null && suenoUltimo !== null) ? suenoUltimo - suenoPrimero : null;
 
-    const totalEjercicios = this.sesiones.filter(s =>
-      s.ejercicios === 'Realizados' || s.ejerciciosRealizados === true
+    const totalEjercicios = this.sesiones.filter(
+      s => s.ejerciciosRealizados === true
     ).length;
+
+    const porcentajeEjercicios =
+      this.sesiones.length > 0
+        ? Math.round((totalEjercicios / this.sesiones.length) * 100)
+        : 0;
+    const fechaInicio = this.formatTimestamp(primera.createdAt);
+    const fechaFin = this.formatTimestamp(ultima.createdAt);    
 
     this.resumen = {
       totalSesiones: this.sesiones.length,
-      fechaInicio: primera.fecha || primera.fecha_creacion,
-      fechaFin: ultima.fecha || ultima.fecha_creacion,
+      fechaInicio,
+      fechaFin,
       evaPrimera,
       evaUltima,
       cambioEva,
@@ -122,22 +148,20 @@ export class EvaluacionFinalPage implements ViewWillEnter {
       suenoUltimo,
       cambioSueno,
       totalEjercicios,
-      porcentajeEjercicios: Math.round((totalEjercicios / this.sesiones.length) * 100),
+      porcentajeEjercicios: porcentajeEjercicios,
       planificadas: this.pacienteSeleccionado?.sesionesPlanificadas || 10
-    };
+   };
   }
 
   private extraerTestResults() {
-    this.testResults = this.sesiones
-      .filter(s => s.test && s.test.testNombre)
-      .map(s => ({
-        sesionNumero: s.numero_sesion,
-        fecha: s.fecha || s.fecha_creacion,
-        testNombre: s.test.testNombre,
-        puntajeTotal: s.test.puntajeTotal,
-        resultado: s.test.resultado,
-        respuestas: s.test.respuestas || []
-      }));
+    this.testResults = this.sesiones.filter(s => s.test !== null);
+  }
+
+  private formatTimestamp(ts?: Timestamp | any): string {
+    if (ts instanceof Timestamp) {
+      return ts.toDate().toLocaleDateString('es-CL');
+    }
+    return '';
   }
 
   private autoRellenarNarrativas() {
@@ -162,26 +186,40 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     this.planTratamiento = '';
   }
 
-  getTestResultColor(resultado: string): string {
+  getTestResultColor(resultado?: string): string {
+
+    if (!resultado) return '#0d9488';
+
+    const r = resultado.toLowerCase();
+
     for (const t of this.testTemplates) {
-      const rango = (t.rangos || []).find((r: any) => r.nombre === resultado);
-      if (rango && rango.color) return rango.color;
+      const rango = (t.rangos || []).find((x: any) => x.nombre === resultado);
+      if (rango?.color) return rango.color;
     }
-    // Default colors based on common result patterns
-    if (resultado.toLowerCase().includes('normal') || resultado.toLowerCase().includes('leve')) return '#10b981';
-    if (resultado.toLowerCase().includes('moderado') || resultado.toLowerCase().includes('medio')) return '#f59e0b';
-    if (resultado.toLowerCase().includes('severo') || resultado.toLowerCase().includes('grave')) return '#ef4444';
+
+    if (r.includes('normal') || r.includes('leve')) return '#10b981';
+    if (r.includes('moderado') || r.includes('medio')) return '#f59e0b';
+    if (r.includes('severo') || r.includes('grave')) return '#ef4444';
+
     return '#0d9488';
   }
 
   // SVG chart helpers
   getEvaCircles(): { cx: number; cy: number; value: number }[] {
     if (!this.sesiones.length) return [];
+
     const w = 280, h = 140, pad = 20;
+
     return this.sesiones.map((s, i) => {
-      const cx = this.sesiones.length === 1 ? w / 2 : pad + (i / (this.sesiones.length - 1)) * (w - 2 * pad);
-      const eva = s.eva ?? s.nivelDolor ?? 0;
+      const cx =
+        this.sesiones.length === 1
+          ? w / 2
+          : pad + (i / (this.sesiones.length - 1)) * (w - 2 * pad);
+
+      const eva = s.painScale ?? 0;
+
       const cy = pad + ((10 - eva) / 10) * (h - 2 * pad);
+
       return { cx, cy, value: eva };
     });
   }
@@ -195,7 +233,7 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     const w = 280, h = 140, pad = 20;
     return this.sesiones.map((s, i) => {
       const cx = this.sesiones.length === 1 ? w / 2 : pad + (i / (this.sesiones.length - 1)) * (w - 2 * pad);
-      const val = s['sue\u00f1o'] ?? s.calidadSueno ?? s.sueno ?? 0;
+      const val = s.sleepQuality ?? 0;
       const cy = pad + ((10 - val) / 10) * (h - 2 * pad);
       return { cx, cy, value: val };
     });
@@ -229,10 +267,11 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     return '#ef4444';
   }
 
-  // Helper to access sueño without ñ in templates (Angular lexer doesn't support ñ)
-  getSuenoValue(s: any): number | null {
-    return s['sue\u00f1o'] ?? s.calidadSueno ?? s.sueno ?? null;
+  
+  getSuenoValue(s: EvolucionDocument): number | null {
+    return s.sleepQuality;
   }
+
 
   async generarPDF() {
     if (!this.pacienteSeleccionado || !this.resumen) return;
@@ -264,6 +303,8 @@ export class EvaluacionFinalPage implements ViewWillEnter {
       await toast.present();
     }
   }
+
+  
 
   async generarDetalleSesionesPDF() {
     if (!this.pacienteSeleccionado || !this.sesiones.length) return;

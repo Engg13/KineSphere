@@ -1,13 +1,14 @@
 import { Component, OnDestroy } from '@angular/core';
 import { AlertController, NavController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
-import { DatabaseService } from '../../services/database.service';
+import { PacientesService } from '../../services/pacientes.service';
+import { TratamientosService } from 'src/app/services/tratamientos.service';
 import { RutinaEjercicios } from '../../models/interfaces';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
-import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
+import { EvolucionesService } from '../../services/evoluciones.service';
 import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
-import { TreatmentService } from 'src/app/services/flujoclinico.service';
+import { FlujoClinicoService } from 'src/app/services/flujoclinico.service';
 
 @Component({
   selector: 'app-paciente-detalle',
@@ -24,22 +25,23 @@ export class PacienteDetallePage implements OnDestroy {
   rutinasCompletadas: RutinaEjercicios[] = [];
   sesionesExpandidas: Set<string | number> = new Set();
   pacienteId: string = '';
-  fechaActual = new Date;
+  fechaActual = new Date();
   esAdmin: boolean = false;
   historialVisual: any[] = [];
   tratamientoActivo: any | null = null;
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
+  
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
-    private databaseService: DatabaseService,
+    private pacientesService: PacientesService,
     private rutinasService: RutinasFirestoreService,
-    private evolucionesService: EvolucionesFirestoreService,
+    private evolucionesService: EvolucionesService,
     private alertCtrl: AlertController,
     private authService: AuthService,
-    private treatmentService: TreatmentService
+    private flujoClinicoService: FlujoClinicoService
   ) {}
 
   // ==============================
@@ -64,7 +66,7 @@ export class PacienteDetallePage implements OnDestroy {
 
       // 🔥 NUEVO: cargar tratamiento activo
       this.tratamientoActivo =
-        await this.treatmentService.getTratamientoActivo(this.pacienteId);
+        await this.tratamientoActivo.getTratamientoActivo(this.pacienteId);
 
     } else {
       this.estaCargando = false;
@@ -96,35 +98,34 @@ export class PacienteDetallePage implements OnDestroy {
   // ==============================
 
   private async cargarPaciente(id: string) {
-    this.estaCargando = true;
+  this.estaCargando = true;
 
-    try {
-      const todosPacientes = await this.databaseService.getPacientes();
-      const paciente = todosPacientes.find(p =>
-        String(p.id) === String(id) || p.pacienteId === id
-      );
+  try {
 
-      if (paciente) {
-        this.paciente = paciente;
-        this.verificarYCorregirEdad();
+    const paciente = await this.pacientesService.getById(id);
 
-        const pacienteIdReal = paciente.id ?? paciente.pacienteId;
+    if (paciente) {
 
-        
-        this.cargarHistorialSesiones(pacienteIdReal);
-        this.cargarRutinasCompletadas(pacienteIdReal);
-      } else {
-        this.paciente = null;
-      }
+      this.paciente = paciente;
 
-    } catch (error) {
-      console.error('Error cargando paciente:', error);
+      this.verificarYCorregirEdad();
+
+      const pacienteIdReal = paciente.id;
+
+      this.cargarHistorialSesiones(pacienteIdReal);
+      this.cargarRutinasCompletadas(pacienteIdReal);
+
+    } else {
       this.paciente = null;
-    } finally {
-      this.estaCargando = false;
     }
-  }
 
+  } catch (error) {
+    console.error('Error cargando paciente:', error);
+    this.paciente = null;
+  } finally {
+    this.estaCargando = false;
+  }
+}
   // ==============================
   // 📚 RUTINAS (REALTIME PRO)
   // ==============================
@@ -167,8 +168,6 @@ export class PacienteDetallePage implements OnDestroy {
         next: (evoluciones) => {
 
           this.historialSesiones = evoluciones || [];
-
-          let contadorProgress = 0;
 
           this.historialVisual = this.historialSesiones.map(e => {
 
@@ -378,35 +377,9 @@ export class PacienteDetallePage implements OnDestroy {
           role: 'destructive',
           handler: async () => {
             try {
-              await this.evolucionesService.softDeleteEvolucion(evolucionId);
+              await this.evolucionesService.softDelete(evolucionId);
             } catch (error) {
               console.error('Error eliminando evolución:', error);
-            }
-          }
-        }
-      ]
-    });
-
-    await alert.present();
-  }
-
-  async confirmarHardDelete(evolucionId: string) {
-    const alert = await this.alertCtrl.create({
-      header: 'Eliminar definitivamente',
-      message: 'Esta acción eliminará permanentemente la evolución. No se puede deshacer.',
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
-        {
-          text: 'Eliminar definitivamente',
-          role: 'destructive',
-          handler: async () => {
-            try {
-              await this.evolucionesService.hardDeleteEvolucion(evolucionId);
-            } catch (error) {
-              console.error('Error eliminando definitivamente:', error);
             }
           }
         }

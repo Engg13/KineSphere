@@ -7,8 +7,8 @@ import {
   IonicModule
 } from '@ionic/angular';
 import { DatePipe } from '@angular/common';
-import { DatabaseService } from '../../services/database.service';
-import { Subscription } from 'rxjs';
+import { PacientesService } from '../../services/pacientes.service';
+import { PacienteDocument } from '../../services/pacientes.service';
 
 @Component({
   selector: 'app-pacientes-lista',
@@ -17,13 +17,12 @@ import { Subscription } from 'rxjs';
   standalone: true,
   imports: [IonicModule, DatePipe]
 })
-export class PacientesListaPage implements OnDestroy {
+export class PacientesListaPage {
 
-  tituloPagina: string = 'Lista de Pacientes';
-  pacientes: any[] = [];
-  estaCargando: boolean = false;
+  tituloPagina = 'Lista de Pacientes';
+  pacientes: PacienteDocument[] = [];
+  estaCargando = false;
 
-  private pacientesSub?: Subscription;
 
   // 🔎 SEARCH PROFESIONAL
   busqueda = signal('');
@@ -34,20 +33,15 @@ export class PacientesListaPage implements OnDestroy {
 
     if (!texto) return [];
 
-    return this.pacientes.filter(p =>
-      (p.nombre || '')
-        .toLowerCase()
-        .includes(texto)
-      ||
-      (p.rut || '')
-        .toLowerCase()
-        .includes(texto)
+      return this.pacientes.filter(p =>
+      (p.nombre ?? '').toLowerCase().includes(texto) ||
+      (p.rut ?? '').toLowerCase().includes(texto)
     );
   });
 
   constructor(
     private navCtrl: NavController,
-    private databaseService: DatabaseService,
+    private pacientesService: PacientesService,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private alertController: AlertController
@@ -57,39 +51,26 @@ export class PacientesListaPage implements OnDestroy {
   // 🔥 REALTIME LOAD
   // ==============================
 
-  ionViewDidEnter() {
+  private async cargarPacientes() {
+    try {
+      this.pacientes = await this.pacientesService.list();
+    } catch (error) {
+      console.error('Error cargando pacientes:', error);
+      this.mostrarToast('Error cargando pacientes', 'danger');
+    }
+  }
+
+  async ionViewDidEnter() {
     this.estaCargando = true;
-
-    this.pacientesSub = this.databaseService
-      .getPacientesRealtime()
-      .subscribe({
-        next: pacientes => {
-          this.pacientes = pacientes;
-          this.estaCargando = false;
-        },
-        error: err => {
-          console.error('Error realtime:', err);
-          this.estaCargando = false;
-          this.mostrarToast('Error cargando pacientes', 'danger');
-        }
-      });
-  }
-
-  ionViewWillLeave() {
-    this.pacientesSub?.unsubscribe();
-  }
-
-  ngOnDestroy() {
-    this.pacientesSub?.unsubscribe();
+    await this.cargarPacientes();
+    this.estaCargando = false;
   }
 
   async recargarPacientes(event?: any) {
-    // En realtime no hace falta recargar,
-    // pero lo dejamos para UX pull-to-refresh
+    await this.cargarPacientes();
+
     if (event) {
-      setTimeout(() => {
-        event.target.complete();
-      }, 600);
+      event.target.complete();
     }
   }
 
@@ -97,8 +78,8 @@ export class PacientesListaPage implements OnDestroy {
   // SEARCH
   // ==============================
 
-  seleccionarDesdeBusqueda(paciente: any) {
-    this.busqueda.set(paciente.nombre);
+  seleccionarDesdeBusqueda(paciente: PacienteDocument) {
+    this.busqueda.set(paciente.nombre ?? '');
     this.mostrarResultados.set(false);
     this.verDetallePaciente(paciente);
   }
@@ -131,7 +112,9 @@ export class PacientesListaPage implements OnDestroy {
     this.navCtrl.navigateRoot('/agregar-paciente');
   }
 
-  verDetallePaciente(paciente: any) {
+  verDetallePaciente(paciente: PacienteDocument) {
+    if (!paciente?.id) return;
+
     this.navCtrl.navigateRoot('/paciente-detalle', {
       queryParams: { pacienteId: paciente.id }
     });
@@ -172,9 +155,9 @@ export class PacientesListaPage implements OnDestroy {
     try {
       const copiaPacientes = [...this.pacientes];
 
-      for (const paciente of copiaPacientes) {
-        await this.databaseService.deletePaciente(paciente.id);
-      }
+      await Promise.all(
+        copiaPacientes.map(p => this.pacientesService.softDelete(p.id))
+      );
 
       await loading.dismiss();
       this.mostrarToast('Pacientes eliminados correctamente', 'success');

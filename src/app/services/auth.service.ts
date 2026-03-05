@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Auth, signInWithEmailAndPassword, signOut, authState } from '@angular/fire/auth';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
+import { AppUser } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,7 @@ export class AuthService {
   user$: Observable<any> = authState(this.auth);
 
   private currentRole: string | null = null;
+  private currentUser: AppUser | null = null;
 
   // =========================
   // LOGIN
@@ -88,8 +90,9 @@ export class AuthService {
     return !!this.auth.currentUser;
   }
 
-  getCurrentUser() {
-    return this.auth.currentUser;
+  
+  getCurrentUser(): AppUser | null {
+    return this.currentUser;
   }
 
   getUsername(): string {

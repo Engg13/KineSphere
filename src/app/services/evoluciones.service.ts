@@ -12,9 +12,13 @@ import {
   where,
   orderBy,
   limit,
-  Timestamp
+  Timestamp,
+  FieldValue,
+  collectionData
 } from '@angular/fire/firestore';
-import { AuthService } from './auth.service';
+import { Observable } from 'rxjs';
+import { ClinicContextService } from '../core/tenancy/clinic-context.service';
+
 
 export type TipoEvolucion = 'initial' | 'progress' | 'discharge';
 
@@ -32,7 +36,9 @@ export interface EvolucionDocument {
   painScale: number | null;
   sleepQuality: number | null;
 
-  zonaTratamiento: string | null;
+  zonaPrincipal: string | null;
+  zonasSecundarias: string[];
+
   tecnicasAplicadas: string[];
 
   rom: ArticulacionRom[];
@@ -53,9 +59,9 @@ export interface EvolucionDocument {
 
   activo: boolean;
 
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  deletedAt?: Timestamp;
+  createdAt: Timestamp | FieldValue;
+  updatedAt: Timestamp | FieldValue;
+  deletedAt?: Timestamp | FieldValue;
 }
 
 export type EvolucionCreateInput =
@@ -120,7 +126,7 @@ export interface ObjetivoClinico {
 export class EvolucionesService {
 
   private readonly firestore = inject(Firestore);
-  private readonly authService = inject(AuthService);
+  private readonly clinicContext = inject(ClinicContextService);
   private readonly collectionName = 'evoluciones';
 
   // =========================
@@ -149,9 +155,10 @@ export class EvolucionesService {
     throw new Error('Las evoluciones progress requieren treatmentId');
     }
 
-    const { clinicId, professionalId } = await this.getAuthContext();
+    const { clinicId, professionalId } = this.getAuthContext();
+    const now = serverTimestamp();
 
-    const cleanPayload = {
+    const cleanPayload: Omit<EvolucionDocument, 'id'> = {
         patientId: payload.patientId,
         treatmentId: payload.treatmentId ?? null,
 
@@ -161,8 +168,13 @@ export class EvolucionesService {
         painScale: payload.painScale ?? null,
         sleepQuality: payload.sleepQuality ?? null,
 
-        zonaTratamiento: payload.zonaTratamiento ?? null,
-        tecnicasAplicadas: payload.tecnicasAplicadas ?? [],
+        zonaPrincipal: payload.zonaPrincipal ?? null,
+        zonasSecundarias: Array.isArray(payload.zonasSecundarias)
+          ? payload.zonasSecundarias
+          : [],
+        tecnicasAplicadas: Array.isArray(payload.tecnicasAplicadas)
+          ? payload.tecnicasAplicadas
+          : [],
         rom: Array.isArray(payload.rom) ? payload.rom : [],
         ejerciciosRealizados: payload.ejerciciosRealizados ?? false,
 
@@ -182,8 +194,8 @@ export class EvolucionesService {
         professionalId,
 
         activo: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        createdAt: now,
+        updatedAt: now
     };
 
     const ref = await addDoc(
@@ -199,7 +211,7 @@ export class EvolucionesService {
   // =========================
 
   async update(id: string, changes: EvolucionUpdateInput): Promise<void> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
     const actual = await this.getByIdOrThrow(id, clinicId);
 
     if (
@@ -230,7 +242,7 @@ export class EvolucionesService {
   // =========================
 
   async softDelete(id: string): Promise<void> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
     await this.getByIdOrThrow(id, clinicId);
 
     await updateDoc(
@@ -248,7 +260,7 @@ export class EvolucionesService {
   // =========================
 
   async getById(id: string): Promise<EvolucionDocument | null> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
 
     const ref = doc(this.firestore, `${this.collectionName}/${id}`);
     const snapshot = await getDoc(ref);
@@ -272,14 +284,15 @@ export class EvolucionesService {
   // =========================
 
   async listByPaciente(patientId: string): Promise<EvolucionDocument[]> {
-    const { clinicId } = await this.getAuthContext();
+
+    const { clinicId } = this.getAuthContext();
 
     const q = query(
       collection(this.firestore, this.collectionName),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
       where('activo', '==', true),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'asc')
     );
 
     const snapshot = await getDocs(q);
@@ -288,6 +301,7 @@ export class EvolucionesService {
       id: docItem.id,
       ...(docItem.data() as Omit<EvolucionDocument, 'id'>)
     }));
+
   }
 
   // =========================
@@ -295,7 +309,7 @@ export class EvolucionesService {
   // =========================
 
   async getEvaluacionInicial(patientId: string): Promise<EvolucionDocument | null> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
 
     const q = query(
       collection(this.firestore, this.collectionName),
@@ -324,7 +338,7 @@ export class EvolucionesService {
   // =========================
 
   async getNextSessionNumber(patientId: string): Promise<number> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
 
     const q = query(
       collection(this.firestore, this.collectionName),
@@ -349,21 +363,13 @@ export class EvolucionesService {
   // INTERNAL HELPERS
   // =========================
 
-  private async getAuthContext(): Promise<{ clinicId: string; professionalId: string }> {
-    const user = this.authService.getCurrentUser();
-    if (!user?.uid) {
-      throw new Error('No autenticado');
-    }
+  private getAuthContext() {
 
-    const clinicId = await this.authService.getCurrentClinicId();
-    if (!clinicId) {
-      throw new Error('No hay clinicId disponible');
-    }
+    const clinicId = this.clinicContext.getClinicId();
+    const professionalId = this.clinicContext.getProfessionalId();
 
-    return {
-      clinicId,
-      professionalId: user.uid
-    };
+    return { clinicId, professionalId };
+
   }
 
   private async getByIdOrThrow(id: string, clinicId: string): Promise<EvolucionDocument> {
@@ -400,7 +406,7 @@ export class EvolucionesService {
   }
 
   async listHoy(): Promise<EvolucionDocument[]> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
 
     const inicioHoy = new Date();
     inicioHoy.setHours(0, 0, 0, 0);
@@ -409,7 +415,7 @@ export class EvolucionesService {
         collection(this.firestore, this.collectionName),
         where('clinicId', '==', clinicId),
         where('activo', '==', true),
-        where('createdAt', '>=', inicioHoy)
+        where('createdAt', '>=', Timestamp.fromDate(inicioHoy))
     );
 
     const snapshot = await getDocs(q);
@@ -421,7 +427,7 @@ export class EvolucionesService {
     }
 
     async listIniciales(): Promise<EvolucionDocument[]> {
-        const { clinicId } = await this.getAuthContext();
+        const { clinicId } = this.getAuthContext();
 
         const q = query(
             collection(this.firestore, this.collectionName),
@@ -436,5 +442,21 @@ export class EvolucionesService {
             id: docItem.id,
             ...(docItem.data() as Omit<EvolucionDocument, 'id'>)
         }));
+    }
+
+    getEvolucionesByPacienteRealtime(patientId: string): Observable<EvolucionDocument[]> {
+
+      const clinicId = this.clinicContext.getClinicId();
+
+      const q = query(
+        collection(this.firestore, this.collectionName),
+        where('clinicId', '==', clinicId),
+        where('patientId', '==', patientId),
+        where('activo', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+
+      return collectionData(q, { idField: 'id' }) as Observable<EvolucionDocument[]>;
+
     }
 }

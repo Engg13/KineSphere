@@ -44,7 +44,8 @@ export interface Evolucion {
   painScale: number | null;
   sleepQuality: number | null;
   rom: ArticulacionRom[];
-  zonaTratamiento: string | null;
+  zonaPrincipal?: string | null;
+  zonasSecundarias?: string[];
   tecnicasAplicadas: string[];
   ejerciciosRealizados: boolean;
   rutinaId?: string;
@@ -68,7 +69,8 @@ export interface EvolucionCreateInput {
   painScale: number | null;
   sleepQuality: number | null;
   rom: ArticulacionRom[];
-  zonaTratamiento: string | null;
+  zonaPrincipal?: string | null;
+  zonasSecundarias?: string[];
   tecnicasAplicadas: string[];
   ejerciciosRealizados: boolean;
   rutinaId?: string;

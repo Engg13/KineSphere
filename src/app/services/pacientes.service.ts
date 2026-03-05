@@ -3,6 +3,7 @@ import {
   Firestore,
   addDoc,
   collection,
+  collectionData,
   doc,
   getDoc,
   getDocs,
@@ -13,7 +14,9 @@ import {
   orderBy,
   Timestamp
 } from '@angular/fire/firestore';
-import { AuthService } from './auth.service';
+import { Observable, of } from 'rxjs';
+import { ClinicContextService } from '../core/tenancy/clinic-context.service';
+
 
 export interface PacienteDocument {
   id: string;
@@ -46,12 +49,12 @@ export type PacienteUpdateInput = Omit<Partial<PacienteDocument>, 'id' | 'clinic
 })
 export class PacientesService {
   private readonly firestore = inject(Firestore);
-  private readonly authService = inject(AuthService);
+  private readonly clinicContext = inject(ClinicContextService);
 
   private readonly collectionName = 'pacientes';
 
   async create(data: PacienteCreateInput): Promise<PacienteDocument> {
-    const { clinicId, professionalId } = await this.getAuthContext();
+    const { clinicId, professionalId } = this.getAuthContext();
     const normalizedRut = this.normalizeRut(data.rut);
 
     if (normalizedRut) {
@@ -75,7 +78,7 @@ export class PacientesService {
   }
 
   async update(id: string, data: PacienteUpdateInput): Promise<void> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
     const paciente = await this.getByIdOrThrow(id, clinicId);
 
     const normalizedRut = this.normalizeRut(data.rut);
@@ -94,7 +97,9 @@ export class PacientesService {
   }
 
   async softDelete(id: string): Promise<void> {
-    const { clinicId } = await this.getAuthContext();
+
+    const { clinicId } = this.getAuthContext();
+
     await this.getByIdOrThrow(id, clinicId);
 
     await updateDoc(doc(this.firestore, `${this.collectionName}/${id}`), {
@@ -103,10 +108,11 @@ export class PacientesService {
       updatedAt: serverTimestamp(),
       deletedAt: serverTimestamp()
     });
+
   }
 
   async getById(id: string): Promise<PacienteDocument | null> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
 
     const ref = doc(this.firestore, `${this.collectionName}/${id}`);
     const snapshot = await getDoc(ref);
@@ -125,7 +131,7 @@ export class PacientesService {
   }
 
   async list(): Promise<PacienteDocument[]> {
-    const { clinicId } = await this.getAuthContext();
+    const { clinicId } = this.getAuthContext();
 
     const q = query(
       collection(this.firestore, this.collectionName),
@@ -142,21 +148,13 @@ export class PacientesService {
     }));
   }
 
-  private async getAuthContext(): Promise<{ clinicId: string; professionalId: string }> {
-    const professional = this.authService.getCurrentUser();
-    if (!professional?.uid) {
-      throw new Error('No autenticado');
-    }
+  private getAuthContext() {
 
-    const clinicId = await this.authService.getCurrentClinicId();
-    if (!clinicId) {
-      throw new Error('No hay clinicId disponible para el usuario actual');
-    }
+    const clinicId = this.clinicContext.getClinicId();
+    const professionalId = this.clinicContext.getProfessionalId();
 
-    return {
-      clinicId,
-      professionalId: professional.uid
-    };
+    return { clinicId, professionalId };
+
   }
 
   private async getByIdOrThrow(id: string, clinicId: string): Promise<PacienteDocument> {
@@ -213,5 +211,31 @@ export class PacientesService {
       }
       return acc;
     }, {});
+  }
+
+  getPacientesRealtime(): Observable<PacienteDocument[]> {
+
+    try {
+
+      const clinicId = this.clinicContext.getClinicId();
+
+      const ref = collection(this.firestore, this.collectionName);
+
+      const q = query(
+        ref,
+        where('clinicId', '==', clinicId),
+        where('isDeleted', '==', false),
+        orderBy('createdAt', 'desc')
+      );
+
+      return collectionData(q, { idField: 'id' }) as Observable<PacienteDocument[]>;
+
+    } catch (err) {
+
+      console.error('Error obteniendo pacientes:', err);
+      return of([]);
+
+    }
+
   }
 }

@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 
-import { DatabaseService } from '../../services/database.service';
+import { PacientesService } from '../../services/pacientes.service';
 import { EjerciciosFirestoreService } from '../../services/EjerciciosFirestoreService.service';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
@@ -89,7 +89,7 @@ export class EjerciciosPage implements OnInit, OnDestroy {
     private modalCtrl: ModalController,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
-    private databaseService: DatabaseService,
+    private pacientesService: PacientesService,
     private ejerciciosService: EjerciciosFirestoreService,
     private rutinasService: RutinasFirestoreService,
     private ejerciciosWhatsappService: EjerciciosService
@@ -118,9 +118,19 @@ export class EjerciciosPage implements OnInit, OnDestroy {
 
   // ================= PACIENTES =================
 
-  async cargarPacientes() {
-    this.listaPacientes = await this.databaseService.getPacientes();
-    this.pacientesFiltrados = [...this.listaPacientes];
+  cargarPacientes() {
+
+    const sub = this.pacientesService
+      .getPacientesRealtime()
+      .subscribe(pacientes => {
+
+        this.listaPacientes = pacientes;
+        this.pacientesFiltrados = [...pacientes];
+
+      });
+
+    this.subs.push(sub);
+
   }
 
   filtrarPacientes() {

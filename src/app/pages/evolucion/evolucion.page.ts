@@ -263,7 +263,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     if (!tratamiento) return;
 
     const zonaPrincipal = tratamiento.zonaPrincipal || '';
-    const secundarias = tratamiento.articulacionesSecundarias || [];
+    const secundarias = tratamiento.zonasSecundarias || [];
 
     this.form.patchValue({ zonaTratamiento: zonaPrincipal });
 
@@ -515,7 +515,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     await this.tratamientosService.update(this.treatmentId, {
       zonaPrincipal,
-      articulacionesSecundarias: secundarias
+      zonasSecundarias: secundarias
     });
   }
 

@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { NavController, AlertController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
-import { FirestoreService } from '../../services/firestore.service';
+import { DocumentosService } from '../../services/documentos.service';
+import { ClinicContextService } from '../../core/tenancy/clinic-context.service';
 
 @Component({
     selector: 'app-documentos-medicos',
@@ -16,14 +17,22 @@ export class DocumentosMedicosPage implements OnInit {
   pacienteId: string = "";
   pacienteNombre: string = 'Paciente';
 
+  clinicId: string = '';
+  professionalId: string = '';
+
   constructor(
     private navCtrl: NavController,
     private alertController: AlertController,
     private route: ActivatedRoute,
-    private firestoreService: FirestoreService
+    private documentosService: DocumentosService,
+    private clinicContext = inject(ClinicContextService)
   ) {}
 
   ngOnInit() {
+
+    this.clinicId = this.clinicContext.getClinicId();
+    this.professionalId = this.clinicContext.getProfessionalId();
+
     this.route.queryParams.subscribe(params => {
       if (params['pacienteId']) {
         this.pacienteId = String(params['pacienteId']);
@@ -31,6 +40,7 @@ export class DocumentosMedicosPage implements OnInit {
         this.cargarDocumentos();
       }
     });
+
   }
 
   private cargarDocumentos() {
@@ -39,7 +49,7 @@ export class DocumentosMedicosPage implements OnInit {
       return;
     }
 
-    this.firestoreService.getDocumentosByPaciente(this.pacienteId).subscribe({
+    this.documentosService.getDocumentosByPaciente(this.pacienteId).subscribe({
       next: documentos => {
         this.documentos = documentos || [];
       },
@@ -97,12 +107,14 @@ export class DocumentosMedicosPage implements OnInit {
       const nuevoDocumento = {
         imagen: dataUrl,
         fecha: new Date().toLocaleString('es-CL'),
-        tipo: tipo,
-        paciente_id: this.pacienteId,
+        tipo,
+        pacienteId: this.pacienteId,
+        clinicId: this.clinicId,
+        professionalId: this.professionalId,
         descripcion: `Documento médico - ${new Date().toLocaleDateString('es-CL')}`
       };
 
-      await this.firestoreService.addDocumento(nuevoDocumento);
+      await this.documentosService.addDocumento(nuevoDocumento);
       this.mostrarMensaje('Documento guardado exitosamente');
     } catch (error) {
       console.error('Error guardando documento:', error);
@@ -120,7 +132,7 @@ export class DocumentosMedicosPage implements OnInit {
           text: 'Eliminar',
           role: 'destructive',
           handler: () => {
-            this.firestoreService.deleteDocumento(documento.id)
+            this.documentosService.deleteDocumento(documento.id)
               .then(() => this.mostrarMensaje('Documento eliminado'))
               .catch(error => {
                 console.error('Error eliminando documento en Firestore:', error);
