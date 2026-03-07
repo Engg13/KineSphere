@@ -11,7 +11,7 @@ import {
   deleteDoc
 } from '@angular/fire/firestore';
 import { TestTemplate } from '../models/test-template.model';
-import { AuthService } from './auth.service';
+import { BaseClinicService } from '../core/services/base-clinic.service';
 
 const COLLECTION_NAME = 'testTemplates';
 const STORAGE_KEY = 'test_templates';
@@ -19,14 +19,13 @@ const STORAGE_KEY = 'test_templates';
 @Injectable({
   providedIn: 'root'
 })
-export class TestTemplatesFirestoreService {
-
-  private firestore = inject(Firestore);
-  private authService = inject(AuthService);
+export class TestTemplatesFirestoreService extends BaseClinicService {
 
   async getTests(): Promise<TestTemplate[]> {
+
     try {
-      const clinicId = await this.authService.getCurrentClinicId();
+
+      const clinicId = this.clinicId;
 
       const ref = collection(this.firestore, COLLECTION_NAME);
 
@@ -48,14 +47,17 @@ export class TestTemplatesFirestoreService {
       return tests;
 
     } catch (error) {
+
       console.warn('No se pudo cargar tests desde Firestore, usando respaldo local.', error);
       return this.getLocalBackup();
+
     }
+
   }
 
   async upsertTest(test: TestTemplate): Promise<void> {
 
-    const clinicId = await this.authService.getCurrentClinicId();
+    const clinicId = this.clinicId;
 
     const payload = {
       nombre: test.nombre,
@@ -72,6 +74,7 @@ export class TestTemplatesFirestoreService {
       payload,
       { merge: true }
     );
+
   }
 
   async deleteTest(testId: string): Promise<void> {

@@ -10,7 +10,7 @@ const routes: Routes = [
   },
   {
     path: 'dashboard',
-    loadChildren: () => import('./pages/dashboard/dashboard.module').then(m => m.DashboardPageModule),
+    loadComponent: () => import('./pages/dashboard/dashboard.page').then(m => m.DashboardPage),
     canActivate: [AuthGuard]  
   },
   {
@@ -21,11 +21,6 @@ const routes: Routes = [
   {
     path: 'paciente-detalle',
     loadChildren: () => import('./pages/paciente-detalle/paciente-detalle.module').then(m => m.PacienteDetallePageModule),
-    canActivate: [AuthGuard]  
-  },
-  {
-    path: 'sesion',
-    loadChildren: () => import('./pages/sesion/sesion.module').then(m => m.SesionPageModule),
     canActivate: [AuthGuard]  
   },
 
@@ -61,7 +56,7 @@ const routes: Routes = [
   },
   {
     path: 'documentos-medicos',
-    loadChildren: () => import('./pages/documentos-medicos/documentos-medicos.module').then( m => m.DocumentosMedicosPageModule),
+    loadChildren: () => import('./pages/documentos-medicos/documentos-medicos.page').then( m => m.DocumentosMedicosPage),
     canActivate: [AuthGuard]
   },
   {
@@ -78,6 +73,13 @@ const routes: Routes = [
     path: 'perfil-profesional',
     loadChildren: () => import('./pages/perfil-profesional/perfil-profesional.module').then(m => m.PerfilProfesionalPageModule),
     canActivate: [AuthGuard]
+  },
+
+  {
+    path: 'r/:token',
+    loadComponent: () =>
+      import('./pages/rutina-publica/rutina-publica.page')
+        .then(m => m.RutinaPublicaPage)
   },
   
   {

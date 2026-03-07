@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import {
-  Firestore,
   addDoc,
   collection,
   collectionData,
@@ -15,7 +14,9 @@ import {
   Timestamp
 } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
-import { ClinicContextService } from '../core/tenancy/clinic-context.service';
+import { BaseClinicService } from '../core/services/base-clinic.service';
+
+
 
 
 export interface PacienteDocument {
@@ -47,14 +48,13 @@ export type PacienteUpdateInput = Omit<Partial<PacienteDocument>, 'id' | 'clinic
 @Injectable({
   providedIn: 'root'
 })
-export class PacientesService {
-  private readonly firestore = inject(Firestore);
-  private readonly clinicContext = inject(ClinicContextService);
+export class PacientesService extends BaseClinicService {
 
   private readonly collectionName = 'pacientes';
 
   async create(data: PacienteCreateInput): Promise<PacienteDocument> {
-    const { clinicId, professionalId } = this.getAuthContext();
+    const clinicId = this.clinicId;
+    const professionalId = this.professionalId;
     const normalizedRut = this.normalizeRut(data.rut);
 
     if (normalizedRut) {
@@ -72,13 +72,14 @@ export class PacientesService {
       isDeleted: false
     });
 
-    const ref = await addDoc(collection(this.firestore, this.collectionName), payload);
+    const ref = await addDoc(this.getCollection(), payload);
 
     return this.getByIdOrThrow(ref.id, clinicId);
   }
 
   async update(id: string, data: PacienteUpdateInput): Promise<void> {
-    const { clinicId } = this.getAuthContext();
+
+    const clinicId = this.clinicId;
     const paciente = await this.getByIdOrThrow(id, clinicId);
 
     const normalizedRut = this.normalizeRut(data.rut);
@@ -93,16 +94,16 @@ export class PacientesService {
       updatedAt: serverTimestamp()
     });
 
-    await updateDoc(doc(this.firestore, `${this.collectionName}/${id}`), payload);
+    await updateDoc(this.docRef(id), payload);
   }
 
   async softDelete(id: string): Promise<void> {
 
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
 
     await this.getByIdOrThrow(id, clinicId);
 
-    await updateDoc(doc(this.firestore, `${this.collectionName}/${id}`), {
+    await updateDoc(this.docRef(id), {
       isDeleted: true,
       activo: false,
       updatedAt: serverTimestamp(),
@@ -112,9 +113,9 @@ export class PacientesService {
   }
 
   async getById(id: string): Promise<PacienteDocument | null> {
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
 
-    const ref = doc(this.firestore, `${this.collectionName}/${id}`);
+    const ref = this.docRef(id);
     const snapshot = await getDoc(ref);
 
     if (!snapshot.exists()) {
@@ -131,10 +132,10 @@ export class PacientesService {
   }
 
   async list(): Promise<PacienteDocument[]> {
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
 
     const q = query(
-      collection(this.firestore, this.collectionName),
+      this.getCollection(),
       where('clinicId', '==', clinicId),
       where('isDeleted', '==', false),
       orderBy('createdAt', 'desc')
@@ -148,17 +149,8 @@ export class PacientesService {
     }));
   }
 
-  private getAuthContext() {
-
-    const clinicId = this.clinicContext.getClinicId();
-    const professionalId = this.clinicContext.getProfessionalId();
-
-    return { clinicId, professionalId };
-
-  }
-
   private async getByIdOrThrow(id: string, clinicId: string): Promise<PacienteDocument> {
-    const ref = doc(this.firestore, `${this.collectionName}/${id}`);
+    const ref = this.docRef(id);
     const snapshot = await getDoc(ref);
 
     if (!snapshot.exists()) {
@@ -180,7 +172,7 @@ export class PacientesService {
 
   private async ensureRutIsUnique(rut: string, clinicId: string, excludeId?: string): Promise<void> {
     const q = query(
-      collection(this.firestore, this.collectionName),
+      this.getCollection(),
       where('clinicId', '==', clinicId),
       where('rut', '==', rut),
       where('isDeleted', '==', false)
@@ -215,27 +207,24 @@ export class PacientesService {
 
   getPacientesRealtime(): Observable<PacienteDocument[]> {
 
-    try {
+    const clinicId = this.clinicId;
 
-      const clinicId = this.clinicContext.getClinicId();
+    const q = query(
+      this.getCollection(),
+      where('clinicId', '==', clinicId),
+      where('isDeleted', '==', false),
+      orderBy('createdAt', 'desc')
+    );
 
-      const ref = collection(this.firestore, this.collectionName);
+    return collectionData(q, { idField: 'id' }) as Observable<PacienteDocument[]>;
 
-      const q = query(
-        ref,
-        where('clinicId', '==', clinicId),
-        where('isDeleted', '==', false),
-        orderBy('createdAt', 'desc')
-      );
+  }
 
-      return collectionData(q, { idField: 'id' }) as Observable<PacienteDocument[]>;
+  private getCollection() {
+    return collection(this.firestore, this.collectionName);
+  }
 
-    } catch (err) {
-
-      console.error('Error obteniendo pacientes:', err);
-      return of([]);
-
-    }
-
+  private docRef(id: string) {
+    return doc(this.firestore, `${this.collectionName}/${id}`);
   }
 }

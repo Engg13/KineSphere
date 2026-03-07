@@ -12,38 +12,35 @@ import {
   serverTimestamp
 } from '@angular/fire/firestore';
 import { Observable, combineLatest, map } from 'rxjs';
-import { AuthService } from './auth.service';
+import { BaseClinicService } from '../core/services/base-clinic.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class EjerciciosFirestoreService {
-
-  private firestore = inject(Firestore);
-  private authService = inject(AuthService);
+export class EjerciciosFirestoreService extends BaseClinicService {
 
   // 🔥 Obtener ejercicios globales + del profesional
   getEjercicios(): Observable<any[]> {
-    const user = this.authService.getCurrentUser();
-    if (!user) throw new Error('No autenticado');
 
     const ejerciciosRef = collection(this.firestore, 'ejercicios');
-    const isAdmin = this.authService.getRole() === 'admin';
 
-    // Admin: lectura completa explícita
-    if (isAdmin) {
-      return collectionData(ejerciciosRef, { idField: 'id' });
-    }
+    const clinicId = this.clinicId;
+    const userId = this.professionalId;
 
-    // Profesional: consultas filtradas en servidor
-    const qGlobal = query(ejerciciosRef, where('esGlobal', '==', true));
-    const qPropios = query(ejerciciosRef, where('createdBy', '==', user.uid));
+    const qGlobal = query(ejerciciosRef, where('global', '==', true));
+
+    const qPropios = query(
+      ejerciciosRef,
+      where('clinicId', '==', clinicId),
+      where('createdBy', '==', userId)
+    );
 
     return combineLatest([
       collectionData(qGlobal, { idField: 'id' }) as Observable<any[]>,
       collectionData(qPropios, { idField: 'id' }) as Observable<any[]>
     ]).pipe(
       map(([globales, propios]) => {
+
         const ejerciciosMap = new Map<string, any>();
 
         [...globales, ...propios].forEach(ej => {
@@ -51,21 +48,25 @@ export class EjerciciosFirestoreService {
         });
 
         return Array.from(ejerciciosMap.values());
+
       })
     );
   }
 
   async agregarEjercicioPersonalizado(ejercicio: any) {
-    const user = this.authService.getCurrentUser();
-    if (!user) throw new Error('No autenticado');
+
+    const clinicId = this.clinicId;
+    const userId = this.professionalId;
 
     return addDoc(collection(this.firestore, 'ejercicios'), {
-        ...ejercicio,
-        global: false,
-        createdBy: user.uid,
-        createdAt: serverTimestamp()
+      ...ejercicio,
+      global: false,
+      clinicId,
+      createdBy: userId,
+      createdAt: serverTimestamp()
     });
-}
+
+  }
 
   async actualizarEjercicio(id: string, cambios: any) {
   return updateDoc(doc(this.firestore, `ejercicios/${id}`), cambios);
@@ -76,15 +77,20 @@ export class EjerciciosFirestoreService {
   }
 
   async seedEjerciciosPorDefecto(ejercicios: any[]) {
-        for (const ej of ejercicios) {
-            await addDoc(collection(this.firestore, 'ejercicios'), {
-            ...ej,
-            global: true,
-            createdAt: serverTimestamp(),
-            createdBy: null
-            });
-        }
+
+    for (const ej of ejercicios) {
+
+      await addDoc(collection(this.firestore, 'ejercicios'), {
+        ...ej,
+        global: true,
+        clinicId: null,
+        createdBy: null,
+        createdAt: serverTimestamp()
+      });
+
     }
+
+  }
 
     getCategorias() {
   return [

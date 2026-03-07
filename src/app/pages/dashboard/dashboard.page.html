@@ -20,7 +20,7 @@
           <div>
             <small class="greeting-label">Bienvenido de vuelta</small>
             <h1 class="user-name">
-              {{ user.email }}
+              {{ user?.email }}
             </h1>
           </div>
         }
@@ -116,7 +116,7 @@
         </div>
 
         <div class="patients-list">
-          @for (paciente of pacientesRecientes; track paciente) {
+          @for (paciente of pacientesRecientes; track paciente.id) {
             <div class="patient-card" (click)="verDetallePaciente(paciente)">
               <div class="patient-avatar" [class.active]="paciente.activo">
                 <ion-icon name="person"></ion-icon>

@@ -50,7 +50,7 @@
     </div>
 
     <!-- CONTENIDO CUANDO HAY PACIENTE SELECCIONADO -->
-    <div *ngIf="pacienteSeleccionado && !cargando">
+    < *ngIf="pacienteSeleccionado && !cargando">
 
       <!-- INFO DEL PACIENTE -->
       <div class="patient-card">
@@ -184,7 +184,7 @@
           </svg>
         </div>
         <div class="chart-x-labels">
-          <span *ngFor="let s of sesiones; let i = index">S{{ s.numero_sesion || i + 1 }}</span>
+          <span *ngFor="let s of sesiones; let i = index">S{{ s.sessionNumber || i + 1 }}</span>
         </div>
       </div>
 
@@ -214,7 +214,7 @@
           </svg>
         </div>
         <div class="chart-x-labels">
-          <span *ngFor="let s of sesiones; let i = index">S{{ s.numero_sesion || i + 1 }}</span>
+          <span *ngFor="let s of sesiones; let i = index">  S{{ s.sessionNumber || i + 1 }}</span>
         </div>
       </div>
 
@@ -224,56 +224,86 @@
           <ion-icon name="clipboard"></ion-icon>
           Resultados de Tests
         </h3>
+
         <div class="test-results-list">
+
           <div *ngFor="let tr of testResults" class="test-result-row">
+
             <div class="test-result-header">
-              <span class="test-session-badge">S{{ tr.sesionNumero }}</span>
-              <span class="test-name">{{ tr.testNombre }}</span>
-              <span class="test-date">{{ formatearFecha(tr.fecha) }}</span>
+              <span class="test-session-badge">
+                S{{ tr.sessionNumber }}
+              </span>
+
+              <span class="test-name">
+                {{ tr.test?.testNombre }}
+              </span>
+
+              <span class="test-date">
+                {{ formatearFecha(tr.createdAt) }}
+              </span>
             </div>
+
             <div class="test-result-body">
+
               <div class="test-puntaje">
                 <span class="puntaje-label">Puntaje</span>
-                <span class="puntaje-valor">{{ tr.puntajeTotal }}</span>
+                <span class="puntaje-valor">
+                  {{ tr.test?.puntajeTotal }}
+                </span>
               </div>
-              <div class="test-resultado-badge" [style.background]="getTestResultColor(tr.resultado)">
-                {{ tr.resultado }}
+
+              <div
+                class="test-resultado-badge"
+                [style.background]="getTestResultColor(tr.test?.resultado)"
+              >
+                {{ tr.test?.resultado }}
               </div>
+
             </div>
+
           </div>
+
         </div>
       </div>
 
       <!-- HISTORIAL DE SESIONES -->
-      <div *ngIf="sesiones.length > 0" class="history-card">
-        <h3 class="chart-title">
-          <ion-icon name="list"></ion-icon>
-          Historial de Sesiones
-        </h3>
-        <div class="session-list">
-          <div *ngFor="let s of sesiones" class="session-row">
-            <div class="session-number">S{{ s.numero_sesion }}</div>
-            <div class="session-details">
-              <div class="session-date">{{ formatearFecha(s.fecha || s.fecha_creacion) }}</div>
-              <div class="session-metrics">
-                <span class="metric" [style.color]="getEvaColor(s.eva ?? s.nivelDolor ?? 0)">
-                  EVA: {{ s.eva ?? s.nivelDolor ?? '-' }}
-                </span>
-                <span class="metric" [style.color]="getSuenoColor(getSuenoValue(s) ?? 0)">
-                  Sueno: {{ getSuenoValue(s) ?? '-' }}
-                </span>
-                <span class="metric" [class.ejercicio-si]="s.ejercicios === 'Realizados'" [class.ejercicio-no]="s.ejercicios !== 'Realizados'">
-                  {{ s.ejercicios === 'Realizados' ? 'Ejercicios OK' : 'Sin ejercicios' }}
-                </span>
-                <span *ngIf="s.test" class="metric test-metric">
-                  {{ s.test.testNombre }}: {{ s.test.puntajeTotal }}pts
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div *ngFor="let s of sesiones" class="session-row">
 
-    </div>
+        <div class="session-number">
+          S{{ s.sessionNumber }}
+        </div>
+
+        <div class="session-details">
+
+          <div class="session-date">
+            {{ formatearFecha(s.createdAt) }}
+          </div>
+
+          <div class="session-metrics">
+
+            <span class="metric" [style.color]="getEvaColor(s.painScale ?? 0)">
+              EVA: {{ s.painScale ?? '-' }}
+            </span>
+
+            <span class="metric" [style.color]="getSuenoColor(getSuenoValue(s) ?? 0)">
+              Sueno: {{ getSuenoValue(s) ?? '-' }}
+            </span>
+
+            <span
+              class="metric"
+              [ngClass]="s.ejerciciosRealizados ? 'ejercicio-si' : 'ejercicio-no'"
+            >
+              {{ s.ejerciciosRealizados ? 'Ejercicios OK' : 'Sin ejercicios' }}
+            </span>
+
+            <span *ngIf="s.test" class="metric test-metric">
+              {{ s.test?.testNombre }}: {{ s.test?.puntajeTotal }} pts
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
   </div>
 </ion-content>

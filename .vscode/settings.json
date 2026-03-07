@@ -1,3 +1,8 @@
 {
-  "typescript.preferences.autoImportFileExcludePatterns": ["@ionic/angular/common", "@ionic/angular/standalone"]
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "@ionic/angular/common",
+    "@ionic/angular/standalone"
+  ],
+  "editor.lineHeight": 24,
+  "terminal.integrated.tabs.focusMode": "doubleClick"
 }

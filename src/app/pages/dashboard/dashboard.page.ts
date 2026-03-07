@@ -9,6 +9,7 @@ import { AuthService } from '../../services/auth.service';
 import { PacienteDocument } from '../../services/pacientes.service';
 import { TratamientoDocument } from '../../services/tratamientos.service';
 
+
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.page.html',
@@ -25,7 +26,10 @@ export class DashboardPage {
   sesionesHoy = 0;
   pacientesSinEvaluacion = 0;
   pacientesRecientes: PacienteDocument[] = [];
+  evaluacionesPendientes = 0;
+  user$ = this.authService.user$;
   estaCargando = true;
+
 
   constructor(
     private navCtrl: NavController,
@@ -36,9 +40,8 @@ export class DashboardPage {
   ) {}
 
   async ionViewDidEnter() {
-    this.usuarioNombre = this.authService.getNombreCompleto();
-    await this.cargarDashboard();
-  }
+  await this.cargarDashboard();
+}
 
   private dashboardCache: {
     pacientes: PacienteDocument[];
@@ -47,11 +50,22 @@ export class DashboardPage {
     evolucionesIniciales: any[];
   } | null = null;
 
+  recargarDashboard(event: any) {
+
+    this.dashboardCache = null;
+
+    this.cargarDashboard().then(() => {
+      event.target.complete();
+    });
+
+  }
+
   private async cargarDashboard() {
 
     if (this.dashboardCache) {
-      this.aplicarDatos(this.dashboardCache);
-    }
+    this.aplicarDatos(this.dashboardCache);
+    return;
+  }
 
     this.estaCargando = !this.dashboardCache;
 
@@ -91,6 +105,7 @@ export class DashboardPage {
     tratamientosActivos: TratamientoDocument[];
     evolucionesHoy: any[];
     evolucionesIniciales: any[];
+    
   }) {
 
     const { pacientes, tratamientosActivos, evolucionesHoy, evolucionesIniciales } = data;
@@ -99,17 +114,23 @@ export class DashboardPage {
     this.pacientesActivos = pacientes.filter(p => p.activo === true).length;
     this.tratamientosActivos = tratamientosActivos.length;
 
-    this.sesionesHoy = evolucionesHoy.filter(e =>
-      e.tipoEvolucion === 'progress'
-    ).length;
-
     const pacientesConInicial = new Set(
-      evolucionesIniciales.map(e => e.patientId)
+      evolucionesIniciales
+        .filter(e => e.patientId)
+        .map(e => e.patientId)
     );
 
     this.pacientesSinEvaluacion = tratamientosActivos.filter(t =>
       !pacientesConInicial.has(t.patientId)
     ).length;
+
+    this.evaluacionesPendientes = this.pacientesSinEvaluacion;
+
+    this.sesionesHoy = evolucionesHoy.filter(e =>
+      e.tipoEvolucion === 'progress'
+    ).length;
+
+    
 
     this.pacientesRecientes = [...pacientes]
       .sort((a, b) =>
@@ -129,10 +150,30 @@ export class DashboardPage {
     this.navCtrl.navigateRoot('/agregar-paciente');
   }
 
-    verDetallePaciente(paciente: PacienteDocument) {
+  verDetallePaciente(paciente: PacienteDocument) {
     this.navCtrl.navigateRoot('/paciente-detalle', {
       queryParams: { pacienteId: paciente.id }
     });
+  }
+
+  irAPerfil() {
+  this.navCtrl.navigateRoot('/perfil-profesional');
+  }
+
+  irASesion() {
+  this.navCtrl.navigateRoot('/sesion');
+  }
+
+  irAEvaluaciones() {
+  this.navCtrl.navigateRoot('/evaluacion-final');
+  }
+
+  irAEjercicios() {
+  this.navCtrl.navigateRoot('/ejercicios');
+  }
+
+  irAEvaluacionesClinicas() {
+  this.navCtrl.navigateRoot('/tests-config');
   }
 
 

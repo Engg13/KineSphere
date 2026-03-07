@@ -3,6 +3,7 @@ import { NavController, ToastController, AlertController, IonicModule } from '@i
 import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
+import { updateProfile } from '@angular/fire/auth';
 
 @Component({
     selector: 'app-perfil-profesional',
@@ -31,36 +32,43 @@ export class PerfilProfesionalPage {
   ) {}
 
   ionViewDidEnter() {
-    this.nombreCompleto = this.authService.getNombreCompleto();
+
+    this.nombreCompleto = localStorage.getItem('nombreProfesional') || '';
     this.username = this.authService.getUsername();
+
     this.rutProfesional = localStorage.getItem('rutProfesional') || '';
     this.telefonoProfesional = localStorage.getItem('telefonoProfesional') || '';
     this.emailProfesional = localStorage.getItem('emailProfesional') || '';
+
     this.passwordActual = '';
     this.passwordNueva = '';
     this.passwordConfirmar = '';
+
   }
 
   async guardarDatosProfesionales() {
+
     if (!this.nombreCompleto || this.nombreCompleto.trim().length < 2) {
       this.mostrarToast('El nombre debe tener al menos 2 caracteres', 'warning');
       return;
     }
 
-    this.authService.cambiarNombre(this.nombreCompleto.trim());
+    localStorage.setItem('nombreProfesional', this.nombreCompleto.trim());
 
-    // Save professional details for ISAPRE PDF
     if (this.rutProfesional.trim()) {
       localStorage.setItem('rutProfesional', this.rutProfesional.trim());
     }
+
     if (this.telefonoProfesional.trim()) {
       localStorage.setItem('telefonoProfesional', this.telefonoProfesional.trim());
     }
+
     if (this.emailProfesional.trim()) {
       localStorage.setItem('emailProfesional', this.emailProfesional.trim());
     }
 
     this.mostrarToast('Datos profesionales guardados', 'success');
+
   }
 
   async cambiarPassword() {
@@ -99,8 +107,8 @@ export class PerfilProfesionalPage {
         {
           text: 'Cerrar Sesion',
           role: 'destructive',
-          handler: () => {
-            this.authService.logout();
+          handler: async () => {
+            await this.authService.logout();
             this.navCtrl.navigateRoot('/login');
           }
         }

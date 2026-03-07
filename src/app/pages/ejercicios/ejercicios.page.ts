@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs';
 import { PacientesService } from '../../services/pacientes.service';
 import { EjerciciosFirestoreService } from '../../services/EjerciciosFirestoreService.service';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
-import { EjerciciosService } from '../../services/ejercicios.service';
+import { RutinasWhatsappService } from '../../services/rutinas-whatsapp.service';
 
 import {
   EjercicioLocal,
@@ -92,7 +92,7 @@ export class EjerciciosPage implements OnInit, OnDestroy {
     private pacientesService: PacientesService,
     private ejerciciosService: EjerciciosFirestoreService,
     private rutinasService: RutinasFirestoreService,
-    private ejerciciosWhatsappService: EjerciciosService
+    private rutinasWhatsappService: RutinasWhatsappService
   ) {}
 
   ngOnInit() {
@@ -118,16 +118,16 @@ export class EjerciciosPage implements OnInit, OnDestroy {
 
   // ================= PACIENTES =================
 
-  cargarPacientes() {
+  async cargarPacientes() {
 
-    const sub = this.pacientesService
-      .getPacientesRealtime()
-      .subscribe(pacientes => {
+    const pacientes$ = await this.pacientesService.getPacientesRealtime();
 
-        this.listaPacientes = pacientes;
-        this.pacientesFiltrados = [...pacientes];
+    const sub = pacientes$.subscribe(pacientes => {
 
-      });
+      this.listaPacientes = pacientes;
+      this.pacientesFiltrados = pacientes;
+
+    });
 
     this.subs.push(sub);
 
@@ -388,14 +388,21 @@ export class EjerciciosPage implements OnInit, OnDestroy {
   }
 
   async enviarWhatsappConNumero(rutina: RutinaEjercicios | null) {
+
     if (!rutina) return;
 
     if (!rutina.ejercicios?.length) {
-      await this.mostrarToast('La rutina no tiene ejercicios para enviar.', 'warning');
+      await this.mostrarToast(
+        'La rutina no tiene ejercicios para enviar.',
+        'warning'
+      );
       return;
     }
 
-    this.ejerciciosWhatsappService.enviarPorWhatsapp(rutina);
+    this.rutinasWhatsappService.enviarRutina(
+      rutina,
+      this.pacienteTelefono
+    );
   }
 
   trackByEjercicio(index: number, item: EjercicioEnRutina) {

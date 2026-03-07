@@ -1,8 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Auth, signInWithEmailAndPassword, signOut, authState } from '@angular/fire/auth';
-import { Firestore, doc, getDoc } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { AppUser } from '../models/user.model';
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from '@angular/fire/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -10,40 +8,32 @@ import { AppUser } from '../models/user.model';
 export class AuthService {
 
   private auth = inject(Auth);
-  private firestore = inject(Firestore);
 
-  user$: Observable<any> = authState(this.auth);
-
-  private currentRole: string | null = null;
-  private currentUser: AppUser | null = null;
+  user$ = authState(this.auth);
 
   // =========================
   // LOGIN
   // =========================
 
   async login(email: string, password: string): Promise<boolean> {
+
     try {
-      const credential = await signInWithEmailAndPassword(
+
+      await signInWithEmailAndPassword(
         this.auth,
         email,
         password
       );
 
-      const role = await this.getUserRole(credential.user.uid);
-
-      if (!role) {
-        await signOut(this.auth);
-        return false;
-      }
-
-      this.currentRole = role;
-
       return true;
 
     } catch (error) {
+
       console.error('Error login:', error);
       return false;
+
     }
+
   }
 
   // =========================
@@ -51,35 +41,7 @@ export class AuthService {
   // =========================
 
   async logout(): Promise<void> {
-    this.currentRole = null;
     await signOut(this.auth);
-  }
-
-  // =========================
-  // ROLE
-  // =========================
-
-  async getUserRole(uid: string): Promise<string | null> {
-    const userRef = doc(this.firestore, `users/${uid}`);
-    const snap = await getDoc(userRef);
-
-    if (snap.exists()) {
-      return snap.data()['role'] || null;
-    }
-
-    return null;
-  }
-
-  getRole(): string | null {
-    return this.currentRole;
-  }
-
-  isAdmin(): boolean {
-    return this.currentRole === 'admin';
-  }
-
-  isProfesional(): boolean {
-    return this.currentRole === 'professional';
   }
 
   // =========================
@@ -90,76 +52,46 @@ export class AuthService {
     return !!this.auth.currentUser;
   }
 
-  
-  getCurrentUser(): AppUser | null {
-    return this.currentUser;
-  }
-
   getUsername(): string {
     return this.auth.currentUser?.email || '';
   }
 
-  getNombreCompleto(): string {
-    return this.auth.currentUser?.email || 'Usuario';
-  }
+  async cambiarPassword(passwordActual: string, passwordNueva: string)
+    : Promise<{ success: boolean; message: string }> {
 
-  async getCurrentUserData(): Promise<any> {
-    const user = this.auth.currentUser;
-    if (!user) throw new Error('No autenticado');
+      const user = this.auth.currentUser;
 
-    const userRef = doc(this.firestore, `users/${user.uid}`);
-    const snap = await getDoc(userRef);
+      if (!user || !user.email) {
+        return { success: false, message: 'No hay sesión activa' };
+      }
 
-    if (!snap.exists()) {
-      throw new Error('Usuario sin perfil en Firestore');
+      try {
+
+        const credential = EmailAuthProvider.credential(
+          user.email,
+          passwordActual
+        );
+
+        await reauthenticateWithCredential(user, credential);
+
+        await updatePassword(user, passwordNueva);
+
+        return {
+          success: true,
+          message: 'Contraseña actualizada correctamente'
+        };
+
+      } catch (error) {
+
+        console.error(error);
+
+        return {
+          success: false,
+          message: 'No se pudo cambiar la contraseña'
+        };
+
+      }
+
     }
 
-    return snap.data();
-  }
-
-  async getCurrentClinicId(): Promise<string | null> {
-    const data = await this.getCurrentUserData();
-
-    // Si es superadmin, no pertenece a clínica
-    if (data.role === 'superadmin') {
-      return null;
-    }
-
-    if (!data?.clinicId) {
-      throw new Error('Usuario sin clinicId');
-    }
-
-    return data.clinicId;
-  }
-
-  // =========================
-  // PERFIL (Placeholder)
-  // =========================
-
-  async cambiarNombre(nuevoNombre: string): Promise<void> {
-    console.log('Cambio de nombre pendiente de implementación real');
-  }
-
-  async cambiarPassword(
-    passwordActual: string,
-    passwordNueva: string
-  ): Promise<{ success: boolean; message: string }> {
-
-    if (!this.auth.currentUser) {
-      return { success: false, message: 'No hay sesión activa' };
-    }
-
-    return {
-      success: false,
-      message: 'Cambio de contraseña requiere reautenticación'
-    };
-  }
-
-  async refreshRole(): Promise<void> {
-    const user = this.auth.currentUser;
-    if (!user) return;
-
-    const role = await this.getUserRole(user.uid);
-    this.currentRole = role;
-  }
 }

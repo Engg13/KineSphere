@@ -1,0 +1,140 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Rutina de ejercicios</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- Cargando -->
+  <div *ngIf="cargando" class="ion-text-center">
+    <ion-spinner></ion-spinner>
+    <p>Cargando rutina...</p>
+  </div>
+
+  <!-- Rutina no encontrada -->
+  <div *ngIf="!cargando && !rutina" class="ion-text-center">
+    <h2>Rutina no encontrada</h2>
+  </div>
+
+  <!-- Rutina -->
+  <div *ngIf="rutina">
+
+    <h2 class="ion-text-center">
+      {{ rutina.nombre }}
+    </h2>
+
+    <!-- PROGRESO -->
+    <div style="margin:20px 0">
+
+      <ion-progress-bar
+        [value]="getProgreso()/100"
+        color="success">
+      </ion-progress-bar>
+
+      <p class="ion-text-center">
+        {{ getProgreso() }} % completado
+      </p>
+
+    </div>
+
+    <!-- EJERCICIOS -->
+    <ion-card *ngFor="let ej of rutina.ejercicios; let i = index">
+
+      <ion-card-header>
+        <ion-card-title>
+          {{ ej.letra }}. {{ ej.ejercicio.nombre }}
+        </ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+
+        <p *ngIf="ej.ejercicio.descripcion">
+          {{ ej.ejercicio.descripcion }}
+        </p>
+
+        <!-- VIDEO -->
+        <div *ngIf="ej.ejercicio.videoUrl" style="margin-bottom:15px">
+
+            <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px">
+
+                <iframe
+                [src]="ej.ejercicio.videoUrl | youtubeEmbed"
+                style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"
+                allowfullscreen>
+                </iframe>
+
+            </div>
+
+        </div>
+
+        <!-- SERIES -->
+        <div style="margin-top:10px">
+
+          <ion-button
+            size="small"
+            *ngFor="let s of ej.series; let j = index"
+            [color]="s.completada ? 'success' : 'medium'"
+            (click)="toggleSerie(i,j)"
+            style="margin:4px"
+          >
+
+            {{ s.numero }} • {{ s.repeticiones }} reps
+
+          </ion-button>
+
+        </div>
+
+      </ion-card-content>
+
+    </ion-card>
+
+    <!-- MENSAJE FINAL -->
+    <div
+      *ngIf="getProgreso() === 100"
+      class="ion-text-center"
+      style="margin-top:30px"
+    >
+
+      <h2>🎉 Rutina completada</h2>
+      <p>¡Excelente trabajo!</p>
+
+    </div>
+
+    <div *ngIf="getProgreso() === 100" style="margin-top:30px">
+
+        <h3 class="ion-text-center">
+            ¿Cómo estuvo el dolor durante la rutina?
+        </h3>
+
+        <div style="display:flex;flex-wrap:wrap;justify-content:center;margin-top:10px">
+
+            <ion-button
+            *ngFor="let n of [0,1,2,3,4,5,6,7,8,9,10]"
+            size="small"
+            [color]="painScore === n ? 'danger' : 'medium'"
+            (click)="painScore = n"
+            style="margin:4px"
+            >
+            {{ n }}
+            </ion-button>
+
+        </div>
+
+        <div class="ion-text-center" style="margin-top:15px">
+
+            <ion-button
+            color="primary"
+            [disabled]="painScore === null || guardandoDolor"
+            (click)="guardarDolorSesion()"
+            >
+            Guardar
+            </ion-button>
+
+        </div>
+
+        </div>
+
+  </div>
+
+</ion-content>

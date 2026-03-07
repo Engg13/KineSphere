@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import {
-  Firestore,
   collection,
   addDoc,
   query,
@@ -13,102 +12,107 @@ import {
   collectionGroup,
   orderBy
 } from '@angular/fire/firestore';
-import { Observable, combineLatest, from, map } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { AuthService } from './auth.service';
+import { Observable, combineLatest, map } from 'rxjs';
+import { BaseClinicService } from '../core/services/base-clinic.service';
 import { RutinaEjercicios } from '../models/interfaces';
 
 @Injectable({
   providedIn: 'root'
 })
-export class RutinasFirestoreService {
+export class RutinasFirestoreService extends BaseClinicService {
 
-  private firestore = inject(Firestore);
-  private authService = inject(AuthService);
 
   // =====================================================
   // 🔥 RUTINAS REALTIME
   // =====================================================
 
   getRutinasPorPacienteRealtime(pacienteId: string | null): Observable<any[]> {
-    const user = this.authService.getCurrentUser();
-    if (!user) throw new Error('No autenticado');
+
+    const clinicId = this.clinicId;
+    const userId = this.professionalId;
 
     const ref = collection(this.firestore, 'rutinas');
 
-    return from(this.authService.getCurrentClinicId()).pipe(
-      switchMap((clinicId) => {
-        const plantillasQ = query(
-          ref,
-          where('clinicId', '==', clinicId),
-          where('professionalId', '==', user.uid),
-          where('esPlantilla', '==', true)
+    const plantillasQ = query(
+      ref,
+      where('clinicId', '==', clinicId),
+      where('professionalId', '==', userId),
+      where('esPlantilla', '==', true)
+    );
+
+    if (!pacienteId) {
+      return (collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>).pipe(
+        map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+      );
+    }
+
+    const pacienteQ = query(
+      ref,
+      where('clinicId', '==', clinicId),
+      where('professionalId', '==', userId),
+      where('pacienteId', '==', pacienteId)
+    );
+
+    return combineLatest([
+      collectionData(pacienteQ, { idField: 'id' }) as Observable<any[]>,
+      collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>
+    ]).pipe(
+      map(([rutinasPaciente, plantillas]) => {
+
+        const mapRutinas = new Map<string, any>();
+
+        [...rutinasPaciente, ...plantillas].forEach(r => {
+          if (r?.id) mapRutinas.set(r.id, r);
+        });
+
+        return Array.from(mapRutinas.values()).map((r) =>
+          this.normalizarRutinaLegacy(r)
         );
 
-        if (!pacienteId) {
-          return (collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>).pipe(
-            map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
-          );
-        }
-
-        const pacienteQ = query(
-          ref,
-          where('clinicId', '==', clinicId),
-          where('professionalId', '==', user.uid),
-          where('pacienteId', '==', pacienteId)
-        );
-
-        return combineLatest([
-          collectionData(pacienteQ, { idField: 'id' }) as Observable<any[]>,
-          collectionData(plantillasQ, { idField: 'id' }) as Observable<any[]>
-        ]).pipe(
-          map(([rutinasPaciente, plantillas]) => {
-            const mapRutinas = new Map<string, any>();
-
-            [...rutinasPaciente, ...plantillas].forEach(r => {
-              if (r?.id) mapRutinas.set(r.id, r);
-            });
-
-            return Array.from(mapRutinas.values()).map((r) => this.normalizarRutinaLegacy(r));
-          })
-        );
       })
     );
+
   }
 
   // =====================================================
   // ➕ CREAR RUTINA
   // =====================================================
 
-    async crearRutina(data: {
-        pacienteId?: string | null;
-        pacienteNombre?: string;
-        nombre: string;
-        estado: 'draft' | 'active' | 'completed' | 'archived';
-        ejercicios?: any[];
-        }) {
-        const user = this.authService.getCurrentUser();
-        if (!user) throw new Error('No autenticado');
+  async crearRutina(data: {
+    pacienteId?: string | null;
+    pacienteNombre?: string;
+    nombre: string;
+    estado: 'draft' | 'active' | 'completed' | 'archived';
+    ejercicios?: any[];
+  }) {
 
-        const esPlantilla = !data.pacienteId;
-        const clinicId = await this.authService.getCurrentClinicId();
-        console.log("ClinicId:", clinicId);
-        console.log("User UID:", user.uid);
+    const clinicId = this.clinicId;
+    const userId = this.professionalId; 
+    if (!clinicId || !userId) {
+      throw new Error('Clinic context not initialized');
+    }
 
-        return addDoc(collection(this.firestore, 'rutinas'), {
-            clinicId,
-            pacienteId: data.pacienteId ?? null,
-            pacienteNombre: data.pacienteNombre ?? null,
-            nombre: data.nombre,
-            ejercicios: data.ejercicios ?? [],
-            fecha: new Date().toISOString(),
-            estado: data.estado,
-            enviadaWhatsapp: false,
-            esPlantilla,          
-            professionalId: user.uid,
-            createdAt: serverTimestamp()
-        });
-}
+    const esPlantilla = !data.pacienteId;
+
+    console.log("ClinicId:", clinicId);
+
+    return addDoc(collection(this.firestore, 'rutinas'), {
+      clinicId,
+      pacienteId: data.pacienteId ?? null,
+      pacienteNombre: data.pacienteNombre ?? null,
+      nombre: data.nombre,
+      ejercicios: data.ejercicios ?? [],
+      fecha: new Date().toISOString(),
+      estado: data.estado,
+      enviadaWhatsapp: false,
+      esPlantilla,
+      professionalId: userId,
+      publicToken: crypto.randomUUID(),
+      publicEnabled: true,
+      createdAt: serverTimestamp()
+    });
+
+  }
 
   // =====================================================
   // ✏️ ACTUALIZAR RUTINA
@@ -131,8 +135,6 @@ export class RutinasFirestoreService {
   // =====================================================
 
   getEjerciciosDeRutinaRealtime(rutinaId: string): Observable<any[]> {
-    const user = this.authService.getCurrentUser();
-    if (!user) throw new Error('No autenticado');
 
     const q = query(
       collection(this.firestore, `rutinas/${rutinaId}/ejercicios`),
@@ -183,13 +185,18 @@ export class RutinasFirestoreService {
     rutinaId: string,
     data: any
   ) {
+
+    const clinicId = this.clinicId;
+
     return addDoc(
       collection(this.firestore, `rutinas/${rutinaId}/historial`),
       {
         ...data,
+        clinicId,
         createdAt: serverTimestamp()
       }
     );
+
   }
 
   getHistorialDeRutinaRealtime(
@@ -208,37 +215,39 @@ export class RutinasFirestoreService {
   // =====================================================
 
   getHistorialGlobalPorEjercicioRealtime(
-    ejercicioId: string
-  ): Observable<any[]> {
+      ejercicioId: string
+    ): Observable<any[]> {
 
-    const q = query(
-      collectionGroup(this.firestore, 'historial'),
-      where('ejercicioId', '==', ejercicioId)
-    );
+      const clinicId = this.clinicId;
 
-    return collectionData(q, { idField: 'id' });
-  }
+      const q = query(
+        collectionGroup(this.firestore, 'historial'),
+        where('clinicId', '==', clinicId),
+        where('ejercicioId', '==', ejercicioId)
+      );
+
+      return collectionData(q, { idField: 'id' });
+
+    }
 
   getRutinasGeneralesRealtime(): Observable<any[]> {
-    const user = this.authService.getCurrentUser();
-    if (!user) throw new Error('No autenticado');
+
+    const clinicId = this.clinicId;
+    const userId = this.professionalId;
 
     const ref = collection(this.firestore, 'rutinas');
 
-    return from(this.authService.getCurrentClinicId()).pipe(
-      switchMap((clinicId) => {
-        const q = query(
-          ref,
-          where('clinicId', '==', clinicId),
-          where('professionalId', '==', user.uid),
-          where('pacienteId', '==', null)
-        );
-
-        return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
-          map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
-        );
-      })
+    const q = query(
+      ref,
+      where('clinicId', '==', clinicId),
+      where('professionalId', '==', userId),
+      where('pacienteId', '==', null)
     );
+
+    return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
+      map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+    );
+
   }
 
     async clonarRutinaACliente(
@@ -246,10 +255,9 @@ export class RutinasFirestoreService {
         pacienteId: string,
         pacienteNombre: string
         ) {
-        const user = this.authService.getCurrentUser();
-        if (!user) throw new Error('No autenticado');
 
-        const clinicId = await this.authService.getCurrentClinicId();
+        const clinicId = this.clinicId;
+        const userId = this.professionalId;
 
         const nuevaRutina = {
             clinicId,
@@ -261,7 +269,9 @@ export class RutinasFirestoreService {
             estado: 'active',
             enviadaWhatsapp: false,
             esPlantilla: false,
-            professionalId: user.uid,
+            professionalId: userId,
+            publicToken: crypto.randomUUID(),
+            publicEnabled: true,
             createdAt: serverTimestamp()
         };
 
@@ -269,25 +279,23 @@ export class RutinasFirestoreService {
         }
 
         getRutinasRealtime(): Observable<any[]> {
-            const user = this.authService.getCurrentUser();
-            if (!user) throw new Error('No autenticado');
 
-            const ref = collection(this.firestore, 'rutinas');
+          const clinicId = this.clinicId;
+          const userId = this.professionalId;
 
-            return from(this.authService.getCurrentClinicId()).pipe(
-              switchMap((clinicId) => {
-                const q = query(
-                  ref,
-                  where('clinicId', '==', clinicId),
-                  where('professionalId', '==', user.uid)
-                );
+          const ref = collection(this.firestore, 'rutinas');
 
-                return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
-                  map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
-                );
-              })
-            );
-            }
+          const q = query(
+            ref,
+            where('clinicId', '==', clinicId),
+            where('professionalId', '==', userId)
+          );
+
+          return (collectionData(q, { idField: 'id' }) as Observable<any[]>).pipe(
+            map((rutinas) => rutinas.map((r) => this.normalizarRutinaLegacy(r)))
+          );
+
+        }
 
 
   private normalizarRutinaLegacy(rutina: any): any {

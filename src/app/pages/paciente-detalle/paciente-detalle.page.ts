@@ -1,13 +1,12 @@
 import { Component, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { AlertController, NavController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { PacientesService } from '../../services/pacientes.service';
-import { TratamientosService } from 'src/app/services/tratamientos.service';
 import { RutinaEjercicios } from '../../models/interfaces';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { EvolucionesService } from '../../services/evoluciones.service';
 import { Subscription } from 'rxjs';
-import { AuthService } from 'src/app/services/auth.service';
 import { FlujoClinicoService } from 'src/app/services/flujoclinico.service';
 
 @Component({
@@ -15,7 +14,7 @@ import { FlujoClinicoService } from 'src/app/services/flujoclinico.service';
   templateUrl: './paciente-detalle.page.html',
   styleUrls: ['./paciente-detalle.page.scss'],
   standalone: true,
-  imports: [IonicModule]
+  imports: [IonicModule, CommonModule]
 })
 export class PacienteDetallePage implements OnDestroy {
 
@@ -40,7 +39,6 @@ export class PacienteDetallePage implements OnDestroy {
     private rutinasService: RutinasFirestoreService,
     private evolucionesService: EvolucionesService,
     private alertCtrl: AlertController,
-    private authService: AuthService,
     private flujoClinicoService: FlujoClinicoService
   ) {}
 
@@ -50,11 +48,9 @@ export class PacienteDetallePage implements OnDestroy {
 
   async ionViewDidEnter() {
 
-    await this.authService.refreshRole();
-    this.esAdmin = this.authService.isAdmin();
-
-    const queryId = this.route.snapshot.queryParamMap.get('pacienteId')
-      || this.route.snapshot.queryParamMap.get('id');
+    const queryId =
+      this.route.snapshot.queryParamMap.get('pacienteId') ||
+      this.route.snapshot.queryParamMap.get('id');
 
     if (queryId) {
       this.pacienteId = queryId;
@@ -62,15 +58,19 @@ export class PacienteDetallePage implements OnDestroy {
 
     if (this.pacienteId) {
 
+      this.cancelarSuscripciones();
+
       await this.cargarPaciente(this.pacienteId);
 
-      // 🔥 NUEVO: cargar tratamiento activo
       this.tratamientoActivo =
-        await this.tratamientoActivo.getTratamientoActivo(this.pacienteId);
+        await this.flujoClinicoService.getTratamientoActivo(this.pacienteId);
 
     } else {
+
       this.estaCargando = false;
+
     }
+
   }
 
   ionViewWillLeave() {
@@ -411,5 +411,25 @@ export class PacienteDetallePage implements OnDestroy {
         mode: 'discharge'
       }
     });
+  }
+
+  async confirmarHardDelete(id: string) {
+
+    const confirmar = confirm('¿Eliminar esta sesión?');
+
+    if (!confirmar) return;
+
+    try {
+
+      await this.evolucionesService.softDelete(id);
+
+      console.log('Sesión eliminada');
+
+    } catch (error) {
+
+      console.error('Error eliminando sesión', error);
+
+    }
+
   }
 }

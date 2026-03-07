@@ -1,5 +1,5 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { importProvidersFrom } from '@angular/core';
+import { importProvidersFrom, APP_INITIALIZER } from '@angular/core';
 import { RouteReuseStrategy } from '@angular/router';
 import { IonicRouteStrategy, IonicModule } from '@ionic/angular';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -18,6 +18,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { AppRoutingModule } from './app/app-routing.module';
 import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
+
+import { AppInitService } from './app/core/init/app-init.service';
+
+// 🚀 APP INIT FUNCTION
+function initializeApplication(appInit: AppInitService) {
+  return () => appInit.init();
+}
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -44,6 +51,14 @@ bootstrapApplication(AppComponent, {
     // 🔥 Firebase
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideFirestore(() => getFirestore()),
-    provideAuth(() => getAuth())
+    provideAuth(() => getAuth()),
+
+    // 🚀 APP INITIALIZER
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeApplication,
+      deps: [AppInitService],
+      multi: true
+    }
   ]
 }).catch(err => console.error(err));

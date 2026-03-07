@@ -7,17 +7,16 @@ import { Subscription, firstValueFrom } from 'rxjs';
 import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
 import { ArticulacionRom, RomEntry, TipoEvolucion } from '../../models/evolucion.model';
 import { TestTemplate } from '../../models/test-template.model';
-import { EvolucionesFirestoreService } from '../../services/evoluciones-firestore.service';
 import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
 import { FlujoClinicoService} from '../../services/flujoclinico.service';
 import { PacientesService} from '../../services/pacientes.service';
 import { EjerciciosPage } from '../ejercicios/ejercicios.page';
 import { Chart } from 'chart.js/auto';
-import { AuthService } from 'src/app/services/auth.service';
 import { ObjetivoClinico } from '../../models/evolucion.model';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { TratamientosService } from '../../services/tratamientos.service';
+import { EvolucionesService } from '../../services/evoluciones.service';
 
 const ROM_CONFIG: Record<string, string[]> = {
   Hombro: ['Flexión', 'Extensión', 'Abducción', 'Aducción', 'Rotación interna', 'Rotación externa'],
@@ -46,12 +45,11 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private navCtrl = inject(NavController);
   private modalCtrl = inject(ModalController);
   private toastCtrl = inject(ToastController);
-  private evolucionesService = inject(EvolucionesFirestoreService);
   private pacientesService = inject(PacientesService);
   private rutinasService = inject(RutinasFirestoreService);
   private testTemplatesService = inject(TestTemplatesFirestoreService);
   private flujoClinicoService = inject(FlujoClinicoService);
-  private authService = inject(AuthService);
+  private evolucionesService = inject(EvolucionesService);
   private tratamientosService = inject(TratamientosService);
   private usarDatosDemo = true;
    // 🔥 poner en false en producción
@@ -115,7 +113,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     tipoEvolucion: this.fb.nonNullable.control<TipoEvolucion>('progress'),
     painScale: this.fb.control<number | null>(null, Validators.required),
     sleepQuality: this.fb.nonNullable.control(3),
-    zonaTratamiento: this.fb.nonNullable.control(''),
+    zonaPrincipal: this.fb.nonNullable.control(''),
     tecnicasAplicadas: this.fb.nonNullable.control<string[]>([]),
     rom: this.fb.array<FormGroup>([]),
     ejerciciosRealizados: this.fb.nonNullable.control(false),
@@ -265,7 +263,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     const zonaPrincipal = tratamiento.zonaPrincipal || '';
     const secundarias = tratamiento.zonasSecundarias || [];
 
-    this.form.patchValue({ zonaTratamiento: zonaPrincipal });
+    this.form.patchValue({ zonaPrincipal });
 
     this.romArray.clear();
 
@@ -385,7 +383,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     const zona = (event as CustomEvent).detail?.value as string;
     if (!zona) return;
 
-    this.form.controls.zonaTratamiento.setValue(zona);
+    this.form.controls.zonaPrincipal.setValue(zona);
 
     const tipo = this.form.get('tipoEvolucion')?.value;
 
@@ -427,8 +425,8 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     this.romArray.removeAt(index);
 
-    if (articulacion === this.form.controls.zonaTratamiento.value) {
-      this.form.controls.zonaTratamiento.setValue('');
+    if (articulacion === this.form.controls.zonaPrincipal.value) {
+      this.form.controls.zonaPrincipal.setValue('');
     }
 
     await this.persistirArticulacionPacienteConVerificacion(articulacion);
@@ -509,7 +507,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private async persistirArticulacionesPaciente(): Promise<void> {
     if (!this.treatmentId) return;
 
-    const zonaPrincipal = this.form.controls.zonaTratamiento.getRawValue() || '';
+    const zonaPrincipal = this.form.controls.zonaPrincipal.getRawValue() || '';
     const todas = this.romArray.controls.map((ctrl) => ctrl.controls['articulacion'].value);
     const secundarias = todas.filter((art) => art !== zonaPrincipal);
 
@@ -637,7 +635,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     const payload = {
       painScale: value.painScale,
       sleepQuality: value.sleepQuality,
-      zonaTratamiento: value.zonaTratamiento || null,
+      zonaPrincipal: value.zonaPrincipal || null,
       tecnicasAplicadas: value.tecnicasAplicadas,
       rom: romPayload,
       ejerciciosRealizados: value.ejerciciosRealizados,
@@ -753,7 +751,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   private applyZonaLock(tipo: TipoEvolucion | null): void {
-    const zonaControl = this.form.get('zonaTratamiento');
+    const zonaControl = this.form.get('zonaPrincipal');
 
     if (!zonaControl) return;
 
@@ -811,13 +809,9 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   private async cargarEvolucionesParaGrafico(): Promise<any[]> {
-    const evolucionesServiceAny = this.evolucionesService as any;
-
-    if (this.treatmentId && evolucionesServiceAny.getEvolucionesByTratamientoRealtime) {
-      return firstValueFrom(evolucionesServiceAny.getEvolucionesByTratamientoRealtime(this.treatmentId));
-    }
-
-    return firstValueFrom(this.evolucionesService.getEvolucionesByPacienteRealtime(this.patientId));
+    return firstValueFrom(
+      this.evolucionesService.getEvolucionesByPacienteRealtime(this.patientId)
+    );
   }
 
   private crearGraficoEva(): void {

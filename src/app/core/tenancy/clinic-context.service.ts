@@ -1,37 +1,44 @@
 import { Injectable, inject } from '@angular/core';
-import { AuthService } from '../../services/auth.service';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClinicContextService {
 
-  private authService = inject(AuthService);
+  private firestore = inject(Firestore);
+  private auth = inject(Auth);
 
-  getClinicId(): string {
+  clinicId: string | null = null;
+  role: string | null = null;
+  uid: string | null = null;
 
-    const user = this.authService.getCurrentUser();
+  async init(): Promise<void> {
 
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
+    const user = this.auth.currentUser;
 
-    return user.clinicId;
+    if (!user) throw new Error('Usuario no autenticado');
+
+    this.uid = user.uid;
+
+    const ref = doc(this.firestore, `users/${user.uid}`);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) throw new Error('Perfil de usuario no existe');
+
+    const data = snap.data();
+
+    this.clinicId = data['clinicId'];
+    this.role = data['role'];
+
+    console.log('Clinic loaded:', this.clinicId);
+    console.log('Role:', this.role);
+
   }
 
-  getProfessionalId(): string {
-
-    const user = this.authService.getCurrentUser();
-
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    return user.uid;
+  isAdmin(): boolean {
+    return this.role === 'admin';
   }
-
-  getUser() {
-    return this.authService.getCurrentUser();
-    }
 
 }

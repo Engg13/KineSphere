@@ -48,10 +48,10 @@
           </ion-avatar>
 
           <ion-label>
-            <h2>{{ pac.nombre || pac.nombre_completo }}</h2>
+            <h2>{{ pac.nombre }}</h2>
             <p>
               {{ pac.rut }}
-              • {{ pac.num_sesiones || 0 }} sesiones
+              • {{ pac.sesionesCompletadas || 0 }} sesiones
             </p>
           </ion-label>
 
@@ -85,7 +85,7 @@
     <!-- PATIENT LIST -->
     @if (!estaCargando && pacientes.length > 0 && !busqueda()) {
       <div class="patients-list animated-item">
-        @for (paciente of pacientes; track paciente; let i = $index) {
+        @for (paciente of pacientes; track paciente.id; let i = $index) {
           <div class="patient-card" (click)="verDetallePaciente(paciente)">
             <div class="patient-avatar" [class.active]="paciente.activo">
               <ion-icon name="person"></ion-icon>
@@ -98,7 +98,7 @@
                   {{ paciente.activo ? 'Activo' : 'Finalizado' }}
                 </ion-badge>
                 <span class="meta-text">
-                  {{ paciente.num_sesiones || paciente.sesionesCompletadas || 0 }}
+                  {{ paciente.sesionesCompletadas || 0 }}
                   @if (paciente.sesionesPlanificadas && paciente.sesionesPlanificadas > 0) {
                     /{{ paciente.sesionesPlanificadas }}
                   }
@@ -107,9 +107,9 @@
                 <span class="meta-text">{{ paciente.rut }}</span>
               </div>
             </div>
-            @if (paciente.fechaCreacion) {
+            @if (paciente.createdAt) {
               <div class="patient-date">
-                <small>{{ paciente.fechaCreacion | date:'dd/MM' }}</small>
+                <small>{{ paciente.createdAt?.toDate() | date:'dd/MM' }}</small>
               </div>
             }
             <ion-icon name="chevron-forward" class="patient-arrow"></ion-icon>

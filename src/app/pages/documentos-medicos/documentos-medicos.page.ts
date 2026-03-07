@@ -13,6 +13,9 @@ import { ClinicContextService } from '../../core/tenancy/clinic-context.service'
     imports: [IonicModule]
 })
 export class DocumentosMedicosPage implements OnInit {
+
+  private clinicContext = inject(ClinicContextService);
+  
   documentos: any[] = [];
   pacienteId: string = "";
   pacienteNombre: string = 'Paciente';
@@ -20,18 +23,19 @@ export class DocumentosMedicosPage implements OnInit {
   clinicId: string = '';
   professionalId: string = '';
 
+  
+
   constructor(
     private navCtrl: NavController,
     private alertController: AlertController,
     private route: ActivatedRoute,
-    private documentosService: DocumentosService,
-    private clinicContext = inject(ClinicContextService)
+    private documentosService: DocumentosService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
 
-    this.clinicId = this.clinicContext.getClinicId();
-    this.professionalId = this.clinicContext.getProfessionalId();
+    this.clinicId = this.clinicContext.clinicId;
+    this.professionalId = this.clinicContext.uid;
 
     this.route.queryParams.subscribe(params => {
       if (params['pacienteId']) {

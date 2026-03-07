@@ -24,7 +24,7 @@ export class DocumentosService {
 
   getDocumentosByPaciente(pacienteId: string): Observable<any[]> {
 
-    const clinicId = this.clinicContext.getClinicId();
+    const clinicId = this.clinicContext.clinicId
 
     const q = query(
       this.documentosRef,

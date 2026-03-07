@@ -3,7 +3,7 @@ import { NavController, ViewWillEnter, ToastController, IonicModule } from '@ion
 import { EvolucionesService, EvolucionDocument } from '../../services/evoluciones.service';
 import { PacientesService, PacienteDocument } from '../../services/pacientes.service';
 import { PdfService } from '../../services/pdf.services';
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
 import { TestTemplate } from '../../models/test-template.model';
@@ -30,7 +30,7 @@ type ResumenPaciente = {
     templateUrl: './evaluacion-final.page.html',
     styleUrls: ['./evaluacion-final.page.scss'],
     standalone: true,
-    imports: [IonicModule, NgFor, NgIf, FormsModule]
+    imports: [IonicModule, NgFor, NgIf, NgClass, FormsModule]
 })
 export class EvaluacionFinalPage implements ViewWillEnter {
   pacientes: PacienteDocument[] = [];
@@ -243,16 +243,26 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     return this.getSuenoCircles().map(p => `${p.cx},${p.cy}`).join(' ');
   }
 
-  formatearFecha(fechaString: string): string {
-    if (!fechaString) return '-';
-    try {
-      if (fechaString.includes('/')) return fechaString;
-      const fecha = new Date(fechaString);
-      if (isNaN(fecha.getTime())) return fechaString;
-      return fecha.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    } catch {
-      return fechaString;
+  formatearFecha(fecha: any): string {
+
+    if (!fecha) return '-';
+
+    // Firestore Timestamp
+    if (fecha?.toDate) {
+      return fecha.toDate().toLocaleDateString('es-CL');
     }
+
+    // string
+    if (typeof fecha === 'string') {
+      if (fecha.includes('/')) return fecha;
+
+      const d = new Date(fecha);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('es-CL');
+      }
+    }
+
+    return '-';
   }
 
   getEvaColor(valor: number): string {

@@ -35,6 +35,7 @@ export class LoginPage {
     this.isLoading = true;
 
     try {
+
       const success = await this.authService.login(this.email, this.password);
 
       if (!success) {
@@ -42,29 +43,21 @@ export class LoginPage {
         return;
       }
 
-      const role = this.authService.getRole();
-
-      if (role === 'admin') {
-        await this.mostrarExito('Bienvenido Administrador');
-
-      } else if (role === 'professional') {
-        await this.mostrarExito('Bienvenido Profesional');
-
-      } else if (role === 'superadmin') {
-        await this.mostrarExito('Bienvenido Super Administrador');
-
-      } else {
-        await this.mostrarError('Rol no válido');
-        return;
-      }
+      await this.mostrarExito('Bienvenido');
 
       this.navCtrl.navigateRoot('/dashboard');
 
     } catch (error) {
+
+      console.error(error);
       await this.mostrarError('Credenciales incorrectas');
+
     } finally {
+
       this.isLoading = false;
+
     }
+
   }
 
   private async mostrarError(mensaje: string) {

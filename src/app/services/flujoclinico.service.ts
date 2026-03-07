@@ -1,20 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { runTransaction, doc, collection, serverTimestamp } from '@angular/fire/firestore';
-import { Firestore } from '@angular/fire/firestore';
 import { TratamientosService } from './tratamientos.service';
 import { EvolucionesService } from './evoluciones.service';
-import { ClinicContextService } from '../core/tenancy/clinic-context.service';
 import { EvolucionCreateInput } from '../models/evolucion.model';
+import { BaseClinicService } from '../core/services/base-clinic.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class FlujoClinicoService {
+export class FlujoClinicoService extends BaseClinicService {
 
-  private readonly firestore = inject(Firestore);
+  
   private readonly tratamientosService = inject(TratamientosService);
   private readonly evolucionesService = inject(EvolucionesService);
-  private readonly clinicContext = inject(ClinicContextService);
   private readonly evolucionesCollection = 'evoluciones';
 
   private buildCleanPayload(payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>) {
@@ -70,10 +68,8 @@ export class FlujoClinicoService {
     payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
   ): Promise<string> {
 
-    const professionalId = this.clinicContext.getProfessionalId();
-    const clinicId = this.clinicContext.getClinicId();
-
-    if (!professionalId) throw new Error('No autenticado');
+    const clinicId = this.clinicId;
+    const professionalId = this.professionalId;
 
     const evolucionId = await runTransaction(this.firestore, async (transaction) => {
 
@@ -139,10 +135,8 @@ export class FlujoClinicoService {
     payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
   ): Promise<string> {
 
-    const professionalId = this.clinicContext.getProfessionalId();
-    const clinicId = this.clinicContext.getClinicId();
-
-    if (!professionalId) throw new Error('No autenticado');
+  const clinicId = this.clinicId;
+  const professionalId = this.professionalId;
 
     return runTransaction(this.firestore, async (transaction) => {
 
@@ -196,6 +190,6 @@ export class FlujoClinicoService {
   }
 
   async getTratamientoActivo(patientId: string) {
-    return this.tratamientosService.getTratamientoActivo(patientId);
+    return this.tratamientosService.getActivoByPaciente(patientId);
   }
 }

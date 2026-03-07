@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import {
-  Firestore,
   addDoc,
   collection,
   doc,
@@ -11,9 +10,10 @@ import {
   updateDoc,
   where,
   Timestamp,
-  limit
+  limit,
+  orderBy
 } from '@angular/fire/firestore';
-import { AuthService } from './auth.service';
+import { BaseClinicService } from '../core/services/base-clinic.service';
 
 export interface TratamientoDocument {
   id: string;
@@ -32,25 +32,25 @@ export interface TratamientoDocument {
 @Injectable({
   providedIn: 'root'
 })
-export class TratamientosService {
+export class TratamientosService extends BaseClinicService {
 
-  private readonly firestore = inject(Firestore);
-  private readonly authService = inject(AuthService);
   private readonly collectionName = 'tratamientos';
+
 
   async create(
     patientId: string,
     data?: {
-        zonaPrincipal?: string | null;
-        zonasSecundarias?: string[];
+      zonaPrincipal?: string | null;
+      zonasSecundarias?: string[];
     }
-    ): Promise<TratamientoDocument> {
+  ): Promise<TratamientoDocument> {
 
-    const { clinicId, professionalId } = await this.getAuthContext();
+    const clinicId = this.clinicId;
+    const professionalId = this.professionalId;
 
     const ref = await addDoc(
-        collection(this.firestore, this.collectionName),
-        {
+      this.getCollection(),
+      {
         clinicId,
         patientId,
         professionalId,
@@ -64,37 +64,49 @@ export class TratamientosService {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         closedAt: null
-        }
+      }
     );
 
     return this.getByIdOrThrow(ref.id, clinicId);
-    }
+  }
 
   async incrementTotalSesiones(id: string, newTotal: number): Promise<void> {
+
+    const clinicId = this.clinicId;
+
+    const tratamiento = await this.getByIdOrThrow(id, clinicId);
+
     await updateDoc(
-      doc(this.firestore, `${this.collectionName}/${id}`),
+      doc(this.firestore, `${this.collectionName}/${tratamiento.id}`),
       {
         totalSesiones: newTotal,
         updatedAt: serverTimestamp()
       }
     );
+
   }
 
   async close(id: string): Promise<void> {
+
+    const clinicId = this.clinicId;
+
+    const tratamiento = await this.getByIdOrThrow(id, clinicId);
+
     await updateDoc(
-      doc(this.firestore, `${this.collectionName}/${id}`),
+      doc(this.firestore, `${this.collectionName}/${tratamiento.id}`),
       {
         estado: 'completed',
         updatedAt: serverTimestamp(),
         closedAt: serverTimestamp()
       }
     );
+
   }
 
   async getById(id: string): Promise<TratamientoDocument | null> {
-    const { clinicId } = await this.getAuthContext();
+    const clinicId = this.clinicId;
 
-    const ref = doc(this.firestore, `${this.collectionName}/${id}`);
+    const ref = this.docRef(id);
     const snap = await getDoc(ref);
 
     if (!snap.exists()) return null;
@@ -110,13 +122,15 @@ export class TratamientosService {
   }
 
   async getActivoByPaciente(patientId: string): Promise<TratamientoDocument | null> {
-    const { clinicId } = await this.getAuthContext();
+    const clinicId = this.clinicId;
 
     const q = query(
-      collection(this.firestore, this.collectionName),
+      this.getCollection(),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
-      where('estado', '==', 'active')
+      where('estado', '==', 'active'),
+      orderBy('createdAt', 'desc'),
+      limit(1)
     );
 
     const snapshot = await getDocs(q);
@@ -130,18 +144,8 @@ export class TratamientosService {
     };
   }
 
-  private async getAuthContext(): Promise<{ clinicId: string; professionalId: string }> {
-    const user = this.authService.getCurrentUser();
-    if (!user?.uid) throw new Error('No autenticado');
-
-    const clinicId = await this.authService.getCurrentClinicId();
-    if (!clinicId) throw new Error('Sin clinicId');
-
-    return { clinicId, professionalId: user.uid };
-  }
-
   private async getByIdOrThrow(id: string, clinicId: string): Promise<TratamientoDocument> {
-    const ref = doc(this.firestore, `${this.collectionName}/${id}`);
+    const ref = this.docRef(id);
     const snap = await getDoc(ref);
 
     if (!snap.exists()) throw new Error('Tratamiento no encontrado');
@@ -159,12 +163,13 @@ export class TratamientosService {
   }
 
   async listActivos(): Promise<TratamientoDocument[]> {
-    const { clinicId } = await this.getAuthContext();
+    const clinicId = this.clinicId;
 
     const q = query(
-        collection(this.firestore, this.collectionName),
+        this.getCollection(),
         where('clinicId', '==', clinicId),
-        where('estado', '==', 'active')
+        where('estado', '==', 'active'),
+        orderBy('createdAt', 'desc')
     );
 
     const snapshot = await getDocs(q);
@@ -176,59 +181,35 @@ export class TratamientosService {
     }
 
     async update(
-        id: string,
-        changes: {
-            zonaPrincipal?: string | null;
-            zonasSecundarias?: string[];
+      id: string,
+      changes: {
+        zonaPrincipal?: string | null;
+        zonasSecundarias?: string[];
+      }
+    ): Promise<void> {
+
+      const clinicId = this.clinicId;
+
+      const tratamiento = await this.getByIdOrThrow(id, clinicId);
+
+      if (tratamiento.estado !== 'active') {
+        throw new Error('No se puede modificar un tratamiento finalizado');
+      }
+
+      await updateDoc(
+        this.docRef(id),
+        {
+          ...changes,
+          updatedAt: serverTimestamp()
         }
-        ): Promise<void> {
-
-        const { clinicId } = await this.getAuthContext();
-
-        const ref = doc(this.firestore, `${this.collectionName}/${id}`);
-        const snap = await getDoc(ref);
-
-        if (!snap.exists()) {
-            throw new Error('Tratamiento no encontrado');
-        }
-
-        const tratamiento = snap.data();
-
-        if (tratamiento['clinicId'] !== clinicId) {
-            throw new Error('Tratamiento fuera de la clínica actual');
-        }
-
-        if (tratamiento['estado'] !== 'active') {
-            throw new Error('No se puede modificar un tratamiento finalizado');
-        }
-
-        await updateDoc(ref, {
-            ...changes,
-            updatedAt: serverTimestamp()
-        });
-    }
-
-    async getTratamientoActivo(patientId: string) {
-
-      const { clinicId } = await this.getAuthContext();
-
-      const q = query(
-        collection(this.firestore, this.collectionName),
-        where('clinicId', '==', clinicId),
-        where('patientId', '==', patientId),
-        where('activo', '==', true),
-        limit(1)
       );
-
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) return null;
-
-      const docSnap = snapshot.docs[0];
-
-      return {
-        id: docSnap.id,
-        ...(docSnap.data())
-      };
     }
+
+    private getCollection() {
+    return collection(this.firestore, this.collectionName);
+  }
+
+  private docRef(id: string) {
+    return doc(this.firestore, `${this.collectionName}/${id}`);
+  }
 }

@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import {
-  Firestore,
   addDoc,
   collection,
   doc,
@@ -16,8 +15,10 @@ import {
   FieldValue,
   collectionData
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { ClinicContextService } from '../core/tenancy/clinic-context.service';
+import { Observable, filter, switchMap } from 'rxjs';
+import { BaseClinicService } from '../core/services/base-clinic.service';
+
+
 
 
 export type TipoEvolucion = 'initial' | 'progress' | 'discharge';
@@ -123,10 +124,8 @@ export interface ObjetivoClinico {
 @Injectable({
   providedIn: 'root'
 })
-export class EvolucionesService {
+export class EvolucionesService extends BaseClinicService {
 
-  private readonly firestore = inject(Firestore);
-  private readonly clinicContext = inject(ClinicContextService);
   private readonly collectionName = 'evoluciones';
 
   // =========================
@@ -155,7 +154,9 @@ export class EvolucionesService {
     throw new Error('Las evoluciones progress requieren treatmentId');
     }
 
-    const { clinicId, professionalId } = this.getAuthContext();
+    const clinicId = this.clinicId;
+    const professionalId = this.professionalId;
+
     const now = serverTimestamp();
 
     const cleanPayload: Omit<EvolucionDocument, 'id'> = {
@@ -199,7 +200,7 @@ export class EvolucionesService {
     };
 
     const ref = await addDoc(
-        collection(this.firestore, this.collectionName),
+        this.getCollection(),
         cleanPayload
     );
 
@@ -211,7 +212,8 @@ export class EvolucionesService {
   // =========================
 
   async update(id: string, changes: EvolucionUpdateInput): Promise<void> {
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
+
     const actual = await this.getByIdOrThrow(id, clinicId);
 
     if (
@@ -232,7 +234,7 @@ export class EvolucionesService {
     });
 
     await updateDoc(
-        doc(this.firestore, `${this.collectionName}/${id}`),
+        this.docRef(id),
         clean
     );
     }
@@ -242,11 +244,12 @@ export class EvolucionesService {
   // =========================
 
   async softDelete(id: string): Promise<void> {
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
+
     await this.getByIdOrThrow(id, clinicId);
 
     await updateDoc(
-      doc(this.firestore, `${this.collectionName}/${id}`),
+      this.docRef(id),
       {
         activo: false,
         deletedAt: serverTimestamp(),
@@ -260,9 +263,10 @@ export class EvolucionesService {
   // =========================
 
   async getById(id: string): Promise<EvolucionDocument | null> {
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
 
-    const ref = doc(this.firestore, `${this.collectionName}/${id}`);
+
+    const ref = this.docRef(id);
     const snapshot = await getDoc(ref);
 
     if (!snapshot.exists()) return null;
@@ -285,10 +289,11 @@ export class EvolucionesService {
 
   async listByPaciente(patientId: string): Promise<EvolucionDocument[]> {
 
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
+
 
     const q = query(
-      collection(this.firestore, this.collectionName),
+      this.getCollection(),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
       where('activo', '==', true),
@@ -309,10 +314,11 @@ export class EvolucionesService {
   // =========================
 
   async getEvaluacionInicial(patientId: string): Promise<EvolucionDocument | null> {
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
+
 
     const q = query(
-      collection(this.firestore, this.collectionName),
+      this.getCollection(),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
       where('tipoEvolucion', '==', 'initial'),
@@ -338,10 +344,11 @@ export class EvolucionesService {
   // =========================
 
   async getNextSessionNumber(patientId: string): Promise<number> {
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
+
 
     const q = query(
-      collection(this.firestore, this.collectionName),
+      this.getCollection(),
       where('clinicId', '==', clinicId),
       where('patientId', '==', patientId),
       where('tipoEvolucion', '==', 'progress'),
@@ -363,17 +370,9 @@ export class EvolucionesService {
   // INTERNAL HELPERS
   // =========================
 
-  private getAuthContext() {
-
-    const clinicId = this.clinicContext.getClinicId();
-    const professionalId = this.clinicContext.getProfessionalId();
-
-    return { clinicId, professionalId };
-
-  }
 
   private async getByIdOrThrow(id: string, clinicId: string): Promise<EvolucionDocument> {
-    const ref = doc(this.firestore, `${this.collectionName}/${id}`);
+    const ref = this.docRef(id);
     const snapshot = await getDoc(ref);
 
     if (!snapshot.exists()) {
@@ -406,16 +405,18 @@ export class EvolucionesService {
   }
 
   async listHoy(): Promise<EvolucionDocument[]> {
-    const { clinicId } = this.getAuthContext();
+    const clinicId = this.clinicId;
+
 
     const inicioHoy = new Date();
     inicioHoy.setHours(0, 0, 0, 0);
 
     const q = query(
-        collection(this.firestore, this.collectionName),
+        this.getCollection(),
         where('clinicId', '==', clinicId),
         where('activo', '==', true),
-        where('createdAt', '>=', Timestamp.fromDate(inicioHoy))
+        where('createdAt', '>=', Timestamp.fromDate(inicioHoy)),
+        orderBy('createdAt', 'desc')
     );
 
     const snapshot = await getDocs(q);
@@ -427,13 +428,15 @@ export class EvolucionesService {
     }
 
     async listIniciales(): Promise<EvolucionDocument[]> {
-        const { clinicId } = this.getAuthContext();
+        const clinicId = this.clinicId;
+
 
         const q = query(
-            collection(this.firestore, this.collectionName),
+            this.getCollection(),
             where('clinicId', '==', clinicId),
             where('tipoEvolucion', '==', 'initial'),
-            where('activo', '==', true)
+            where('activo', '==', true),
+            orderBy('createdAt', 'desc')
         );
 
         const snapshot = await getDocs(q);
@@ -446,10 +449,10 @@ export class EvolucionesService {
 
     getEvolucionesByPacienteRealtime(patientId: string): Observable<EvolucionDocument[]> {
 
-      const clinicId = this.clinicContext.getClinicId();
+      const clinicId = this.clinicId;
 
       const q = query(
-        collection(this.firestore, this.collectionName),
+        this.getCollection(),
         where('clinicId', '==', clinicId),
         where('patientId', '==', patientId),
         where('activo', '==', true),
@@ -458,5 +461,13 @@ export class EvolucionesService {
 
       return collectionData(q, { idField: 'id' }) as Observable<EvolucionDocument[]>;
 
+    }
+
+    private getCollection() {
+      return collection(this.firestore, this.collectionName);
+    }
+
+    private docRef(id: string) {
+      return doc(this.firestore, `${this.collectionName}/${id}`);
     }
 }
