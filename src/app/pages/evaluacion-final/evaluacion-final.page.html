@@ -50,7 +50,7 @@
     </div>
 
     <!-- CONTENIDO CUANDO HAY PACIENTE SELECCIONADO -->
-    < *ngIf="pacienteSeleccionado && !cargando">
+    <div *ngIf="pacienteSeleccionado && !cargando">
 
       <!-- INFO DEL PACIENTE -->
       <div class="patient-card">
@@ -305,5 +305,6 @@
         </div>
 
       </div>
+    </div>
   </div>
 </ion-content>

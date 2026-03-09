@@ -51,7 +51,7 @@ const routes: Routes = [
   },
   {
     path: 'documentos-medicos',
-    loadChildren: () => import('./pages/documentos-medicos/documentos-medicos.page').then( m => m.DocumentosMedicosPage),
+    loadComponent: () => import('./pages/documentos-medicos/documentos-medicos.page').then( m => m.DocumentosMedicosPage),
     canActivate: [AuthGuard]
   },
   {
@@ -64,7 +64,8 @@ const routes: Routes = [
     path: 'rutina-paciente-editor/:id',
     loadComponent: () =>
       import('./pages/rutina-paciente-editor/rutina-paciente-editor.page')
-        .then(m => m.RutinaPacienteEditorPage)
+        .then(m => m.RutinaPacienteEditorPage),
+    canActivate: [AuthGuard]
   },
   
   {

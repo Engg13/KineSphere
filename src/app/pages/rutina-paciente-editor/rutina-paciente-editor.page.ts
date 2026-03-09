@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -23,6 +24,8 @@ import { RutinasPacienteService } from '../../services/rutinas-paciente.service'
 })
 export class RutinaPacienteEditorPage implements OnInit {
 
+  private destroyRef = inject(DestroyRef);
+
   rutinaId!: string;
   rutina: any;
 
@@ -39,6 +42,7 @@ export class RutinaPacienteEditorPage implements OnInit {
 
     this.rutinasService
       .getRutinaById(this.rutinaId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(r => this.rutina = r);
 
   }

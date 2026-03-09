@@ -4,6 +4,7 @@ import {
   getDocs,
   query,
   orderBy,
+  where,
   doc,
   setDoc,
   deleteDoc
@@ -22,10 +23,12 @@ export class TestTemplatesFirestoreService extends BaseClinicService {
 
   async getTests(): Promise<TestTemplate[]> {
 
+    const clinicId = this.clinicId;
     const ref = collection(this.firestore, COLLECTION_NAME);
 
     const q = query(
       ref,
+      where('clinicId', '==', clinicId),
       orderBy('fechaCreacion', 'desc')
     );
 
@@ -68,11 +71,8 @@ export class TestTemplatesFirestoreService extends BaseClinicService {
     const tests = await this.getTests();
 
     if (tests.length > 0) {
-      console.log(`Tests ya existentes (${tests.length}), no se hace seed.`);
       return;
     }
-
-    console.log('Seeding tests predeterminados...');
 
     for (const test of TESTS_PREDETERMINADOS) {
       await this.upsertTest(test);

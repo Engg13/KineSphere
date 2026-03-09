@@ -56,6 +56,8 @@ export interface Documento {
   fecha: string;
   tipo: 'foto_camara' | 'desde_galeria';
   descripcion?: string;
+  clinicId?: string;
+  professionalId?: string;
 }
 
 export interface Evaluacion {

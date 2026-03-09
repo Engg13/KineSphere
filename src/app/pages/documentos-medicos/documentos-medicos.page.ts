@@ -1,8 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { NavController, AlertController, IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { DocumentosService } from '../../services/documentos.service';
+import { Documento } from '../../models/interfaces';
 import { ClinicContextService } from '../../core/tenancy/clinic-context.service';
 
 @Component({
@@ -15,8 +17,9 @@ import { ClinicContextService } from '../../core/tenancy/clinic-context.service'
 export class DocumentosMedicosPage implements OnInit {
 
   private clinicContext = inject(ClinicContextService);
-  
-  documentos: any[] = [];
+  private destroyRef = inject(DestroyRef);
+
+  documentos: Documento[] = [];
   pacienteId: string = "";
   pacienteNombre: string = 'Paciente';
 
@@ -37,7 +40,7 @@ export class DocumentosMedicosPage implements OnInit {
     this.clinicId = this.clinicContext.clinicId;
     this.professionalId = this.clinicContext.uid;
 
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['pacienteId']) {
         this.pacienteId = String(params['pacienteId']);
         this.pacienteNombre = params['pacienteNombre'] || 'Paciente';
@@ -53,7 +56,7 @@ export class DocumentosMedicosPage implements OnInit {
       return;
     }
 
-    this.documentosService.getDocumentosByPaciente(this.pacienteId).subscribe({
+    this.documentosService.getDocumentosByPaciente(this.pacienteId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: documentos => {
         this.documentos = documentos || [];
       },
@@ -126,7 +129,7 @@ export class DocumentosMedicosPage implements OnInit {
     }
   }
 
-  async eliminarDocumento(documento: any) {
+  async eliminarDocumento(documento: Documento) {
     const alert = await this.alertController.create({
       header: 'Confirmar Eliminación',
       message: '¿Estás seguro de que quieres eliminar este documento médico?',
@@ -136,7 +139,7 @@ export class DocumentosMedicosPage implements OnInit {
           text: 'Eliminar',
           role: 'destructive',
           handler: () => {
-            this.documentosService.deleteDocumento(documento.id)
+            this.documentosService.deleteDocumento(String(documento.id))
               .then(() => this.mostrarMensaje('Documento eliminado'))
               .catch(error => {
                 console.error('Error eliminando documento en Firestore:', error);
@@ -149,7 +152,7 @@ export class DocumentosMedicosPage implements OnInit {
     await alert.present();
   }
 
-  async verDocumento(documento: any) {
+  async verDocumento(documento: Documento) {
     const alert = await this.alertController.create({
       header: 'Documento Médico',
       message: `

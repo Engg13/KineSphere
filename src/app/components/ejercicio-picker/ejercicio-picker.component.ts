@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +16,8 @@ import { Ejercicio, CategoriaEjercicio } from '../../models/ejercicio.model';
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class EjercicioPickerComponent implements OnInit {
+
+  private destroyRef = inject(DestroyRef);
 
   ejercicios: Ejercicio[] = [];
   ejerciciosFiltrados: Ejercicio[] = [];
@@ -41,6 +44,7 @@ export class EjercicioPickerComponent implements OnInit {
 
     this.ejerciciosService
       .getEjercicios()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ejs => {
 
         this.ejercicios = ejs;

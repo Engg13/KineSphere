@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +21,8 @@ import { RutinaTemplate } from '../../models/rutina-template.model';
     SafePipe]
 })
 export class RutinaTemplateEditorPage {
+
+  private destroyRef = inject(DestroyRef);
 
   ejerciciosBiblioteca: Ejercicio[] = [];
   ejerciciosFiltrados: Ejercicio[] = [];
@@ -60,7 +63,7 @@ export class RutinaTemplateEditorPage {
 
   cargarEjercicios() {
 
-    this.ejerciciosService.getEjercicios().subscribe(ejercicios => {
+    this.ejerciciosService.getEjercicios().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(ejercicios => {
 
       this.ejerciciosBiblioteca = ejercicios;
       this.ejerciciosFiltrados = [...ejercicios];

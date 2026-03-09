@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
 import { ArticulacionRom, RomEntry, TipoEvolucion } from '../../models/evolucion.model';
 import { TestTemplate } from '../../models/test-template.model';
@@ -50,9 +51,8 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private flujoClinicoService = inject(FlujoClinicoService);
   private evolucionesService = inject(EvolucionesService);
   private tratamientosService = inject(TratamientosService);
-  private rutinasPacienteService: RutinasPacienteService;
-  private usarDatosDemo = true;
-   // 🔥 poner en false en producción
+  private rutinasPacienteService = inject(RutinasPacienteService);
+  private destroyRef = inject(DestroyRef);
 
   patientId = '';
   pacienteNombre = 'Paciente';
@@ -79,8 +79,6 @@ export class EvolucionPage implements OnInit, OnDestroy {
   evaData: number[] = [];
   evaLabels: string[] = [];
   cargando = true;
-
-  private rutinasSub?: Subscription;
 
   zonasTratamiento: string[] = [
     'Columna cervical',
@@ -176,10 +174,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   return null;
   }
 
-  async ngOnInit(): Promise<void> {setTimeout(() => {
-  document.body.style.background = 'red';
-}, 500);
-
+  async ngOnInit(): Promise<void> {
     const params = this.route.snapshot.queryParamMap;
 
     this.patientId = params.get('patientId') || params.get('pacienteId') || '';
@@ -197,7 +192,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.applyZonaLock(tipoActual);
     this.actualizarEstadoObjetivos();
 
-    this.form.get('tipoEvolucion')?.valueChanges.subscribe(async (tipo) => {
+    this.form.get('tipoEvolucion')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async (tipo) => {
       this.applyZonaLock(tipo);
       this.actualizarEstadoObjetivos();
 
@@ -209,13 +204,12 @@ export class EvolucionPage implements OnInit, OnDestroy {
       }
     });
 
-    this.form.get('test')?.valueChanges.subscribe((test) => {
+    this.form.get('test')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((test) => {
       if (this.esDischarge && test?.puntajeTotal != null) {
         this.testFinal = test.puntajeTotal;
         this.resultadoTestFinal = test.resultado;
       }
     });
-    console.log('EvolucionPage INIT');
 
     try {
       await this.cargarContexto();
@@ -224,12 +218,10 @@ export class EvolucionPage implements OnInit, OnDestroy {
     } finally {
       
       this.cargando = false;
-      console.log('Cargando terminó:', this.cargando);
     }
   }
 
   ngOnDestroy(): void {
-    this.rutinasSub?.unsubscribe();
   }
 
   async cargarContexto(): Promise<void> {
@@ -335,10 +327,9 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     if (!this.patientId) return;
 
-    this.rutinasSub?.unsubscribe();
-
-    this.rutinasSub = this.rutinasPacienteService
+    this.rutinasPacienteService
       .getRutinasPaciente(this.patientId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((rutinas: RutinaPaciente[]) => {
 
         this.rutinasDisponibles = rutinas.filter(r => r.activa);
@@ -349,8 +340,6 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
   async cargarTestsDisponibles(): Promise<void> {
     this.testsDisponibles = await this.testTemplatesService.getTests();
-
-    console.log('TESTS DISPONIBLES:', this.testsDisponibles);
   }
 
   async onTipoEvolucionChange(event: Event): Promise<void> {
@@ -784,13 +773,6 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   private construirDatosEva(evoluciones: any[]): void {
-
-    if (this.usarDatosDemo && evoluciones.length < 3) {
-      // 🔥 Datos simulados
-      this.evaLabels = ['Inicial', 'S1', 'S2', 'S3', 'S4', 'Alta'];
-      this.evaData = [8, 7, 6, 4, 3, 1];
-      return;
-    }
 
     const ordenadas = evoluciones
       .filter(e => e.painScale != null)

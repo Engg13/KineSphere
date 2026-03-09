@@ -6,10 +6,12 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  getDoc,
   query,
   where
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
+import { Documento } from '../models/interfaces';
 import { ClinicContextService } from '../core/tenancy/clinic-context.service';
 
 @Injectable({
@@ -22,26 +24,32 @@ export class DocumentosService {
 
   private documentosRef = collection(this.firestore, 'documentos');
 
-  getDocumentosByPaciente(pacienteId: string): Observable<any[]> {
+  getDocumentosByPaciente(pacienteId: string): Observable<Documento[]> {
 
     const clinicId = this.clinicContext.clinicId
 
     const q = query(
       this.documentosRef,
-      where('patientId', '==', pacienteId),
+      where('pacienteId', '==', pacienteId),
       where('clinicId', '==', clinicId)
     );
 
-    return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    return collectionData(q, { idField: 'id' }) as Observable<Documento[]>;
   }
 
   addDocumento(documento: any) {
     return addDoc(this.documentosRef, documento);
   }
 
-  deleteDocumento(id: string) {
+  async deleteDocumento(id: string) {
 
+    const clinicId = this.clinicContext.clinicId;
     const ref = doc(this.firestore, `documentos/${id}`);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists() || snap.data()?.['clinicId'] !== clinicId) {
+      throw new Error('Documento no encontrado o no pertenece a esta clínica');
+    }
 
     return deleteDoc(ref);
   }

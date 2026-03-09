@@ -22,6 +22,7 @@ export interface TratamientoDocument {
   professionalId: string;
   estado: 'active' | 'completed';
   totalSesiones: number;
+  nextSessionNumber?: number;
   zonaPrincipal: string | null;
   zonasSecundarias: string[];
   createdAt: Timestamp;
@@ -164,9 +165,6 @@ export class TratamientosService extends BaseClinicService {
 
   async listActivos(): Promise<TratamientoDocument[]> {
 
-    console.log("clinicId", this.clinicId);
-    console.log("professionalId", this.professionalId);
-
     const q = query(
       this.getCollection(),
       where('clinicId', '==', this.clinicId),
@@ -176,11 +174,9 @@ export class TratamientosService extends BaseClinicService {
 
     const snapshot = await getDocs(q);
 
-    console.log("TRATAMIENTOS SNAPSHOT", snapshot.size);
-
     return snapshot.docs.map(d => ({
       id: d.id,
-      ...(d.data() as any)
+      ...(d.data() as Omit<TratamientoDocument, 'id'>)
     }));
   }
 
