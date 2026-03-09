@@ -10,6 +10,8 @@ import { SafePipe } from '../../pipes/safe.pipe';
 import { Ejercicio } from '../../models/ejercicio.model';
 import { RutinaTemplateEjercicio } from '../../models/rutina-ejercicio.model';
 import { RutinaTemplate } from '../../models/rutina-template.model';
+import { ModalController } from '@ionic/angular';
+import { EjercicioPickerComponent } from '../../components/ejercicio-picker/ejercicio-picker.component';
 
 @Component({
   selector: 'app-rutina-template-editor',
@@ -50,6 +52,7 @@ export class RutinaTemplateEditorPage {
     private ejerciciosService: EjerciciosFirestoreService,
     private templatesService: RutinasTemplatesService,
     private navCtrl: NavController,
+    private modalCtrl: ModalController
   ) {
     this.cargarEjercicios();
   }
@@ -194,6 +197,22 @@ export class RutinaTemplateEditorPage {
       orden: index + 1
 
     }));
+
+  }
+
+  async abrirSelectorEjercicios() {
+
+    const modal = await this.modalCtrl.create({
+      component: EjercicioPickerComponent
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+
+    if (data?.ejercicio) {
+      this.agregarEjercicio(data.ejercicio);
+    }
 
   }
 

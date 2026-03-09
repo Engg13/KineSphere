@@ -21,20 +21,15 @@
 
         <h2>{{ template.nombre }}</h2>
 
-        <p>
-          {{ template.descripcion }}
-        </p>
+        <p>{{ template.descripcion }}</p>
 
-        <p>
-          {{ template.ejercicios.length }} ejercicios
-        </p>
+        <p>{{ template.ejercicios.length }} ejercicios</p>
 
       </ion-label>
 
       <ion-icon
         *ngIf="templateSeleccionado?.id === template.id"
         name="checkmark-circle"
-        color="success"
         slot="end">
       </ion-icon>
 
@@ -42,22 +37,16 @@
 
   </ion-list>
 
+  <!-- BOTON ASIGNAR -->
+
+  <ion-button
+    expand="block"
+    style="margin:24px"
+    [disabled]="!templateSeleccionado"
+    (click)="asignar()">
+
+    Asignar rutina
+
+  </ion-button>
+
 </ion-content>
-
-<ion-footer>
-
-  <ion-toolbar>
-
-    <ion-button
-      expand="block"
-      color="primary"
-      [disabled]="!templateSeleccionado"
-      (click)="asignar()">
-
-      Asignar rutina
-
-    </ion-button>
-
-  </ion-toolbar>
-
-</ion-footer>

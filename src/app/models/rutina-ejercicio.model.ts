@@ -38,4 +38,10 @@ export interface RutinaEjercicio {
 
   notas?: string;
 
+  videoUrl?: string;
+
+  imagenUrl?: string;
+
+  instrucciones?: string;
+
 }

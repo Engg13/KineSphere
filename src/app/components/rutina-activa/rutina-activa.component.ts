@@ -9,6 +9,7 @@ import { Ejercicio } from '../../models/ejercicio.model';
 import { RutinasPacienteService } from '../../services/rutinas-paciente.service';
 import { EjercicioPickerComponent } from '../ejercicio-picker/ejercicio-picker.component';
 import { FormsModule } from '@angular/forms';
+import { RutinasTemplatesService } from '../../services/rutinas-templates.service';
 
 @Component({
   selector: 'app-rutina-activa',
@@ -23,7 +24,8 @@ export class RutinaActivaComponent {
 
   constructor(
     private modalCtrl: ModalController,
-    private rutinasPacienteService: RutinasPacienteService
+    private rutinasPacienteService: RutinasPacienteService,
+    private rutinasTemplatesService: RutinasTemplatesService
   ) {}
 
   // ================================
@@ -54,12 +56,20 @@ export class RutinaActivaComponent {
 
     if (!this.rutina?.id) return;
 
-    const nuevo: RutinaTemplateEjercicio = {
+    const nuevo = {
+
       ejercicioId: ejercicio.id!,
       nombre: ejercicio.nombre,
+
       orden: (this.rutina.ejercicios?.length || 0) + 1,
+
       series: 3,
-      repeticiones: 10
+      repeticiones: 10,
+
+      videoUrl: ejercicio.videoUrl,
+      imagenUrl: ejercicio.imagenUrl,
+      instrucciones: ejercicio.instrucciones
+
     };
 
     const ejerciciosActualizados = [
@@ -69,9 +79,7 @@ export class RutinaActivaComponent {
 
     await this.rutinasPacienteService.actualizarRutina(
       this.rutina.id,
-      {
-        ejercicios: ejerciciosActualizados
-      }
+      { ejercicios: ejerciciosActualizados }
     );
 
   }
@@ -146,5 +154,50 @@ export class RutinaActivaComponent {
     this.editando = false;
 
   }
+
+  async duplicarEjercicio(ejercicioId: string) {
+
+    if (!this.rutina?.id || !this.rutina.ejercicios) return;
+
+    const index = this.rutina.ejercicios.findIndex(
+      e => e.ejercicioId === ejercicioId
+    );
+
+    if (index === -1) return;
+
+    const original = this.rutina.ejercicios[index];
+
+    const copia = {
+      ...original
+    };
+
+    const ejercicios = [...this.rutina.ejercicios];
+
+    ejercicios.splice(index + 1, 0, copia);
+
+    // recalcular orden
+    ejercicios.forEach((ej, i) => {
+      ej.orden = i + 1;
+    });
+
+    await this.rutinasPacienteService.actualizarRutina(
+      this.rutina.id,
+      { ejercicios }
+    );
+
+  }
+
+  async convertirAPlantilla() {
+
+    if (!this.rutina) return;
+
+    await this.rutinasTemplatesService.crearTemplateDesdeRutina(
+      this.rutina
+    );
+
+    alert('Plantilla creada desde esta rutina');
+
+  }
+
 
 }

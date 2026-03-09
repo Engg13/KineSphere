@@ -45,94 +45,6 @@
 
   </ion-card>
 
-
-  <!-- ========================= -->
-  <!-- BIBLIOTECA -->
-  <!-- ========================= -->
-
-  <ion-card>
-
-    <ion-card-header>
-      <ion-card-title>Biblioteca de ejercicios</ion-card-title>
-    </ion-card-header>
-
-    <ion-card-content>
-
-      <!-- BUSCADOR -->
-
-      <ion-item>
-        <ion-input
-          placeholder="Buscar ejercicio..."
-          [(ngModel)]="terminoBusqueda"
-          (ionInput)="filtrarEjercicios()">
-        </ion-input>
-      </ion-item>
-
-      <!-- CATEGORIAS -->
-
-      <div style="margin-top:10px;margin-bottom:10px">
-
-        <ion-chip
-          *ngFor="let cat of categorias"
-          (click)="cambiarCategoria(cat)"
-          [color]="categoriaFiltro === cat ? 'primary' : 'medium'">
-
-          {{cat}}
-
-        </ion-chip>
-
-      </div>
-
-      <!-- LISTA EJERCICIOS -->
-
-      <ion-list>
-
-        <ion-item
-          *ngFor="let ej of ejerciciosFiltrados">
-
-          <!-- VIDEO -->
-
-          <ion-thumbnail slot="start" *ngIf="ej.videoThumbnail">
-
-            <img
-              [src]="ej.videoThumbnail"
-              (click)="abrirPreview(ej.videoUrl)" />
-
-          </ion-thumbnail>
-
-          <!-- INFO -->
-
-          <ion-label>
-
-            <h2>{{ej.nombre}}</h2>
-
-            <p *ngIf="ej.musculoPrincipal">
-              {{ej.musculoPrincipal}}
-            </p>
-
-          </ion-label>
-
-          <!-- AGREGAR -->
-
-          <ion-button
-            slot="end"
-            size="small"
-            fill="outline"
-            (click)="agregarEjercicio(ej)">
-
-            + Agregar
-
-          </ion-button>
-
-        </ion-item>
-
-      </ion-list>
-
-    </ion-card-content>
-
-  </ion-card>
-
-
   <!-- ========================= -->
   <!-- RUTINA -->
   <!-- ========================= -->
@@ -205,6 +117,15 @@
 
   </ion-card>
 
+  <ion-button
+    expand="block"
+    fill="outline"
+    (click)="abrirSelectorEjercicios()">
+
+    <ion-icon name="add" slot="start"></ion-icon>
+    Agregar ejercicio
+
+  </ion-button>
 
   <!-- ========================= -->
   <!-- MODAL VIDEO -->
@@ -253,28 +174,19 @@
 
     </ng-template>
 
-  </ion-modal>
-
-</ion-content>
-
+</ion-modal>
 
 <!-- ========================= -->
 <!-- GUARDAR -->
 <!-- ========================= -->
 
-<ion-footer>
+<ion-button
+  expand="block"
+  style="margin:24px"
+  (click)="guardar()">
 
-  <ion-toolbar>
+  Guardar plantilla
 
-    <ion-button
-      expand="block"
-      color="success"
-      (click)="guardar()">
+</ion-button>
 
-      Guardar plantilla
-
-    </ion-button>
-
-  </ion-toolbar>
-
-</ion-footer>
+</ion-content>

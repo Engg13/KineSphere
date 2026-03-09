@@ -154,7 +154,7 @@ export class PacienteDetallePage implements OnDestroy {
         next: (rutinas: RutinaPaciente[]) => {
 
           this.rutinasCompletadas = rutinas
-            .filter(r => !r.activa)
+            .filter(r => r.activa === false)
             .sort((a, b) => {
 
               const fechaA = a.createdAt instanceof Date
@@ -363,7 +363,7 @@ export class PacienteDetallePage implements OnDestroy {
   const docRef = await this.rutinasPacienteService.crearRutinaPaciente({
 
     pacienteId: this.pacienteId,
-    nombre: 'Nueva rutina',
+    nombre: '',
     descripcion: '',
     ejercicios: [],
     activa: true
@@ -495,23 +495,11 @@ export class PacienteDetallePage implements OnDestroy {
 
   seleccionarPlantilla() {
 
-    this.router.navigate([
-      '/rutinas-templates'
-    ], {
-      queryParams: {
-        pacienteId: this.paciente.id
-      }
-    });
-
-  }
-
-  usarPlantilla() {
-
     this.navCtrl.navigateRoot(
       '/asignar-rutina',
       {
         queryParams: {
-          pacienteId: this.pacienteId
+          pacienteId: this.paciente.id
         }
       }
     );

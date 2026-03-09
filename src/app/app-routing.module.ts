@@ -58,19 +58,17 @@ const routes: Routes = [
     path: 'config-test',
     loadChildren: () => import('./pages/config-test/config-test.module').then(m => m.ConfigTestPageModule),
     canActivate: [AuthGuard]
-  },
-
-  {
-    path: 'rutina-paciente-editor/:id',
-    loadComponent: () =>
-      import('./pages/rutina-paciente-editor/rutina-paciente-editor.page')
-        .then(m => m.RutinaPacienteEditorPage)
-  },
-  
+  },  
   {
     path: 'tests-config',
     loadChildren: () => import('./pages/tests-config/tests-config.module').then(m => m.TestsConfigPageModule),
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'asignar-rutina',
+    loadComponent: () =>
+      import('./pages/asignar-rutina/asignar-rutina.page')
+        .then(m => m.AsignarRutinaPage)
   },
   {
     path: 'perfil-profesional',

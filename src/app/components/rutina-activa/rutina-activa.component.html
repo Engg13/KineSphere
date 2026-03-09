@@ -1,4 +1,4 @@
-<div class="rutina-card">
+<div class="rutina-card" style="padding-bottom: 40px;">
 
   <!-- HEADER -->
 
@@ -13,7 +13,8 @@
     <ion-input
       *ngIf="editando"
       [(ngModel)]="rutina.nombre"
-      placeholder="Nombre de la rutina">
+      label="Nombre rutina"
+      labelPlacement="stacked">
     </ion-input>
 
     <div class="rutina-actions">
@@ -25,9 +26,30 @@
         fill="outline"
         *ngIf="!editando"
         (click)="activarEdicion()">
-
         Editar
+      </ion-button>
 
+      <!-- CONVERTIR A PLANTILLA -->
+
+      <ion-button
+        size="small"
+        fill="outline"
+        (click)="convertirAPlantilla()">
+
+        <ion-icon name="copy-outline" slot="start"></ion-icon>
+        Plantilla
+
+      </ion-button>
+
+      <!-- CANCELAR -->
+
+      <ion-button
+        size="small"
+        fill="outline"
+        color="medium"
+        *ngIf="editando"
+        (click)="cancelarEdicion()">
+        Cancelar
       </ion-button>
 
       <!-- GUARDAR -->
@@ -37,9 +59,7 @@
         color="success"
         *ngIf="editando"
         (click)="guardarCambios()">
-
         Guardar
-
       </ion-button>
 
       <!-- AGREGAR EJERCICIO -->
@@ -47,10 +67,11 @@
       <ion-button
         size="small"
         fill="outline"
+        *ngIf="editando"
         (click)="abrirSelectorEjercicios()">
 
         <ion-icon name="add" slot="start"></ion-icon>
-        Agregar ejercicio
+        Ejercicio
 
       </ion-button>
 
@@ -58,32 +79,31 @@
 
   </div>
 
-
   <!-- LISTA EJERCICIOS -->
 
   <ion-list>
 
     <ion-reorder-group
-      [disabled]="false"
+      [disabled]="!editando"
       (ionItemReorder)="reordenarEjercicios($event)">
 
       @for (ej of rutina?.ejercicios; track ej.ejercicioId) {
 
         <ion-item>
 
-          <ion-reorder slot="start"></ion-reorder>
+          <ion-reorder slot="start" *ngIf="editando"></ion-reorder>
 
           <ion-label>
 
             <h2>{{ ej.nombre }}</h2>
 
-            <!-- MODO LECTURA -->
+            <!-- LECTURA -->
 
             <p *ngIf="!editando">
               {{ ej.series }} series • {{ ej.repeticiones }} reps
             </p>
 
-            <!-- MODO EDICIÓN -->
+            <!-- EDICIÓN -->
 
             <ion-grid *ngIf="editando">
 
@@ -94,6 +114,7 @@
                   <ion-input
                     type="number"
                     label="Series"
+                    labelPlacement="stacked"
                     [(ngModel)]="ej.series">
                   </ion-input>
 
@@ -104,6 +125,7 @@
                   <ion-input
                     type="number"
                     label="Reps"
+                    labelPlacement="stacked"
                     [(ngModel)]="ej.repeticiones">
                   </ion-input>
 
@@ -115,17 +137,23 @@
 
           </ion-label>
 
-          <!-- ELIMINAR -->
+          <ion-buttons slot="end" *ngIf="editando">
 
-          <ion-button
-            fill="clear"
-            color="danger"
-            slot="end"
-            (click)="eliminarEjercicio(ej.ejercicioId)">
+            <ion-button
+              fill="clear"
+              color="primary"
+              (click)="duplicarEjercicio(ej.ejercicioId)">
+              <ion-icon name="copy-outline"></ion-icon>
+            </ion-button>
 
-            <ion-icon name="trash-outline"></ion-icon>
+            <ion-button
+              fill="clear"
+              color="danger"
+              (click)="eliminarEjercicio(ej.ejercicioId)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
 
-          </ion-button>
+          </ion-buttons>
 
         </ion-item>
 

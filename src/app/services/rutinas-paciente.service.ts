@@ -44,18 +44,19 @@ export class RutinasPacienteService extends BaseClinicService {
 
     async crearRutinaPaciente(rutina: Partial<RutinaPaciente>) {
 
-    const ref = collection(
-        this.firestore,
-        this.getPath()
-    );
+        const ref = collection(
+            this.firestore,
+            this.getPath()
+        );
 
-    return addDoc(ref, {
-        clinicId: this.clinicId,
-        createdBy: this.professionalId,
-        ...rutina,
-        createdAt: serverTimestamp()
+        return addDoc(ref, {
+            ...rutina,
+            clinicId: this.clinicId,
+            createdBy: this.professionalId,
+            createdAt: serverTimestamp()
         });
-    }
+
+       }
 
     async asignarTemplateAPaciente(
         pacienteId: string,
@@ -131,10 +132,13 @@ export class RutinasPacienteService extends BaseClinicService {
             this.firestore,
             `clinics/${this.clinicId}/rutinas_paciente/${rutinaId}`
             ),
-            cambios
+            {
+            ...cambios,
+            updatedAt: serverTimestamp()
+            }
         );
 
-        }
+    }
 
     getRutinaActivaPaciente(pacienteId: string): Observable<RutinaPaciente | null> {
 
@@ -163,7 +167,9 @@ export class RutinasPacienteService extends BaseClinicService {
             `clinics/${this.clinicId}/rutinas_paciente/${rutinaId}`
         );
 
-        return docData(ref, { idField: 'id' }) as Observable<RutinaPaciente>;
+        return docData(ref, { idField: 'id' }).pipe(
+            map(data => data ? data as RutinaPaciente : null)
+        );
 
-    }
+        }
 }

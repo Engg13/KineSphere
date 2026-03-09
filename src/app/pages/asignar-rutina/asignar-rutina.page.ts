@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
 import { RutinasTemplatesService } from '../../services/rutinas-templates.service';
 import { RutinasPacienteService } from '../../services/rutinas-paciente.service';
 import { RutinaTemplate } from '../../models/rutina-template.model';
@@ -7,7 +9,9 @@ import { NavController } from '@ionic/angular';
 
 @Component({
   selector: 'app-asignar-rutina',
-  templateUrl: './asignar-rutina.page.html'
+  templateUrl: './asignar-rutina.page.html',
+  standalone: true,
+  imports: [CommonModule, IonicModule] 
 })
 export class AsignarRutinaPage {
 
@@ -23,6 +27,8 @@ export class AsignarRutinaPage {
     private route: ActivatedRoute,
     private navCtrl: NavController
   ) {
+    this.pacienteId =
+    this.route.snapshot.queryParamMap.get('pacienteId') || '';
     this.cargarTemplates();
   }
 

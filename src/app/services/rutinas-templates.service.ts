@@ -12,6 +12,8 @@ import {
 import { Observable } from 'rxjs';
 import { BaseClinicService } from '../core/services/base-clinic.service';
 import { RutinaTemplate } from '../models/rutina-template.model';
+import { RutinaPaciente } from '../models/rutina-paciente.model';
+
 
 @Injectable({
   providedIn: 'root'
@@ -68,6 +70,33 @@ export class RutinasTemplatesService extends BaseClinicService {
         `${this.getCollectionPath()}/${id}`
       )
     );
+
+  }
+
+  async crearTemplateDesdeRutina(rutina: RutinaPaciente) {
+
+    const ref = collection(
+      this.firestore,
+      `clinics/${this.clinicId}/rutinas_templates`
+    );
+
+    return addDoc(ref, {
+      nombre: rutina.nombre,
+      descripcion: rutina.descripcion ?? '',
+      ejercicios: rutina.ejercicios.map(e => ({
+        ejercicioId: e.ejercicioId,
+        nombre: e.nombre,
+        orden: e.orden,
+        series: e.series,
+        repeticiones: e.repeticiones,
+        tiempo: e.tiempo,
+        carga: e.carga,
+        notas: e.notas
+      })),
+      createdBy: this.professionalId,
+      clinicId: this.clinicId,
+      createdAt: serverTimestamp()
+    });
 
   }
 
