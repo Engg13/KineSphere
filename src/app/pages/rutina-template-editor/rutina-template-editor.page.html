@@ -1,135 +1,108 @@
 <ion-header>
   <ion-toolbar>
-
     <ion-buttons slot="start">
-      <ion-button (click)="volver()">
-        <ion-icon name="arrow-back"></ion-icon>
+      <ion-button (click)="volver()" fill="clear">
+        <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
-
-    <ion-title>Nueva plantilla de rutina</ion-title>
-
+    <ion-title>Nueva plantilla</ion-title>
   </ion-toolbar>
 </ion-header>
 
-
 <ion-content>
 
-  <!-- ========================= -->
-  <!-- INFO RUTINA -->
-  <!-- ========================= -->
+  <div class="editor-container">
 
-  <ion-card>
+    <!-- NOMBRE Y DESCRIPCION -->
 
-    <ion-card-header>
-      <ion-card-title>Información rutina</ion-card-title>
-    </ion-card-header>
+    <div class="section-card">
 
-    <ion-card-content>
+      <input
+        class="rutina-name-input"
+        type="text"
+        placeholder="Nombre de la rutina"
+        [(ngModel)]="rutina.nombre" />
 
-      <ion-item>
-        <ion-input
-          placeholder="Nombre rutina"
-          [(ngModel)]="rutina.nombre">
-        </ion-input>
-      </ion-item>
+      <textarea
+        class="rutina-desc-input"
+        placeholder="Descripcion (opcional)"
+        rows="2"
+        [(ngModel)]="rutina.descripcion">
+      </textarea>
 
-      <ion-item>
-        <ion-textarea
-          placeholder="Descripción"
-          [(ngModel)]="rutina.descripcion">
-        </ion-textarea>
-      </ion-item>
+    </div>
 
-    </ion-card-content>
+    <!-- EJERCICIOS HEADER -->
 
-  </ion-card>
+    <div class="section-header" *ngIf="rutina.ejercicios.length">
+      <span class="section-label">Ejercicios</span>
+      <span class="section-count">{{ rutina.ejercicios.length }}</span>
+    </div>
 
-  <!-- ========================= -->
-  <!-- RUTINA -->
-  <!-- ========================= -->
+    <!-- LISTA DE EJERCICIOS -->
 
-  <ion-card *ngIf="rutina.ejercicios.length">
+    <div class="ejercicios-stack">
 
-    <ion-card-header>
-      <ion-card-title>
-        Rutina ({{rutina.ejercicios.length}} ejercicios)
-      </ion-card-title>
-    </ion-card-header>
+      <div
+        class="ejercicio-item"
+        *ngFor="let ej of rutina.ejercicios; let i = index">
 
-    <ion-card-content>
+        <div class="ej-order">{{ ej.orden }}</div>
 
-      <ion-list>
+        <div class="ej-body">
 
-        <ion-item
-          *ngFor="let ej of rutina.ejercicios; let i=index">
+          <span class="ej-name">{{ ej.nombre }}</span>
 
-          <ion-label>
+          <div class="ej-params">
 
-            <h2>{{ej.orden}}. {{ej.nombre}}</h2>
+            <div class="param-group">
+              <label>Series</label>
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="ej.series" />
+            </div>
 
-            <ion-grid>
+            <div class="param-group">
+              <label>Reps</label>
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="ej.repeticiones" />
+            </div>
 
-              <ion-row>
+          </div>
 
-                <ion-col size="6">
+        </div>
 
-                  <ion-input
-                    type="number"
-                    label="Series"
-                    [(ngModel)]="ej.series">
-                  </ion-input>
+        <button class="ej-delete" (click)="eliminarEjercicio(i)">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
 
-                </ion-col>
+      </div>
 
-                <ion-col size="6">
+    </div>
 
-                  <ion-input
-                    type="number"
-                    label="Reps"
-                    [(ngModel)]="ej.repeticiones">
-                  </ion-input>
+    <!-- AGREGAR EJERCICIO -->
 
-                </ion-col>
+    <button class="add-exercise-btn" (click)="abrirSelectorEjercicios()">
+      <ion-icon name="add-circle-outline"></ion-icon>
+      <span>Agregar ejercicio</span>
+    </button>
 
-              </ion-row>
+    <!-- GUARDAR -->
 
-            </ion-grid>
+    <button
+      class="save-btn"
+      [class.disabled]="!rutina.nombre.trim()"
+      [disabled]="!rutina.nombre.trim()"
+      (click)="guardar()">
+      Guardar plantilla
+    </button>
 
-          </ion-label>
+  </div>
 
-          <!-- ELIMINAR -->
-
-          <ion-button
-            color="danger"
-            fill="clear"
-            (click)="eliminarEjercicio(i)">
-
-            <ion-icon name="trash"></ion-icon>
-
-          </ion-button>
-
-        </ion-item>
-
-      </ion-list>
-
-    </ion-card-content>
-
-  </ion-card>
-
-  <ion-button
-    expand="block"
-    fill="outline"
-    (click)="abrirSelectorEjercicios()">
-
-    <ion-icon name="add" slot="start"></ion-icon>
-    Agregar ejercicio
-
-  </ion-button>
-
-  <!-- ========================= -->
   <!-- MODAL VIDEO -->
-  <!-- ========================= -->
 
   <ion-modal
     [isOpen]="!!videoPreview"
@@ -139,26 +112,15 @@
 
       <ion-header>
         <ion-toolbar>
-
-          <ion-title>
-            Video ejercicio
-          </ion-title>
-
+          <ion-title>Video ejercicio</ion-title>
           <ion-buttons slot="end">
-
-            <ion-button (click)="cerrarPreview()">
-              Cerrar
-            </ion-button>
-
+            <ion-button (click)="cerrarPreview()">Cerrar</ion-button>
           </ion-buttons>
-
         </ion-toolbar>
       </ion-header>
 
       <ion-content>
-
-        <div style="padding:16px">
-
+        <div class="video-wrapper">
           <iframe
             *ngIf="videoPreview"
             [src]="videoPreview"
@@ -167,26 +129,11 @@
             frameborder="0"
             allowfullscreen>
           </iframe>
-
         </div>
-
       </ion-content>
 
     </ng-template>
 
-</ion-modal>
-
-<!-- ========================= -->
-<!-- GUARDAR -->
-<!-- ========================= -->
-
-<ion-button
-  expand="block"
-  style="margin:24px"
-  (click)="guardar()">
-
-  Guardar plantilla
-
-</ion-button>
+  </ion-modal>
 
 </ion-content>

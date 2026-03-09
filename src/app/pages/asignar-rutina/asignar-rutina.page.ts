@@ -10,6 +10,7 @@ import { NavController } from '@ionic/angular';
 @Component({
   selector: 'app-asignar-rutina',
   templateUrl: './asignar-rutina.page.html',
+  styleUrls: ['./asignar-rutina.page.scss'],
   standalone: true,
   imports: [CommonModule, IonicModule] 
 })

@@ -1,79 +1,66 @@
-<div class="rutina-card" style="padding-bottom: 40px;">
+<div class="rutina-wrapper" *ngIf="rutina">
 
   <!-- HEADER -->
 
-  <div class="rutina-header">
+  <div class="rutina-top">
 
-    <!-- NOMBRE -->
+    <div class="rutina-title-row">
 
-    <h3 *ngIf="!editando">
-      {{ rutina?.nombre || 'Rutina activa' }}
-    </h3>
+      <div class="rutina-badge">
+        <ion-icon name="barbell-outline"></ion-icon>
+      </div>
 
-    <ion-input
-      *ngIf="editando"
-      [(ngModel)]="rutina.nombre"
-      label="Nombre rutina"
-      labelPlacement="stacked">
-    </ion-input>
+      <div class="rutina-title-info">
 
-    <div class="rutina-actions">
+        <h3 *ngIf="!editando">{{ rutina.nombre || 'Rutina activa' }}</h3>
 
-      <!-- EDITAR -->
+        <input
+          *ngIf="editando"
+          class="name-edit-input"
+          type="text"
+          [(ngModel)]="rutina.nombre"
+          placeholder="Nombre de la rutina" />
 
-      <ion-button
-        size="small"
-        fill="outline"
+        <span class="ej-count">{{ rutina.ejercicios?.length || 0 }} ejercicios</span>
+
+      </div>
+
+    </div>
+
+    <!-- ACCIONES -->
+
+    <div class="rutina-toolbar">
+
+      <button
+        class="toolbar-btn"
         *ngIf="!editando"
         (click)="activarEdicion()">
-        Editar
-      </ion-button>
+        <ion-icon name="create-outline"></ion-icon>
+        <span>Editar</span>
+      </button>
 
-      <!-- CONVERTIR A PLANTILLA -->
-
-      <ion-button
-        size="small"
-        fill="outline"
+      <button
+        class="toolbar-btn"
         (click)="convertirAPlantilla()">
+        <ion-icon name="copy-outline"></ion-icon>
+        <span>Plantilla</span>
+      </button>
 
-        <ion-icon name="copy-outline" slot="start"></ion-icon>
-        Plantilla
-
-      </ion-button>
-
-      <!-- CANCELAR -->
-
-      <ion-button
-        size="small"
-        fill="outline"
-        color="medium"
+      <button
+        class="toolbar-btn cancel"
         *ngIf="editando"
         (click)="cancelarEdicion()">
-        Cancelar
-      </ion-button>
+        <ion-icon name="close-outline"></ion-icon>
+        <span>Cancelar</span>
+      </button>
 
-      <!-- GUARDAR -->
-
-      <ion-button
-        size="small"
-        color="success"
+      <button
+        class="toolbar-btn save"
         *ngIf="editando"
         (click)="guardarCambios()">
-        Guardar
-      </ion-button>
-
-      <!-- AGREGAR EJERCICIO -->
-
-      <ion-button
-        size="small"
-        fill="outline"
-        *ngIf="editando"
-        (click)="abrirSelectorEjercicios()">
-
-        <ion-icon name="add" slot="start"></ion-icon>
-        Ejercicio
-
-      </ion-button>
+        <ion-icon name="checkmark-outline"></ion-icon>
+        <span>Guardar</span>
+      </button>
 
     </div>
 
@@ -81,86 +68,79 @@
 
   <!-- LISTA EJERCICIOS -->
 
-  <ion-list>
+  <ion-list class="ejercicio-list">
 
     <ion-reorder-group
       [disabled]="!editando"
       (ionItemReorder)="reordenarEjercicios($event)">
 
-      @for (ej of rutina?.ejercicios; track ej.ejercicioId) {
+      @for (ej of rutina.ejercicios; track ej.ejercicioId; let i = $index) {
 
-        <ion-item>
+        <div class="ejercicio-card">
 
-          <ion-reorder slot="start" *ngIf="editando"></ion-reorder>
+          <ion-reorder *ngIf="editando" class="drag-handle">
+            <ion-icon name="menu-outline"></ion-icon>
+          </ion-reorder>
 
-          <ion-label>
+          <div class="ej-order-num" *ngIf="!editando">{{ ej.orden }}</div>
 
-            <h2>{{ ej.nombre }}</h2>
+          <div class="ej-content">
+
+            <span class="ej-name">{{ ej.nombre }}</span>
 
             <!-- LECTURA -->
+            <div class="ej-stats" *ngIf="!editando">
+              <span class="stat">{{ ej.series }} series</span>
+              <span class="stat-dot"></span>
+              <span class="stat">{{ ej.repeticiones }} reps</span>
+            </div>
 
-            <p *ngIf="!editando">
-              {{ ej.series }} series • {{ ej.repeticiones }} reps
-            </p>
+            <!-- EDICION -->
+            <div class="ej-edit-params" *ngIf="editando">
 
-            <!-- EDICIÓN -->
+              <div class="param-compact">
+                <label>Series</label>
+                <input type="number" min="1" [(ngModel)]="ej.series" />
+              </div>
 
-            <ion-grid *ngIf="editando">
+              <div class="param-compact">
+                <label>Reps</label>
+                <input type="number" min="1" [(ngModel)]="ej.repeticiones" />
+              </div>
 
-              <ion-row>
+            </div>
 
-                <ion-col size="6">
+          </div>
 
-                  <ion-input
-                    type="number"
-                    label="Series"
-                    labelPlacement="stacked"
-                    [(ngModel)]="ej.series">
-                  </ion-input>
+          <!-- ACCIONES POR EJERCICIO -->
+          <div class="ej-actions" *ngIf="editando">
 
-                </ion-col>
-
-                <ion-col size="6">
-
-                  <ion-input
-                    type="number"
-                    label="Reps"
-                    labelPlacement="stacked"
-                    [(ngModel)]="ej.repeticiones">
-                  </ion-input>
-
-                </ion-col>
-
-              </ion-row>
-
-            </ion-grid>
-
-          </ion-label>
-
-          <ion-buttons slot="end" *ngIf="editando">
-
-            <ion-button
-              fill="clear"
-              color="primary"
-              (click)="duplicarEjercicio(ej.ejercicioId)">
+            <button class="ej-action-btn" (click)="duplicarEjercicio(ej.ejercicioId)">
               <ion-icon name="copy-outline"></ion-icon>
-            </ion-button>
+            </button>
 
-            <ion-button
-              fill="clear"
-              color="danger"
-              (click)="eliminarEjercicio(ej.ejercicioId)">
+            <button class="ej-action-btn danger" (click)="eliminarEjercicio(ej.ejercicioId)">
               <ion-icon name="trash-outline"></ion-icon>
-            </ion-button>
+            </button>
 
-          </ion-buttons>
+          </div>
 
-        </ion-item>
+        </div>
 
       }
 
     </ion-reorder-group>
 
   </ion-list>
+
+  <!-- AGREGAR EJERCICIO (edit mode) -->
+
+  <button
+    class="add-btn"
+    *ngIf="editando"
+    (click)="abrirSelectorEjercicios()">
+    <ion-icon name="add-circle-outline"></ion-icon>
+    <span>Agregar ejercicio</span>
+  </button>
 
 </div>

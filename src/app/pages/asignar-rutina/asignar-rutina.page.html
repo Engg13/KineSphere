@@ -1,52 +1,73 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Asignar Rutina</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Asignar rutina</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
 
-  <ion-list>
+  <div class="assign-container">
 
-    <ion-list-header>
-      Plantillas disponibles
-    </ion-list-header>
+    <!-- SECTION HEADER -->
 
-    <ion-item
-      *ngFor="let template of templates"
-      (click)="seleccionarTemplate(template)"
-      button>
+    <div class="section-header">
+      <span class="section-label">Plantillas disponibles</span>
+      <span class="section-count">{{ templates.length }}</span>
+    </div>
 
-      <ion-label>
+    <!-- TEMPLATE LIST -->
 
-        <h2>{{ template.nombre }}</h2>
+    <div class="templates-list">
 
-        <p>{{ template.descripcion }}</p>
+      <button
+        *ngFor="let template of templates"
+        class="template-card"
+        [class.selected]="templateSeleccionado?.id === template.id"
+        (click)="seleccionarTemplate(template)">
 
-        <p>{{ template.ejercicios.length }} ejercicios</p>
+        <div class="template-icon">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </div>
 
-      </ion-label>
+        <div class="template-info">
+          <span class="template-name">{{ template.nombre }}</span>
+          <span class="template-desc" *ngIf="template.descripcion">
+            {{ template.descripcion }}
+          </span>
+          <span class="template-meta">
+            {{ template.ejercicios.length }} ejercicios
+          </span>
+        </div>
 
-      <ion-icon
-        *ngIf="templateSeleccionado?.id === template.id"
-        name="checkmark-circle"
-        slot="end">
-      </ion-icon>
+        <div class="template-check" *ngIf="templateSeleccionado?.id === template.id">
+          <ion-icon name="checkmark-circle" color="primary"></ion-icon>
+        </div>
 
-    </ion-item>
+      </button>
 
-  </ion-list>
+    </div>
 
-  <!-- BOTON ASIGNAR -->
+    <!-- EMPTY STATE -->
 
-  <ion-button
-    expand="block"
-    style="margin:24px"
-    [disabled]="!templateSeleccionado"
-    (click)="asignar()">
+    <div class="empty-state" *ngIf="templates.length === 0">
+      <ion-icon name="document-outline"></ion-icon>
+      <p>No hay plantillas creadas</p>
+      <span>Crea una plantilla primero para poder asignarla</span>
+    </div>
 
-    Asignar rutina
+    <!-- ASSIGN BUTTON -->
 
-  </ion-button>
+    <button
+      class="assign-btn"
+      [class.disabled]="!templateSeleccionado"
+      [disabled]="!templateSeleccionado"
+      (click)="asignar()">
+      Asignar rutina al paciente
+    </button>
+
+  </div>
 
 </ion-content>

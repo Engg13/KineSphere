@@ -1,66 +1,89 @@
-<ion-header>
+<ion-header class="picker-header">
   <ion-toolbar>
-    <ion-title>Seleccionar ejercicio</ion-title>
+    <ion-title>Biblioteca de ejercicios</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="cerrar()">
-        Cerrar
+      <ion-button (click)="cerrar()" fill="clear">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 
-  <ion-toolbar>
+  <div class="search-wrapper">
     <ion-searchbar
-      placeholder="Buscar ejercicio"
+      placeholder="Buscar por nombre..."
       [(ngModel)]="terminoBusqueda"
-      (ionInput)="filtrarEjercicios()">
+      (ionInput)="filtrarEjercicios()"
+      [debounce]="200"
+      mode="ios">
     </ion-searchbar>
-  </ion-toolbar>
+  </div>
 </ion-header>
 
 <ion-content>
 
   <!-- FILTRO CATEGORIAS -->
 
-  <div class="categorias">
-
-    <ion-chip
+  <div class="categorias-scroll">
+    <button
       *ngFor="let cat of categorias"
-      (click)="filtrarPorCategoria(cat.valor)"
-      [color]="categoriaFiltro === cat.valor ? 'primary' : ''">
-
+      class="cat-chip"
+      [class.active]="categoriaFiltro === cat.valor"
+      (click)="filtrarPorCategoria(cat.valor)">
       <ion-icon [name]="cat.icono"></ion-icon>
-      <ion-label>{{cat.nombre}}</ion-label>
+      <span>{{ cat.nombre }}</span>
+    </button>
+  </div>
 
-    </ion-chip>
+  <!-- CONTADOR -->
 
+  <div class="results-count">
+    {{ ejerciciosFiltrados.length }} ejercicios
   </div>
 
   <!-- LISTA EJERCICIOS -->
 
-  <ion-list>
+  <div class="ejercicios-list">
 
-    <ion-item
+    <button
       *ngFor="let ej of ejerciciosFiltrados"
-      (click)="seleccionar(ej)"
-      button>
+      class="ejercicio-card"
+      (click)="seleccionar(ej)">
 
-      <ion-label>
+      <div class="ej-thumb"
+        *ngIf="ej.videoThumbnail || ej.imagenUrl; else iconPlaceholder">
+        <img [src]="ej.videoThumbnail || ej.imagenUrl" [alt]="ej.nombre" />
+      </div>
 
-        <h2>{{ej.nombre}}</h2>
+      <ng-template #iconPlaceholder>
+        <div class="ej-thumb placeholder">
+          <ion-icon name="barbell-outline"></ion-icon>
+        </div>
+      </ng-template>
 
-        <p *ngIf="ej.musculoPrincipal">
-          {{ej.musculoPrincipal}}
-        </p>
+      <div class="ej-info">
+        <span class="ej-name">{{ ej.nombre }}</span>
+        <span class="ej-meta" *ngIf="ej.musculoPrincipal || ej.zonaCorporal">
+          {{ ej.musculoPrincipal || ej.zonaCorporal }}
+        </span>
+        <span class="ej-badge" *ngIf="ej.categoria">
+          {{ ej.categoria }}
+        </span>
+      </div>
 
-      </ion-label>
+      <div class="ej-add">
+        <ion-icon name="add-circle" color="primary"></ion-icon>
+      </div>
 
-      <ion-icon
-        name="add-circle-outline"
-        slot="end">
-      </ion-icon>
+    </button>
 
-    </ion-item>
+  </div>
 
-  </ion-list>
+  <!-- EMPTY STATE -->
+
+  <div class="empty-state" *ngIf="ejerciciosFiltrados.length === 0">
+    <ion-icon name="search-outline"></ion-icon>
+    <p>No se encontraron ejercicios</p>
+    <span>Intenta con otro termino o categoria</span>
+  </div>
 
 </ion-content>

@@ -232,81 +232,85 @@ class="action-card"
 <!-- TAB RUTINAS -->
 
 @if (tabActual === 'rutinas') {
-  <div class="actions-grid animated-item">
 
-  <button
-  class="action-card primary"
-  (click)="crearRutina()">
+  <div class="rutina-actions-row animated-item">
 
-  <ion-icon name="add-circle-outline"></ion-icon>
-  <span>Nueva Rutina</span>
+    <button
+      class="rutina-action-btn primary"
+      (click)="crearRutina()">
+      <ion-icon name="add-circle-outline"></ion-icon>
+      <span>Nueva Rutina</span>
+    </button>
 
-  </button>
-
-
-  <button
-  class="action-card"
-  (click)="seleccionarPlantilla()">
-
-  <ion-icon name="copy-outline"></ion-icon>
-  <span>Usar Plantilla</span>
-
-  </button>
+    <button
+      class="rutina-action-btn"
+      (click)="seleccionarPlantilla()">
+      <ion-icon name="copy-outline"></ion-icon>
+      <span>Usar Plantilla</span>
+    </button>
 
   </div>
 
-@if (rutinaActiva) {
+  @if (rutinaActiva) {
 
-  <div (click)="editarRutina(rutinaActiva.id)">
+    <div class="rutina-section-label animated-item">
+      <span>Rutina activa</span>
+    </div>
 
-  <app-rutina-activa
-  [rutina]="rutinaActiva">
-  </app-rutina-activa>
+    <app-rutina-activa
+      [rutina]="rutinaActiva">
+    </app-rutina-activa>
 
-  </div>
+  }
 
-}
+  @if (!rutinaActiva) {
 
-@if (rutinasCompletadas.length > 0) {
+    <div class="empty-rutina animated-item">
+      <ion-icon name="barbell-outline"></ion-icon>
+      <p>Sin rutina activa</p>
+      <span>Crea una nueva o asigna desde plantilla</span>
+    </div>
 
-<div class="sessions-card animated-item">
+  }
 
-<h3 class="section-title">Rutinas Completadas</h3>
+  @if (rutinasCompletadas.length > 0) {
 
-@for (rutina of rutinasCompletadas; track rutina.id) {
+    <div class="sessions-card animated-item">
 
-<div class="session-item">
+      <h3 class="section-title">Rutinas completadas</h3>
 
-<div class="session-number rutina-icon">
-<ion-icon name="barbell-outline"></ion-icon>
-</div>
+      @for (rutina of rutinasCompletadas; track rutina.id) {
 
-<div class="session-info">
+        <div class="session-item">
 
-<span class="session-date">
-{{ rutina.nombre }}
-</span>
+          <div class="session-number rutina-icon">
+            <ion-icon name="barbell-outline"></ion-icon>
+          </div>
 
-<span class="session-eva">
-{{ rutina.ejercicios.length }} ejercicios
-</span>
+          <div class="session-info">
 
-<span class="session-obs">
+            <span class="session-date">
+              {{ rutina.nombre }}
+            </span>
 
-Completada:
-{{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
+            <span class="session-eva">
+              {{ rutina.ejercicios.length }} ejercicios
+            </span>
 
-</span>
+            <span class="session-obs">
+              Completada:
+              {{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
+            </span>
 
-</div>
+          </div>
 
-</div>
+        </div>
 
-}
+      }
 
-</div>
+    </div>
 
-}
+  }
 
 }
 
