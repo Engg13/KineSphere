@@ -1,5 +1,5 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { importProvidersFrom, APP_INITIALIZER } from '@angular/core';
+import { importProvidersFrom, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { RouteReuseStrategy } from '@angular/router';
 import { IonicRouteStrategy, IonicModule } from '@ionic/angular';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -24,6 +24,13 @@ import { AppInitService } from './app/core/init/app-init.service';
 // 🚀 APP INIT FUNCTION
 function initializeApplication(appInit: AppInitService) {
   return () => appInit.init();
+}
+
+class GlobalErrorHandler implements ErrorHandler {
+  handleError(error: any) {
+    console.error('GLOBAL ERROR:', error);
+    debugger;
+  }
 }
 
 bootstrapApplication(AppComponent, {
@@ -52,6 +59,8 @@ bootstrapApplication(AppComponent, {
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideFirestore(() => getFirestore()),
     provideAuth(() => getAuth()),
+
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
 
     // 🚀 APP INITIALIZER
     {

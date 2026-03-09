@@ -63,25 +63,29 @@ export class DashboardPage {
   private async cargarDashboard() {
 
     if (this.dashboardCache) {
-    this.aplicarDatos(this.dashboardCache);
-    return;
-  }
+      this.aplicarDatos(this.dashboardCache);
+      return;
+    }
 
-    this.estaCargando = !this.dashboardCache;
+    this.estaCargando = true;
 
     try {
 
-      const [
-        pacientes,
-        tratamientosActivos,
-        evolucionesHoy,
-        evolucionesIniciales
-      ] = await Promise.all([
-        this.pacientesService.list(),
-        this.tratamientosService.listActivos(),
-        this.evolucionesService.listHoy(),
-        this.evolucionesService.listIniciales()
-      ]);
+      console.log('Cargando pacientes...');
+      const pacientes = await this.pacientesService.list();
+      console.log('PACIENTES OK', pacientes.length);
+
+      console.log('Cargando tratamientos activos...');
+      const tratamientosActivos = await this.tratamientosService.listActivos();
+      console.log('TRATAMIENTOS OK', tratamientosActivos.length);
+
+      console.log('Cargando evoluciones hoy...');
+      const evolucionesHoy = await this.evolucionesService.listHoy();
+      console.log('EVOLUCIONES HOY OK', evolucionesHoy.length);
+
+      console.log('Cargando evoluciones iniciales...');
+      const evolucionesIniciales = await this.evolucionesService.listIniciales();
+      console.log('EVOLUCIONES INICIALES OK', evolucionesIniciales.length);
 
       const nuevosDatos = {
         pacientes,
@@ -94,7 +98,7 @@ export class DashboardPage {
       this.aplicarDatos(nuevosDatos);
 
     } catch (error) {
-      console.error('Error cargando dashboard:', error);
+      console.error('ERROR DASHBOARD:', error);
     } finally {
       this.estaCargando = false;
     }
@@ -168,8 +172,10 @@ export class DashboardPage {
   this.navCtrl.navigateRoot('/evaluacion-final');
   }
 
-  irAEjercicios() {
-  this.navCtrl.navigateRoot('/ejercicios');
+  irAPlantillas() {
+
+    this.navCtrl.navigateRoot('/rutina-template-editor');
+
   }
 
   irAEvaluacionesClinicas() {

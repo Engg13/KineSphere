@@ -1,347 +1,390 @@
 <ion-content [fullscreen]="true">
-  <div class="page-wrapper">
 
-    <!-- LOADING -->
-    @if (estaCargando) {
-      <div class="loading-container">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
-        <p>Cargando paciente...</p>
-      </div>
-    }
+<div class="page-wrapper">
 
-    <!-- CONTENIDO PRINCIPAL -->
-    @if (!estaCargando && paciente) {
-      <!-- HEADER GRADIENT -->
-      <div class="detail-header">
-        <button class="back-btn" (click)="volverALista()">
-          <ion-icon name="arrow-back"></ion-icon>
-        </button>
-        <div class="patient-hero">
-          <div class="patient-avatar-large">
-            <ion-icon name="person"></ion-icon>
-          </div>
-          <h1 class="patient-name">{{ paciente.nombre }}</h1>
-          <p class="patient-diagnosis">{{ paciente.diagnostico }}</p>
-          <ion-badge [color]="paciente.activo ? 'success' : 'medium'" class="status-badge-large">
-            {{ paciente.activo ? 'Activo' : 'Finalizado' }}
-          </ion-badge>
-        </div>
-      </div>
+<!-- LOADING -->
 
-      <!-- STATS ROW -->
-      <div class="stats-row">
-        <div class="stat-item">
-          <span class="stat-value">
-            @if (tratamientoActivo) {
-              {{ tratamientoActivo.totalSesiones }}
-            } @else {
-              -
-            }
-          </span>
-          <span class="stat-label">Sesiones</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-value">{{ paciente.sesionesPlanificadas || 10 }}</span>
-          <span class="stat-label">Planificadas</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          @if (paciente.edad && paciente.edad > 0) {
-            <span class="stat-value">{{ paciente.edad }}</span>
-          } @else {
-            <span class="stat-value">-</span>
-          }
-          <span class="stat-label">Edad</span>
-        </div>
-      </div>
+@if (estaCargando) {
 
-      <!-- INFO CARD -->
-      <div class="info-card animated-item">
-        <h3 class="section-title">Informacion Personal</h3>
-        <div class="info-grid">
-          @if (paciente.rut) {
-            <div class="info-row">
-              <ion-icon name="card-outline" class="info-icon"></ion-icon>
-              <div>
-                <span class="info-label">RUT</span>
-                <span class="info-value">{{ paciente.rut }}</span>
-              </div>
-            </div>
-          }
-          @if (paciente.telefono) {
-            <div class="info-row clickable" (click)="llamarPaciente()">
-              <ion-icon name="call-outline" class="info-icon"></ion-icon>
-              <div>
-                <span class="info-label">Telefono</span>
-                <span class="info-value link">{{ paciente.telefono }}</span>
-              </div>
-            </div>
-          }
-          @if (paciente.email) {
-            <div class="info-row clickable" (click)="enviarEmail()">
-              <ion-icon name="mail-outline" class="info-icon"></ion-icon>
-              <div>
-                <span class="info-label">Email</span>
-                <span class="info-value link">{{ paciente.email }}</span>
-              </div>
-            </div>
-          }
-          <div class="info-row">
-            <ion-icon name="calendar-outline" class="info-icon"></ion-icon>
-            <div>
-              <span class="info-label">Fecha Ingreso</span>
-              <span class="info-value">
-                @if (paciente.fechaIngreso) {
-                  {{ formatearFecha(paciente.fechaIngreso) }}
-                } @else if (paciente.fechaCreacion) {
-                  {{ formatearFecha(paciente.fechaCreacion) }}
-                } @else {
-                  {{ formatearFecha(fechaActual) }}
-                }
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+<div class="loading-container">
+<ion-spinner name="crescent" color="primary"></ion-spinner>
+<p>Cargando paciente...</p>
+</div>
 
-      <!-- QUICK ACTIONS -->
-      <div class="actions-grid animated-item">
-        <!-- SI NO hay tratamiento activo -->
-        @if (!tratamientoActivo) {
-          <button class="action-card primary" (click)="iniciarTratamiento($event)">
-            <ion-icon name="play-outline"></ion-icon>
-            <span>Iniciar Tratamiento</span>
-          </button>
-        }
+}
 
-        <!-- SI hay tratamiento activo -->
-        @if (tratamientoActivo) {
-          <button class="action-card primary" (click)="nuevaSesion()">
-            <ion-icon name="add-circle-outline"></ion-icon>
-            <span>Nueva Sesión</span>
-          </button>
+@if (!estaCargando && paciente) {
 
-          <button class="action-card danger" (click)="finalizarTratamiento()">
-            <ion-icon name="flag-outline"></ion-icon>
-            <span>Finalizar Tratamiento</span>
-          </button>
-        }
-        <button class="action-card" (click)="editarPaciente()">
-          <ion-icon name="create-outline"></ion-icon>
-          <span>Editar</span>
-        </button>
-        <button class="action-card" (click)="irAEjercicios()">
-          <ion-icon name="barbell-outline"></ion-icon>
-          <span>Ejercicios</span>
-        </button>
-        <button class="action-card" (click)="irADocumentos()">
-          <ion-icon name="document-text-outline"></ion-icon>
-          <span>Documentos</span>
-        </button>
-      </div>
+<!-- HEADER -->
 
-      <!-- HISTORIAL DE RUTINAS -->
-      @if (rutinasCompletadas.length > 0) {
-        <div class="sessions-card animated-item">
-          <h3 class="section-title">Rutinas Completadas</h3>
-          @for (rutina of rutinasCompletadas; track rutina.id) {
-            <div class="session-item">
-              <div class="session-number rutina-icon">
-                <ion-icon name="barbell-outline"></ion-icon>
-              </div>
-              <div class="session-info">
-                <span class="session-date">{{ rutina.nombre }}</span>
-                <span class="session-eva">{{ rutina.ejercicios.length }} ejercicios</span>
-                <span class="session-obs">
-                  Completada: {{ formatearFecha(rutina.fechaCompletada || rutina.fecha) }}
-                </span>
-              </div>
-            </div>
-          }
-        </div>
-      }
+<div class="detail-header">
 
-      <!-- HISTORIAL DE SESIONES -->
-      <div class="sessions-card animated-item">
-        <h3 class="section-title">Historial de Sesiones</h3>
+<button class="back-btn" (click)="volverALista()">
+<ion-icon name="arrow-back"></ion-icon>
+</button>
 
-        @if (historialSesiones.length > 0) {
+<div class="patient-hero">
 
-          @for (sesion of historialVisual; track sesion.id || $index) {
+<div class="patient-avatar-large">
+<ion-icon name="person"></ion-icon>
+</div>
 
-            <div class="session-item-wrapper">
+<h1 class="patient-name">{{ paciente.nombre }}</h1>
 
-              <div class="session-item clickable"
-                  (click)="toggleSesionExpandida(sesion.id)">
+<p class="patient-diagnosis">{{ paciente.diagnostico }}</p>
 
-                <div class="session-number">
-                  {{ sesion.sessionNumber }}
-                </div>
+<ion-badge
+[color]="paciente.activo ? 'success' : 'medium'"
+class="status-badge-large">
 
-                <div class="session-info">
-                  <span class="session-date">
-                    {{ formatearFecha(sesion.createdAt) }}
-                  </span>
+{{ paciente.activo ? 'Activo' : 'Finalizado' }}
 
-                  <span class="session-eva">
-                    EVA: {{ sesion.painScale ?? '-' }}/10
-                  </span>
+</ion-badge>
 
-                  @if (sesion.subjective && !isSesionExpandida(sesion.id)) {
-                    <span class="session-obs">
-                      {{ sesion.subjective }}
-                    </span>
-                  }
-                </div>
+</div>
+</div>
 
-                <ion-icon
-                  [name]="isSesionExpandida(sesion.id)
-                    ? 'chevron-up-outline'
-                    : 'chevron-down-outline'"
-                  class="session-expand-icon">
-                </ion-icon>
 
-              </div>
+<!-- TABS -->
 
-              <!-- DETALLE EXPANDIDO -->
-              @if (isSesionExpandida(sesion.id)) {
+<div class="tabs-bar">
 
-                <div class="session-detail">
+<button
+[class.active]="tabActual === 'info'"
+(click)="cambiarTab('info')">
+Información
+</button>
 
-                  @if (sesion.zonaPrincipal) {
-                    <div class="detail-row">
-                      <ion-icon name="body-outline"></ion-icon>
-                      <span class="detail-label">Zona:</span>
-                      <span class="detail-value">
-                        {{ sesion.zonaPrincipal }}
-                      </span>
-                    </div>
-                  }
+<button
+[class.active]="tabActual === 'sesiones'"
+(click)="cambiarTab('sesiones')">
+Sesiones
+</button>
 
-                  @if (sesion.sleepQuality !== null && sesion.sleepQuality !== undefined) {
-                    <div class="detail-row">
-                      <ion-icon name="moon-outline"></ion-icon>
-                      <span class="detail-label">Sueño:</span>
-                      <span class="detail-value">
-                        {{ sesion.sleepQuality }}/5
-                      </span>
-                    </div>
-                  }
+<button
+[class.active]="tabActual === 'rutinas'"
+(click)="cambiarTab('rutinas')">
+Rutinas
+</button>
 
-                  @if (sesion.tecnicasAplicadas?.length > 0) {
-                    <div class="detail-row detail-row-wrap">
-                      <ion-icon name="hand-left-outline"></ion-icon>
-                      <span class="detail-label">Técnicas:</span>
-                      <div class="detail-chips">
-                        @for (tec of sesion.tecnicasAplicadas; track tec) {
-                          <span class="detail-chip">{{ tec }}</span>
-                        }
-                      </div>
-                    </div>
-                  }
+</div>
 
-                  @if (sesion.rom?.length > 0) {
-                    <div class="detail-row detail-row-block">
-                      <ion-icon name="resize-outline"></ion-icon>
-                      <span class="detail-label">ROM:</span>
-                      <div class="detail-text">
-                        {{ sesion.rom.length }} articulaciones evaluadas
-                      </div>
-                    </div>
-                  }
 
-                  @if (sesion.subjective) {
-                    <div class="detail-row detail-row-block">
-                      <ion-icon name="document-text-outline"></ion-icon>
-                      <span class="detail-label">Subjetivo:</span>
-                      <p class="detail-text">{{ sesion.subjective }}</p>
-                    </div>
-                  }
+<!-- TAB INFO -->
 
-                  @if (sesion.plan) {
-                    <div class="detail-row detail-row-block">
-                      <ion-icon name="flag-outline"></ion-icon>
-                      <span class="detail-label">Plan:</span>
-                      <p class="detail-text">{{ sesion.plan }}</p>
-                    </div>
-                  }
+@if (tabActual === 'info') {
 
-                  @if (sesion.test) {
-                    <div class="detail-row">
-                      <ion-icon name="clipboard-outline"></ion-icon>
-                      <span class="detail-label">Test:</span>
-                      <span class="detail-value">
-                        {{ sesion.test.testNombre }} -
-                        {{ sesion.test.resultado }}
-                        ({{ sesion.test.puntajeTotal }} pts)
-                      </span>
-                    </div>
-                  }
+<!-- STATS -->
 
-                  <!-- ACCIONES -->
-                  <div class="detail-actions">
-                    <button class="delete-btn"
-                            (click)="confirmarEliminacion(sesion.id)">
-                      <ion-icon name="trash-outline"></ion-icon>
-                      Eliminar
-                    </button>
+<div class="stats-row">
 
-                    @if (esAdmin) {
-                      <button class="delete-btn hard"
-                              (click)="confirmarHardDelete(sesion.id)">
-                        <ion-icon name="warning-outline"></ion-icon>
-                        Eliminar definitivo
-                      </button>
-                    }
-                  </div>
+<div class="stat-item">
+<span class="stat-value">
+@if (tratamientoActivo) {
+{{ tratamientoActivo.totalSesiones }}
+} @else {
+-
+}
+</span>
+<span class="stat-label">Sesiones</span>
+</div>
 
-                </div>
+<div class="stat-divider"></div>
 
-              }
+<div class="stat-item">
+<span class="stat-value">
+{{ paciente.sesionesPlanificadas || 10 }}
+</span>
+<span class="stat-label">Planificadas</span>
+</div>
 
-            </div>
+<div class="stat-divider"></div>
 
-          } 
+<div class="stat-item">
+@if (paciente.edad && paciente.edad > 0) {
+<span class="stat-value">{{ paciente.edad }}</span>
+} @else {
+<span class="stat-value">-</span>
+}
+<span class="stat-label">Edad</span>
+</div>
 
-        } @else {
+</div>
 
-          <div class="empty-sessions">
-            <ion-icon name="clipboard-outline"></ion-icon>
-            <p>Sin sesiones registradas</p>
-            @if (!tratamientoActivo) {
-            <button class="empty-action"
-                    (click)="iniciarTratamiento($event)">
-              Iniciar tratamiento
-            </button>
-          }
 
-          @if (tratamientoActivo) {
-            <button class="empty-action"
-                    (click)="nuevaSesion()">
-              Agregar sesión
-            </button>
-          }
-          </div>
+<!-- INFO PERSONAL -->
 
-        } 
+<div class="info-card animated-item">
 
-      </div>
+<h3 class="section-title">Información Personal</h3>
 
-      } 
+<div class="info-grid">
 
-      <!-- ERROR STATE -->
-      @if (!estaCargando && !paciente) {
-        <div class="error-state">
-          <ion-icon name="alert-circle-outline"></ion-icon>
-          <h3>Paciente no encontrado</h3>
-          <p>No se pudo cargar la informacion</p>
-          <button class="back-link"
-                  (click)="volverALista()">
-            Volver a la lista
-          </button>
-        </div>
-      }
+@if (paciente.rut) {
 
-      </div>
-    </ion-content>
+<div class="info-row">
+
+<ion-icon name="card-outline" class="info-icon"></ion-icon>
+
+<div>
+<span class="info-label">RUT</span>
+<span class="info-value">{{ paciente.rut }}</span>
+</div>
+
+</div>
+
+}
+
+@if (paciente.telefono) {
+
+<div class="info-row clickable" (click)="llamarPaciente()">
+
+<ion-icon name="call-outline" class="info-icon"></ion-icon>
+
+<div>
+<span class="info-label">Teléfono</span>
+<span class="info-value link">{{ paciente.telefono }}</span>
+</div>
+
+</div>
+
+}
+
+@if (paciente.email) {
+
+<div class="info-row clickable" (click)="enviarEmail()">
+
+<ion-icon name="mail-outline" class="info-icon"></ion-icon>
+
+<div>
+<span class="info-label">Email</span>
+<span class="info-value link">{{ paciente.email }}</span>
+</div>
+
+</div>
+
+}
+
+</div>
+
+</div>
+
+
+<!-- QUICK ACTIONS -->
+
+<div class="actions-grid animated-item">
+
+@if (!tratamientoActivo) {
+
+<button
+class="action-card primary"
+(click)="iniciarTratamiento($event)">
+<ion-icon name="play-outline"></ion-icon>
+<span>Iniciar Tratamiento</span>
+</button>
+
+}
+
+@if (tratamientoActivo) {
+
+<button
+class="action-card primary"
+(click)="nuevaSesion()">
+<ion-icon name="add-circle-outline"></ion-icon>
+<span>Nueva Sesión</span>
+</button>
+
+<button
+class="action-card danger"
+(click)="finalizarTratamiento()">
+<ion-icon name="flag-outline"></ion-icon>
+<span>Finalizar Tratamiento</span>
+</button>
+
+}
+
+<button
+class="action-card"
+(click)="editarPaciente()">
+<ion-icon name="create-outline"></ion-icon>
+<span>Editar</span>
+</button>
+
+<button
+class="action-card"
+(click)="cambiarTab('rutinas')">
+<ion-icon name="barbell-outline"></ion-icon>
+<span>Rutinas</span>
+</button>
+
+<button
+class="action-card"
+(click)="irADocumentos()">
+<ion-icon name="document-text-outline"></ion-icon>
+<span>Documentos</span>
+</button>
+
+</div>
+
+}
+
+
+<!-- TAB RUTINAS -->
+
+@if (tabActual === 'rutinas') {
+  <div class="actions-grid animated-item">
+
+  <button
+  class="action-card primary"
+  (click)="crearRutina()">
+
+  <ion-icon name="add-circle-outline"></ion-icon>
+  <span>Nueva Rutina</span>
+
+  </button>
+
+
+  <button
+  class="action-card"
+  (click)="seleccionarPlantilla()">
+
+  <ion-icon name="copy-outline"></ion-icon>
+  <span>Usar Plantilla</span>
+
+  </button>
+
+  </div>
+
+@if (rutinaActiva) {
+
+  <div (click)="editarRutina(rutinaActiva.id)">
+
+  <app-rutina-activa
+  [rutina]="rutinaActiva">
+  </app-rutina-activa>
+
+  </div>
+
+}
+
+@if (rutinasCompletadas.length > 0) {
+
+<div class="sessions-card animated-item">
+
+<h3 class="section-title">Rutinas Completadas</h3>
+
+@for (rutina of rutinasCompletadas; track rutina.id) {
+
+<div class="session-item">
+
+<div class="session-number rutina-icon">
+<ion-icon name="barbell-outline"></ion-icon>
+</div>
+
+<div class="session-info">
+
+<span class="session-date">
+{{ rutina.nombre }}
+</span>
+
+<span class="session-eva">
+{{ rutina.ejercicios.length }} ejercicios
+</span>
+
+<span class="session-obs">
+
+Completada:
+{{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
+
+</span>
+
+</div>
+
+</div>
+
+}
+
+</div>
+
+}
+
+}
+
+
+<!-- TAB SESIONES -->
+
+@if (tabActual === 'sesiones') {
+
+<div class="sessions-card animated-item">
+
+<h3 class="section-title">Historial de Sesiones</h3>
+
+@if (historialSesiones.length > 0) {
+
+@for (sesion of historialVisual; track sesion.id || $index) {
+
+<div class="session-item clickable">
+
+<div class="session-number">
+{{ sesion.sessionNumber }}
+</div>
+
+<div class="session-info">
+
+<span class="session-date">
+{{ formatearFecha(sesion.createdAt) }}
+</span>
+
+<span class="session-eva">
+EVA: {{ sesion.painScale ?? '-' }}/10
+</span>
+
+</div>
+
+</div>
+
+}
+
+}
+
+@else {
+
+<div class="empty-sessions">
+
+<ion-icon name="clipboard-outline"></ion-icon>
+
+<p>Sin sesiones registradas</p>
+
+@if (!tratamientoActivo) {
+
+<button
+class="empty-action"
+(click)="iniciarTratamiento($event)">
+Iniciar tratamiento
+</button>
+
+}
+
+@if (tratamientoActivo) {
+
+<button
+class="empty-action"
+(click)="nuevaSesion()">
+Agregar sesión
+</button>
+
+}
+
+</div>
+
+}
+
+</div>
+
+}
+
+}
+
+</div>
+
+</ion-content>

@@ -1,45 +1,37 @@
 import { Injectable } from '@angular/core';
-import {
-  RutinaEjercicios,
-  SerieEjercicio,
-  HistorialEjercicio,
-  CategoriaEjercicio
-} from '../models/interfaces';
+import { CategoriaEjercicio } from '../models/ejercicio.model';
+import { RutinaPaciente } from '../models/rutina-paciente.model';
 
 @Injectable({
   providedIn: 'root'
 })
-export class EjerciciosService {
-
-  private readonly RUTINAS_KEY = 'rutinas_ejercicios';
-  private readonly HISTORIAL_KEY = 'historial_ejercicios';
-
-  
+export class EjerciciosUtilsService {
 
   // ==================== WHATSAPP ====================
 
-  generarMensajeWhatsapp(rutina: RutinaEjercicios): string {
+  generarMensajeWhatsapp(rutina: RutinaPaciente): string {
+
     let msg = `*${rutina.nombre}*\n`;
-    msg += `Paciente: ${rutina.pacienteNombre || 'N/A'}\n`;
-    msg += `Fecha: ${new Date(rutina.fecha).toLocaleDateString('es-CL')}\n`;
-    if (rutina.descripcion?.trim()) {
-      msg += `Indicaciones generales: ${rutina.descripcion.trim()}\n`;
-    }
     msg += `━━━━━━━━━━━━━━━\n\n`;
 
-    (rutina.ejercicios || []).forEach(ej => {
-      msg += `*${ej.letra}) ${ej.ejercicio.nombre}*\n\n`;
+    (rutina.ejercicios || []).forEach((ej, index) => {
 
-      ej.series.forEach(s => {
-        const reps = s.repeticiones ?? '-';
-        msg += `  • Serie ${s.numero}: ${reps} reps\n`;
-      });
+      msg += `*${String.fromCharCode(65 + index)}) ${ej.nombre}*\n\n`;
+
+      for (let i = 1; i <= ej.series; i++) {
+
+        const reps = ej.repeticiones ?? '-';
+
+        msg += `  • Serie ${i}: ${reps} reps\n`;
+
+      }
 
       if (ej.notas?.trim()) {
         msg += `\n  Indicaciones: ${ej.notas.trim()}\n`;
       }
 
       msg += '\n';
+
     });
 
     msg += `━━━━━━━━━━━━━━━\n`;
@@ -48,8 +40,10 @@ export class EjerciciosService {
     return msg;
   }
 
-  enviarPorWhatsapp(rutina: RutinaEjercicios, telefono?: string): void {
+  enviarPorWhatsapp(rutina: RutinaPaciente, telefono?: string): void {
+
     const mensaje = this.generarMensajeWhatsapp(rutina);
+
     const encoded = encodeURIComponent(mensaje);
 
     const base = telefono
@@ -57,15 +51,13 @@ export class EjerciciosService {
       : `https://wa.me/?text=${encoded}`;
 
     window.open(base, '_blank');
+
   }
 
-  // ==================== UTILIDADES ====================
-
-  private generarId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
-  }
+  // ==================== CATEGORIAS ====================
 
   getCategorias(): { valor: CategoriaEjercicio; nombre: string; icono: string; color: string }[] {
+
     return [
       { valor: 'fuerza', nombre: 'Fuerza', icono: 'barbell-outline', color: '#e74c3c' },
       { valor: 'estiramiento', nombre: 'Estiramiento', icono: 'body-outline', color: '#3498db' },
@@ -75,11 +67,23 @@ export class EjerciciosService {
       { valor: 'funcional', nombre: 'Funcional', icono: 'fitness-outline', color: '#9b59b6' },
       { valor: 'rehabilitacion', nombre: 'Rehabilitación', icono: 'medkit-outline', color: '#1abc9c' }
     ];
+
   }
 
+  // ==================== VIDEO ====================
+
   getVideoThumbnail(videoUrl: string): string {
+
     if (!videoUrl) return '';
-    const match = videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    return match ? `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg` : '';
+
+    const match = videoUrl.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    );
+
+    return match
+      ? `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`
+      : '';
+
   }
+
 }

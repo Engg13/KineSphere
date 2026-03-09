@@ -1,0 +1,66 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Seleccionar ejercicio</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cerrar()">
+        Cerrar
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+
+  <ion-toolbar>
+    <ion-searchbar
+      placeholder="Buscar ejercicio"
+      [(ngModel)]="terminoBusqueda"
+      (ionInput)="filtrarEjercicios()">
+    </ion-searchbar>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- FILTRO CATEGORIAS -->
+
+  <div class="categorias">
+
+    <ion-chip
+      *ngFor="let cat of categorias"
+      (click)="filtrarPorCategoria(cat.valor)"
+      [color]="categoriaFiltro === cat.valor ? 'primary' : ''">
+
+      <ion-icon [name]="cat.icono"></ion-icon>
+      <ion-label>{{cat.nombre}}</ion-label>
+
+    </ion-chip>
+
+  </div>
+
+  <!-- LISTA EJERCICIOS -->
+
+  <ion-list>
+
+    <ion-item
+      *ngFor="let ej of ejerciciosFiltrados"
+      (click)="seleccionar(ej)"
+      button>
+
+      <ion-label>
+
+        <h2>{{ej.nombre}}</h2>
+
+        <p *ngIf="ej.musculoPrincipal">
+          {{ej.musculoPrincipal}}
+        </p>
+
+      </ion-label>
+
+      <ion-icon
+        name="add-circle-outline"
+        slot="end">
+      </ion-icon>
+
+    </ion-item>
+
+  </ion-list>
+
+</ion-content>

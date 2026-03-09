@@ -1,143 +1,231 @@
 rules_version = '2';
-service cloud.firestore {
+  service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function userDoc() {
+    return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+  }
+
+  function userExists() {
+    return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+  }
+
+  function hasProfile() {
+    return isSignedIn() && userExists();
+  }
+
+  function role() {
+    return userDoc().role;
+  }
+
+  function clinicId() {
+    return userDoc().clinicId;
+  }
+
+  function sameClinic(data) {
+    return data.clinicId == clinicId();
+  }
+
+  function isAdmin() {
+    return role() == 'admin';
+  }
+
+  function isSuperAdmin() {
+    return role() == 'superadmin';
+  }
+
+  function sameClinicPath(clinicIdDoc) {
+    return hasProfile() && clinicIdDoc == clinicId();
+  }
+
+  /* ================= CLINICS ================= */
+
+  match /clinics/{clinicIdDoc} {
+
+    allow read: if isSuperAdmin() ||
+                sameClinicPath(clinicIdDoc);
+
+    allow create, update, delete: if isSuperAdmin();
+
+  }
+
+  /* ================= USERS ================= */
+
+  match /users/{userId} {
+
+    allow read: if isSuperAdmin() || request.auth.uid == userId;
+
+    allow create: if isSuperAdmin();
+
+    allow update: if isSuperAdmin() || request.auth.uid == userId;
+
+    allow delete: if isSuperAdmin();
+
+  }
+
+  /* ================= PACIENTES ================= */
+
+  match /pacientes/{id} {
+
+    allow read: if hasProfile() && sameClinic(resource.data);
+
+    allow create: if hasProfile() &&
+                  sameClinic(request.resource.data) &&
+                  request.resource.data.professionalId == request.auth.uid;
+
+    allow update: if hasProfile() &&
+                  sameClinic(resource.data) &&
+                  (isAdmin() ||
+                  resource.data.professionalId == request.auth.uid);
+
+    allow delete: if hasProfile() &&
+                  sameClinic(resource.data) &&
+                  isAdmin();
+
+  }
+
+  /* ================= SESIONES ================= */
+
+  match /sesiones/{id} {
+
+    allow read: if hasProfile() && sameClinic(resource.data);
+
+    allow create: if hasProfile() &&
+                  sameClinic(request.resource.data);
+
+    allow update: if hasProfile() &&
+                  sameClinic(resource.data) &&
+                  (isAdmin() ||
+                  resource.data.professionalId == request.auth.uid);
+
+    allow delete: if hasProfile() &&
+                  sameClinic(resource.data) &&
+                  isAdmin();
+
+  }
+
+
+   /* ================= EJERCICIOS GLOBALES ================= */
+
+  match /ejercicios_globales/{id} {
+
+    allow read: if hasProfile();
+
+    allow create: if hasProfile();
+
+  }
+
+  /* ================= EJERCICIOS CLINICA ================= */
+
+  match /clinics/{clinicIdDoc}/ejercicios/{id} {
+
+    allow read: if sameClinicPath(clinicIdDoc);
+
+    allow create: if sameClinicPath(clinicIdDoc);
+
+    allow update: if sameClinicPath(clinicIdDoc);
+
+    allow delete: if sameClinicPath(clinicIdDoc) &&
+                  isAdmin();
+
+  }
+
+  /* ================= TEST TEMPLATES ================= */
+
+  match /testTemplates/{id} {
+
+    allow read: if hasProfile();
+
+    allow create, update, delete: if hasProfile() &&
+      request.resource.data.clinicId == clinicId();
+
     }
 
-    function requesterUserDoc() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    function requesterUserDocExists() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-
-    function requesterHasProfile() {
-      return isSignedIn() &&
-        requesterUserDocExists() &&
-        requesterUserDoc().keys().hasAll(['role']);
-    }
-
-    function isSuperAdmin() {
-      return requesterHasProfile() &&
-        requesterUserDoc().role == 'superadmin';
-    }
-
-    function isAdmin() {
-      return requesterHasProfile() &&
-        requesterUserDoc().role == 'admin';
-    }
-
-    function requesterClinicId() {
-      return requesterUserDoc().clinicId;
-    }
-
-    function belongsToSameClinic(data) {
-      return requesterHasProfile() &&
-        requesterUserDoc().keys().hasAny(['clinicId']) &&
-        data.clinicId == requesterClinicId();
-    }
-
-    function canReadClinicalDoc(data) {
-      return isSuperAdmin() || belongsToSameClinic(data);
-    }
-
-    function protectImmutableFields() {
-      return request.resource.data.clinicId == resource.data.clinicId &&
-        request.resource.data.professionalId == resource.data.professionalId &&
-        request.resource.data.createdAt == resource.data.createdAt;
-    }
-
-    function canEditClinicalDoc() {
-      return requesterHasProfile() &&
-        belongsToSameClinic(resource.data) &&
-        (
-          isAdmin() ||
-          (
-            resource.data.professionalId == request.auth.uid &&
-            protectImmutableFields()
-          )
-        );
-    }
-
-    function isValidClinicalCreate(data) {
-      return requesterHasProfile() &&
-        data.keys().hasAll(['clinicId','professionalId','createdAt','updatedAt']) &&
-        data.clinicId == requesterClinicId() &&
-        data.professionalId == request.auth.uid &&
-        data.createdAt is timestamp &&
-        data.updatedAt is timestamp;
-    }
-
-    function isActive(data) {
-      return !data.keys().hasAny(['isDeleted']) || data.isDeleted == false;
-    }
-
-    match /clinics/{clinicId} {
-      allow read: if isSuperAdmin() ||
-        (requesterHasProfile() && clinicId == requesterClinicId());
-
-      allow create, update, delete: if isSuperAdmin();
-    }
-
-
-
-    match /users/{userId} {
-
-      allow read: if isSuperAdmin() ||
-        request.auth.uid == userId;
-
-      allow create: if isSuperAdmin();
-
-      allow update: if isSuperAdmin() ||
-        request.auth.uid == userId;
-
-      allow delete: if isSuperAdmin();
-    }
-
-    match /pacientes/{id} {
-      allow read: if canReadClinicalDoc(resource.data) && isActive(resource.data);
-      allow create: if isValidClinicalCreate(request.resource.data);
-      allow update: if canEditClinicalDoc();
-      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
-    }
-
-    match /sesiones/{id} {
-      allow read: if canReadClinicalDoc(resource.data) && isActive(resource.data);
-      allow create: if isValidClinicalCreate(request.resource.data);
-      allow update: if canEditClinicalDoc();
-      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
-    }
-
-    match /rutinas/{id} {
-      allow read: if canReadClinicalDoc(resource.data) && isActive(resource.data);
-      allow create: if isValidClinicalCreate(request.resource.data);
-      allow update: if canEditClinicalDoc();
-      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
-    }
-
-    match /testTemplates/{id} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isSuperAdmin();
-    }
-
-
-    match /evoluciones/{id} {
-      allow read: if canReadClinicalDoc(resource.data) && isActive(resource.data);
-      allow create: if isValidClinicalCreate(request.resource.data);
-      allow update: if
-        canEditClinicalDoc() &&
-        request.resource.data.sessionNumber == resource.data.sessionNumber;
-      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
-    }
+    /* ================= TRATAMIENTOS ================= */
 
     match /tratamientos/{id} {
-      allow read: if canReadClinicalDoc(resource.data);
-      allow create: if isValidClinicalCreate(request.resource.data);
-      allow update: if canEditClinicalDoc();
-      allow delete: if isAdmin() && belongsToSameClinic(resource.data);
+
+      allow read: if hasProfile() &&
+                  resource.data.clinicId == clinicId();
+
+      allow create: if hasProfile() &&
+                    request.resource.data.clinicId == clinicId();
+
+      allow update: if hasProfile() &&
+                    resource.data.clinicId == clinicId();
+
+      allow delete: if hasProfile() &&
+                    resource.data.clinicId == clinicId() &&
+                    isAdmin();
     }
+
+
+    /* ================= EVOLUCIONES ================= */
+
+    match /evoluciones/{id} {
+
+      allow read: if hasProfile() &&
+                  resource.data.clinicId == clinicId();
+
+      allow create: if hasProfile() &&
+                    request.resource.data.clinicId == clinicId();
+
+      allow update: if hasProfile() &&
+                    resource.data.clinicId == clinicId();
+
+      allow delete: if hasProfile() &&
+                    resource.data.clinicId == clinicId() &&
+                    isAdmin();
+
+    }
+
+    /* ================= RUTINAS TEMPLATE ================= */
+
+    match /clinics/{clinicIdDoc}/rutinas_templates/{id} {
+
+      allow read: if sameClinicPath(clinicIdDoc);
+
+      allow create: if sameClinicPath(clinicIdDoc);
+
+      allow update: if sameClinicPath(clinicIdDoc);
+
+      allow delete: if sameClinicPath(clinicIdDoc) &&
+                    isAdmin();
+
+    }
+
+    /* ================= RUTINAS PACIENTE ================= */
+
+    match /clinics/{clinicIdDoc}/rutinas_paciente/{id} {
+
+      allow read: if sameClinicPath(clinicIdDoc);
+
+      allow create: if sameClinicPath(clinicIdDoc);
+
+      allow update: if sameClinicPath(clinicIdDoc);
+
+      allow delete: if sameClinicPath(clinicIdDoc) &&
+                    isAdmin();
+
+    }
+
+    /* ================= SESIONES RUTINA ================= */
+
+    match /clinics/{clinicIdDoc}/rutinas_paciente/{rutinaId}/sesiones/{id} {
+
+      allow read: if sameClinicPath(clinicIdDoc);
+
+      allow create: if sameClinicPath(clinicIdDoc);
+
+      allow update: if sameClinicPath(clinicIdDoc);
+
+      allow delete: if sameClinicPath(clinicIdDoc) &&
+                    isAdmin();
+
+    }
+   }
   }
-}

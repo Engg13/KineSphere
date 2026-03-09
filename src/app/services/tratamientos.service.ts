@@ -163,22 +163,26 @@ export class TratamientosService extends BaseClinicService {
   }
 
   async listActivos(): Promise<TratamientoDocument[]> {
-    const clinicId = this.clinicId;
+
+    console.log("clinicId", this.clinicId);
+    console.log("professionalId", this.professionalId);
 
     const q = query(
-        this.getCollection(),
-        where('clinicId', '==', clinicId),
-        where('estado', '==', 'active'),
-        orderBy('createdAt', 'desc')
+      this.getCollection(),
+      where('clinicId', '==', this.clinicId),
+      where('professionalId', '==', this.professionalId),
+      where('estado', '==', 'active')
     );
 
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(docItem => ({
-        id: docItem.id,
-        ...(docItem.data() as Omit<TratamientoDocument, 'id'>)
+    console.log("TRATAMIENTOS SNAPSHOT", snapshot.size);
+
+    return snapshot.docs.map(d => ({
+      id: d.id,
+      ...(d.data() as any)
     }));
-    }
+  }
 
     async update(
       id: string,

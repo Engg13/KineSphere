@@ -1,0 +1,138 @@
+<div class="rutina-card">
+
+  <!-- HEADER -->
+
+  <div class="rutina-header">
+
+    <!-- NOMBRE -->
+
+    <h3 *ngIf="!editando">
+      {{ rutina?.nombre || 'Rutina activa' }}
+    </h3>
+
+    <ion-input
+      *ngIf="editando"
+      [(ngModel)]="rutina.nombre"
+      placeholder="Nombre de la rutina">
+    </ion-input>
+
+    <div class="rutina-actions">
+
+      <!-- EDITAR -->
+
+      <ion-button
+        size="small"
+        fill="outline"
+        *ngIf="!editando"
+        (click)="activarEdicion()">
+
+        Editar
+
+      </ion-button>
+
+      <!-- GUARDAR -->
+
+      <ion-button
+        size="small"
+        color="success"
+        *ngIf="editando"
+        (click)="guardarCambios()">
+
+        Guardar
+
+      </ion-button>
+
+      <!-- AGREGAR EJERCICIO -->
+
+      <ion-button
+        size="small"
+        fill="outline"
+        (click)="abrirSelectorEjercicios()">
+
+        <ion-icon name="add" slot="start"></ion-icon>
+        Agregar ejercicio
+
+      </ion-button>
+
+    </div>
+
+  </div>
+
+
+  <!-- LISTA EJERCICIOS -->
+
+  <ion-list>
+
+    <ion-reorder-group
+      [disabled]="false"
+      (ionItemReorder)="reordenarEjercicios($event)">
+
+      @for (ej of rutina?.ejercicios; track ej.ejercicioId) {
+
+        <ion-item>
+
+          <ion-reorder slot="start"></ion-reorder>
+
+          <ion-label>
+
+            <h2>{{ ej.nombre }}</h2>
+
+            <!-- MODO LECTURA -->
+
+            <p *ngIf="!editando">
+              {{ ej.series }} series • {{ ej.repeticiones }} reps
+            </p>
+
+            <!-- MODO EDICIÓN -->
+
+            <ion-grid *ngIf="editando">
+
+              <ion-row>
+
+                <ion-col size="6">
+
+                  <ion-input
+                    type="number"
+                    label="Series"
+                    [(ngModel)]="ej.series">
+                  </ion-input>
+
+                </ion-col>
+
+                <ion-col size="6">
+
+                  <ion-input
+                    type="number"
+                    label="Reps"
+                    [(ngModel)]="ej.repeticiones">
+                  </ion-input>
+
+                </ion-col>
+
+              </ion-row>
+
+            </ion-grid>
+
+          </ion-label>
+
+          <!-- ELIMINAR -->
+
+          <ion-button
+            fill="clear"
+            color="danger"
+            slot="end"
+            (click)="eliminarEjercicio(ej.ejercicioId)">
+
+            <ion-icon name="trash-outline"></ion-icon>
+
+          </ion-button>
+
+        </ion-item>
+
+      }
+
+    </ion-reorder-group>
+
+  </ion-list>
+
+</div>

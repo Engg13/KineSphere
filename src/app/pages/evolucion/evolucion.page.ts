@@ -7,11 +7,11 @@ import { Subscription, firstValueFrom } from 'rxjs';
 import { SleepQualityComponent } from '../../components/sleep-quality/sleep-quality.component';
 import { ArticulacionRom, RomEntry, TipoEvolucion } from '../../models/evolucion.model';
 import { TestTemplate } from '../../models/test-template.model';
-import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
 import { FlujoClinicoService} from '../../services/flujoclinico.service';
 import { PacientesService} from '../../services/pacientes.service';
-import { EjerciciosPage } from '../ejercicios/ejercicios.page';
+import { RutinasPacienteService } from '../../services/rutinas-paciente.service';
+import { RutinaPaciente } from '../../models/rutina-paciente.model';
 import { Chart } from 'chart.js/auto';
 import { ObjetivoClinico } from '../../models/evolucion.model';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -46,11 +46,11 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private modalCtrl = inject(ModalController);
   private toastCtrl = inject(ToastController);
   private pacientesService = inject(PacientesService);
-  private rutinasService = inject(RutinasFirestoreService);
   private testTemplatesService = inject(TestTemplatesFirestoreService);
   private flujoClinicoService = inject(FlujoClinicoService);
   private evolucionesService = inject(EvolucionesService);
   private tratamientosService = inject(TratamientosService);
+  private rutinasPacienteService: RutinasPacienteService;
   private usarDatosDemo = true;
    // 🔥 poner en false en producción
 
@@ -332,17 +332,25 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   cargarRutinasDisponibles(): void {
+
     if (!this.patientId) return;
 
     this.rutinasSub?.unsubscribe();
 
-    this.rutinasSub = this.rutinasService.getRutinasPorPacienteRealtime(this.patientId).subscribe((rutinas) => {
-      this.rutinasDisponibles = rutinas.filter((r) => r.estado === 'active');
-    });
+    this.rutinasSub = this.rutinasPacienteService
+      .getRutinasPaciente(this.patientId)
+      .subscribe((rutinas: RutinaPaciente[]) => {
+
+        this.rutinasDisponibles = rutinas.filter(r => r.activa);
+
+      });
+
   }
 
   async cargarTestsDisponibles(): Promise<void> {
     this.testsDisponibles = await this.testTemplatesService.getTests();
+
+    console.log('TESTS DISPONIBLES:', this.testsDisponibles);
   }
 
   async onTipoEvolucionChange(event: Event): Promise<void> {
@@ -693,25 +701,23 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   async irACrearRutina(): Promise<void> {
-    const modal = await this.modalCtrl.create({
-      component: EjerciciosPage,
-      componentProps: {
-        pacienteId: this.patientId,
-        pacienteNombre: this.pacienteNombre,
-        openedAsModal: true
-      }
-    });
 
-    await modal.present();
+  if (!this.patientId) return;
 
-    const { data } = await modal.onDidDismiss<{ rutinaCreada?: boolean }>();
+  await this.rutinasPacienteService.crearRutinaPaciente({
+    pacienteId: this.patientId,
+    nombre: 'Rutina de ejercicios',
+    descripcion: '',
+    ejercicios: [],
+    activa: true
+  });
 
-    if (data?.rutinaCreada) {
-      this.cargarRutinasDisponibles();
-      this.actualizarModulosColapsablesAbiertos();
-      await this.mostrarToast('Rutinas actualizadas.', 'success');
-    }
-  }
+  this.cargarRutinasDisponibles();
+  this.actualizarModulosColapsablesAbiertos();
+
+  await this.mostrarToast('Rutina creada.', 'success');
+
+}
 
   volver(): void {
     this.navCtrl.navigateBack('/paciente-detalle', {

@@ -495,3 +495,24 @@
   background: #ffe5e5;
   color: #c62828;
 }
+
+.tabs-bar {
+display:flex;
+justify-content:space-around;
+background:white;
+border-bottom:1px solid #eee;
+}
+
+.tabs-bar button {
+flex:1;
+padding:14px;
+border:none;
+background:none;
+font-weight:500;
+color:#666;
+}
+
+.tabs-bar button.active {
+color:#3880ff;
+border-bottom:3px solid #3880ff;
+}

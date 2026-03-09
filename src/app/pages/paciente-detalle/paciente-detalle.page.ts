@@ -1,45 +1,51 @@
 import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AlertController, NavController, IonicModule } from '@ionic/angular';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PacientesService } from '../../services/pacientes.service';
-import { RutinaEjercicios } from '../../models/interfaces';
-import { RutinasFirestoreService } from '../../services/rutinas-firestore.service';
 import { EvolucionesService } from '../../services/evoluciones.service';
 import { Subscription } from 'rxjs';
 import { FlujoClinicoService } from 'src/app/services/flujoclinico.service';
+import { RutinaPaciente } from '../../models/rutina-paciente.model';
+import { RutinasPacienteService } from '../../services/rutinas-paciente.service';
+import { RutinaActivaComponent } from '../../components/rutina-activa/rutina-activa.component';
 
 @Component({
   selector: 'app-paciente-detalle',
   templateUrl: './paciente-detalle.page.html',
   styleUrls: ['./paciente-detalle.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule]
+  imports: [IonicModule, CommonModule, RutinaActivaComponent]
 })
 export class PacienteDetallePage implements OnDestroy {
 
   paciente: any = null;
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
-  rutinasCompletadas: RutinaEjercicios[] = [];
+  rutinasCompletadas: RutinaPaciente[] = [];
   sesionesExpandidas: Set<string | number> = new Set();
   pacienteId: string = '';
   fechaActual = new Date();
   esAdmin: boolean = false;
   historialVisual: any[] = [];
   tratamientoActivo: any | null = null;
+  rutinaActiva: RutinaPaciente | null = null;
+  tabActual: 'info' | 'sesiones' | 'rutinas' = 'info';
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
+  private rutinaActivaSub?: Subscription;
+  
   
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
     private pacientesService: PacientesService,
-    private rutinasService: RutinasFirestoreService,
     private evolucionesService: EvolucionesService,
     private alertCtrl: AlertController,
-    private flujoClinicoService: FlujoClinicoService
+    private flujoClinicoService: FlujoClinicoService,
+    private rutinasPacienteService: RutinasPacienteService,
+    private router: Router
   ) {}
 
   // ==============================
@@ -91,6 +97,11 @@ export class PacienteDetallePage implements OnDestroy {
       this.evolucionesSub.unsubscribe();
       this.evolucionesSub = undefined;
     }
+
+    if (this.rutinaActivaSub) {
+      this.rutinaActivaSub.unsubscribe();
+      this.rutinaActivaSub = undefined;
+    }
   }
 
   // ==============================
@@ -114,6 +125,7 @@ export class PacienteDetallePage implements OnDestroy {
 
       this.cargarHistorialSesiones(pacienteIdReal);
       this.cargarRutinasCompletadas(pacienteIdReal);
+      this.cargarRutinaActiva(pacienteIdReal);
 
     } else {
       this.paciente = null;
@@ -136,15 +148,27 @@ export class PacienteDetallePage implements OnDestroy {
       this.rutinasSub.unsubscribe();
     }
 
-    this.rutinasSub = this.rutinasService
-      .getRutinasPorPacienteRealtime(pacienteId)
+    this.rutinasSub = this.rutinasPacienteService
+      .getRutinasPaciente(pacienteId)
       .subscribe({
-        next: (rutinas: RutinaEjercicios[]) => {
+        next: (rutinas: RutinaPaciente[]) => {
+
           this.rutinasCompletadas = rutinas
-            .filter(r => r.estado === 'completed')
-            .sort((a, b) =>
-              (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
-            );
+            .filter(r => !r.activa)
+            .sort((a, b) => {
+
+              const fechaA = a.createdAt instanceof Date
+                ? a.createdAt.getTime()
+                : a.createdAt?.toDate?.().getTime() || 0;
+
+              const fechaB = b.createdAt instanceof Date
+                ? b.createdAt.getTime()
+                : b.createdAt?.toDate?.().getTime() || 0;
+
+              return fechaB - fechaA;
+
+            });
+
         },
         error: (error) => {
           console.error('Error cargando rutinas:', error);
@@ -307,7 +331,7 @@ export class PacienteDetallePage implements OnDestroy {
 
     if (!this.tratamientoActivo) return;
 
-    this.navCtrl.navigateForward('/evolucion', {
+    this.navCtrl.navigateRoot('/evolucion', {
       queryParams: {
         patientId: this.pacienteId,
         treatmentId: this.tratamientoActivo.id,
@@ -320,16 +344,6 @@ export class PacienteDetallePage implements OnDestroy {
     this.navCtrl.navigateBack('/pacientes-lista');
   }
 
-  irAEjercicios() {
-    if (!this.paciente) return;
-
-    this.navCtrl.navigateRoot('/ejercicios', {
-      queryParams: {
-        pacienteId: this.paciente.id,
-        pacienteNombre: this.paciente.nombre
-      }
-    });
-  }
 
   irADocumentos() {
     if (!this.paciente) return;
@@ -341,6 +355,28 @@ export class PacienteDetallePage implements OnDestroy {
       }
     });
   }
+
+  async crearRutina() {
+
+  if (!this.pacienteId) return;
+
+  const docRef = await this.rutinasPacienteService.crearRutinaPaciente({
+
+    pacienteId: this.pacienteId,
+    nombre: 'Nueva rutina',
+    descripcion: '',
+    ejercicios: [],
+    activa: true
+
+  });
+
+  const rutinaId = docRef.id;
+
+  this.navCtrl.navigateRoot(
+    `/rutina-paciente-editor/${rutinaId}`
+  );
+
+}
 
   editarPaciente() {
     if (!this.paciente) return;
@@ -430,6 +466,63 @@ export class PacienteDetallePage implements OnDestroy {
       console.error('Error eliminando sesión', error);
 
     }
+
+  }
+
+  private cargarRutinaActiva(pacienteId: string) {
+
+    if (this.rutinaActivaSub) {
+      this.rutinaActivaSub.unsubscribe();
+    }
+
+    this.rutinaActivaSub = this.rutinasPacienteService
+      .getRutinaActivaPaciente(pacienteId)
+      .subscribe({
+        next: rutina => {
+          this.rutinaActiva = rutina;
+        },
+        error: err => {
+          console.error('Error cargando rutina activa', err);
+          this.rutinaActiva = null;
+        }
+      });
+
+  }
+
+  cambiarTab(tab: 'info' | 'sesiones' | 'rutinas') {
+      this.tabActual = tab;
+  }
+
+  seleccionarPlantilla() {
+
+    this.router.navigate([
+      '/rutinas-templates'
+    ], {
+      queryParams: {
+        pacienteId: this.paciente.id
+      }
+    });
+
+  }
+
+  usarPlantilla() {
+
+    this.navCtrl.navigateRoot(
+      '/asignar-rutina',
+      {
+        queryParams: {
+          pacienteId: this.pacienteId
+        }
+      }
+    );
+
+  }
+
+  editarRutina(rutinaId: string) {
+
+  this.navCtrl.navigateRoot(
+    `/rutina-paciente-editor/${rutinaId}`
+  );
 
   }
 }

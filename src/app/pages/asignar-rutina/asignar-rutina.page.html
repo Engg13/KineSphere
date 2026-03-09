@@ -1,0 +1,63 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Asignar Rutina</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <ion-list>
+
+    <ion-list-header>
+      Plantillas disponibles
+    </ion-list-header>
+
+    <ion-item
+      *ngFor="let template of templates"
+      (click)="seleccionarTemplate(template)"
+      button>
+
+      <ion-label>
+
+        <h2>{{ template.nombre }}</h2>
+
+        <p>
+          {{ template.descripcion }}
+        </p>
+
+        <p>
+          {{ template.ejercicios.length }} ejercicios
+        </p>
+
+      </ion-label>
+
+      <ion-icon
+        *ngIf="templateSeleccionado?.id === template.id"
+        name="checkmark-circle"
+        color="success"
+        slot="end">
+      </ion-icon>
+
+    </ion-item>
+
+  </ion-list>
+
+</ion-content>
+
+<ion-footer>
+
+  <ion-toolbar>
+
+    <ion-button
+      expand="block"
+      color="primary"
+      [disabled]="!templateSeleccionado"
+      (click)="asignar()">
+
+      Asignar rutina
+
+    </ion-button>
+
+  </ion-toolbar>
+
+</ion-footer>

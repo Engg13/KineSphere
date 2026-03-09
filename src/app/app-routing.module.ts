@@ -30,11 +30,6 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'ejercicios',
-    loadChildren: () => import('./pages/ejercicios/ejercicios.module').then(m => m.EjerciciosPageModule),
-    canActivate: [AuthGuard]  
-  },
-  {
     path: 'evaluacion-final',
     loadChildren: () => import('./pages/evaluacion-final/evaluacion-final.module').then(m => m.EvaluacionFinalPageModule),
     canActivate: [AuthGuard]  
@@ -64,6 +59,14 @@ const routes: Routes = [
     loadChildren: () => import('./pages/config-test/config-test.module').then(m => m.ConfigTestPageModule),
     canActivate: [AuthGuard]
   },
+
+  {
+    path: 'rutina-paciente-editor/:id',
+    loadComponent: () =>
+      import('./pages/rutina-paciente-editor/rutina-paciente-editor.page')
+        .then(m => m.RutinaPacienteEditorPage)
+  },
+  
   {
     path: 'tests-config',
     loadChildren: () => import('./pages/tests-config/tests-config.module').then(m => m.TestsConfigPageModule),
@@ -80,6 +83,14 @@ const routes: Routes = [
     loadComponent: () =>
       import('./pages/rutina-publica/rutina-publica.page')
         .then(m => m.RutinaPublicaPage)
+  },
+
+  {
+    path: 'rutina-template-editor',
+    loadComponent: () =>
+      import('./pages/rutina-template-editor/rutina-template-editor.page')
+        .then(m => m.RutinaTemplateEditorPage),
+    canActivate: [AuthGuard]
   },
   
   {
