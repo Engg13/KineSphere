@@ -1,109 +1,277 @@
-ion-content {
-  --background: #f5f7fb;
-  --padding-bottom: 120px;
-}
+/* ===== Rutina Template Editor - Clinical Design ===== */
 
-/* HEADER */
+:host {
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --teal: #0d9488;
+  --teal-dark: #0f766e;
+  --teal-light: #f0fdfa;
+  --danger: #ef4444;
+}
 
 ion-toolbar {
-  --background: linear-gradient(135deg, #3d754e, #32bb82);
-  --color: white;
+  --background: linear-gradient(135deg, #0d9488, #0f766e);
+  --color: #ffffff;
+  --border-width: 0;
 }
 
-/* FORM */
-
-ion-item {
-  --background: white;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  --padding-start: 12px;
+ion-content {
+  --background: var(--bg);
 }
 
-/* BUSCADOR */
-
-ion-input {
-  font-size: 14px;
+.editor-container {
+  padding: 16px;
+  padding-bottom: 100px;
 }
 
-/* CATEGORIAS */
+/* ===== SECTION CARD ===== */
 
-ion-chip {
-  margin: 6px 6px 0 0;
-  text-transform: capitalize;
-  font-size: 13px;
+.section-card {
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-/* LISTAS */
-
-ion-list {
-  background: transparent;
-  margin-top: 20px;
-}
-
-ion-list-header {
-  font-weight: 600;
-  font-size: 14px;
-  color: #374151;
-}
-
-/* EJERCICIOS */
-
-ion-item h2 {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-ion-item p {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* BOTON AGREGAR */
-
-ion-button[fill="outline"] {
-  --border-radius: 8px;
-  font-size: 13px;
-}
-
-/* RUTINA */
-
-.rutina-item {
-  background: white;
-  border-radius: 10px;
-  margin-bottom: 8px;
-}
-
-/* BOTON ELIMINAR */
-
-ion-button[color="danger"] {
-  --color: #ef4444;
-}
-
-/* BOTON GUARDAR */
-
-ion-button[expand="block"] {
-  margin-top: 25px;
-  --border-radius: 12px;
-  font-weight: 600;
-}
-
-.video-container {
-
-  position: relative;
-  padding-bottom: 56.25%;
-  height: 0;
-
-}
-
-.video-container iframe {
-
-  position: absolute;
-  top: 0;
-  left: 0;
-
+.rutina-name-input {
   width: 100%;
-  height: 100%;
+  border: none;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 4px 0;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
 
+  &::placeholder {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+}
+
+.rutina-desc-input {
+  width: 100%;
+  border: none;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  outline: none;
+  background: transparent;
+  resize: none;
+  font-family: inherit;
+  margin-top: 4px;
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+/* ===== SECTION HEADER ===== */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px 0 10px;
+  padding: 0 2px;
+}
+
+.section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--teal);
+  background: var(--teal-light);
+  padding: 2px 10px;
   border-radius: 10px;
+}
 
+/* ===== EJERCICIOS STACK ===== */
+
+.ejercicios-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ejercicio-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  transition: box-shadow 0.15s ease;
+}
+
+.ej-order {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ej-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ej-name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.ej-params {
+  display: flex;
+  gap: 10px;
+}
+
+.param-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  input {
+    width: 48px;
+    height: 30px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #f8fafc;
+    outline: none;
+    font-family: inherit;
+    -moz-appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+
+    &:focus {
+      border-color: var(--teal);
+      background: #ffffff;
+    }
+  }
+}
+
+.ej-delete {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 1.1rem;
+    color: #d1d5db;
+    transition: color 0.15s;
+  }
+
+  &:active ion-icon {
+    color: var(--danger);
+  }
+}
+
+/* ===== ADD EXERCISE BUTTON ===== */
+
+.add-exercise-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  background: var(--teal-light);
+  border: 2px dashed #99f6e4;
+  border-radius: 12px;
+  color: var(--teal);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+
+  ion-icon {
+    font-size: 1.2rem;
+  }
+
+  &:active {
+    transform: scale(0.98);
+    background: #ccfbf1;
+  }
+}
+
+/* ===== SAVE BUTTON ===== */
+
+.save-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-top: 24px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/* ===== VIDEO WRAPPER ===== */
+
+.video-wrapper {
+  padding: 16px;
+
+  iframe {
+    border-radius: 12px;
+  }
 }

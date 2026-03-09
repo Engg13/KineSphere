@@ -1,7 +1,323 @@
-.rutina-icon {
-  background: #4caf50;
+/* ===== Rutina Activa - Clinical Card Component ===== */
+
+:host {
+  display: block;
+  --teal: #0d9488;
+  --teal-dark: #0f766e;
+  --teal-light: #f0fdfa;
+  --border: #e5e7eb;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --danger: #ef4444;
 }
 
-.small {
-  font-size: 12px;
+.rutina-wrapper {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  margin: 0 16px 16px;
+  overflow: hidden;
+}
+
+/* ===== TOP HEADER ===== */
+
+.rutina-top {
+  padding: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.rutina-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rutina-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 1.2rem;
+    color: #ffffff;
+  }
+}
+
+.rutina-title-info {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+
+  .ej-count {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+}
+
+.name-edit-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  outline: none;
+  font-family: inherit;
+  background: #f8fafc;
+  margin-bottom: 2px;
+
+  &:focus {
+    border-color: var(--teal);
+    background: #ffffff;
+  }
+}
+
+/* ===== TOOLBAR ===== */
+
+.rutina-toolbar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+
+  ion-icon {
+    font-size: 0.9rem;
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &.save {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #ffffff;
+  }
+
+  &.cancel {
+    color: var(--text-muted);
+  }
+}
+
+/* ===== EJERCICIO LIST ===== */
+
+.ejercicio-list {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+ion-reorder-group {
+  padding: 0;
+}
+
+.ejercicio-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  background: #ffffff;
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.drag-handle {
+  flex-shrink: 0;
+  cursor: grab;
+
+  ion-icon {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+  }
+}
+
+.ej-order-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--teal-light);
+  color: var(--teal);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ej-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ej-name {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+/* ===== STATS (READ MODE) ===== */
+
+.ej-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.stat {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stat-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #d1d5db;
+}
+
+/* ===== EDIT PARAMS ===== */
+
+.ej-edit-params {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.param-compact {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  input {
+    width: 44px;
+    height: 28px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #f8fafc;
+    outline: none;
+    font-family: inherit;
+    -moz-appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+
+    &:focus {
+      border-color: var(--teal);
+      background: #ffffff;
+    }
+  }
+}
+
+/* ===== EXERCISE ACTIONS ===== */
+
+.ej-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ej-action-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+
+  ion-icon {
+    font-size: 1rem;
+    color: var(--text-muted);
+  }
+
+  &:active {
+    background: #f1f5f9;
+  }
+
+  &.danger:active ion-icon {
+    color: var(--danger);
+  }
+}
+
+/* ===== ADD BUTTON ===== */
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: calc(100% - 32px);
+  margin: 12px 16px 16px;
+  padding: 10px;
+  background: var(--teal-light);
+  border: 1.5px dashed #99f6e4;
+  border-radius: 10px;
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+
+  ion-icon {
+    font-size: 1rem;
+  }
+
+  &:active {
+    transform: scale(0.98);
+    background: #ccfbf1;
+  }
 }
