@@ -1,0 +1,73 @@
+/* ===== Rutina Editor Page ===== */
+
+:host {
+  --bg: #f8fafc;
+  --teal: #0d9488;
+  --teal-dark: #0f766e;
+  --text-muted: #94a3b8;
+}
+
+ion-toolbar {
+  --background: linear-gradient(135deg, #0d9488, #0f766e);
+  --color: #ffffff;
+  --border-width: 0;
+}
+
+ion-content {
+  --background: var(--bg);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 16px;
+  gap: 12px;
+
+  p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.editor-container {
+  padding: 16px;
+  padding-bottom: 100px;
+}
+
+/* ===== SAVE BUTTON ===== */
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px;
+  margin-top: 24px;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+  min-height: 52px;
+
+  ion-spinner {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}

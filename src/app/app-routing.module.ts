@@ -114,6 +114,15 @@ const routes: Routes = [
   },
 
   {
+    path: 'rutina-editor',
+    loadComponent: () =>
+      import('./pages/rutina-editor/rutina-editor.page')
+        .then(m => m.RutinaEditorPage),
+    canActivate: [AuthGuard]
+  },
+
+  // Legacy routes kept for backward compatibility
+  {
     path: 'rutina-template-editor',
     loadComponent: () =>
       import('./pages/rutina-template-editor/rutina-template-editor.page')

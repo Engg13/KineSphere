@@ -1,0 +1,338 @@
+/* ===== Rutina Builder - Physitrack-style Clinical UI ===== */
+
+:host {
+  display: block;
+  --teal: #0d9488;
+  --teal-dark: #0f766e;
+  --teal-light: #f0fdfa;
+  --teal-border: #ccfbf1;
+  --border: #e5e7eb;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --danger: #ef4444;
+  --card-bg: #ffffff;
+}
+
+/* ===== HEADER (NAME + DESC) ===== */
+
+.builder-header {
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 8px;
+}
+
+.rutina-name-input {
+  width: 100%;
+  border: none;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 4px 0;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+
+  &::placeholder {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+}
+
+.rutina-desc-input {
+  width: 100%;
+  border: none;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  outline: none;
+  background: transparent;
+  resize: none;
+  font-family: inherit;
+  margin-top: 4px;
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+/* ===== SECTION HEADER ===== */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0 8px;
+  padding: 0 2px;
+}
+
+.section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--teal);
+  background: var(--teal-light);
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+/* ===== EJERCICIO LIST ===== */
+
+.ejercicio-list {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+ion-reorder-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ===== EJERCICIO CARD ===== */
+
+.ejercicio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: box-shadow 0.15s ease;
+}
+
+.drag-handle {
+  flex-shrink: 0;
+  cursor: grab;
+  padding-top: 2px;
+
+  ion-icon {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+  }
+}
+
+.ej-order-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ===== CONTENT ===== */
+
+.ej-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ej-name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+/* ===== PARAMS ROW ===== */
+
+.ej-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.param-compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  input {
+    width: 44px;
+    height: 28px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #f8fafc;
+    outline: none;
+    font-family: inherit;
+    -moz-appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+
+    &:focus {
+      border-color: var(--teal);
+      background: #ffffff;
+    }
+
+    &::placeholder {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+  }
+}
+
+/* ===== NOTES ===== */
+
+.ej-notes {
+  margin-top: 6px;
+}
+
+.notes-input {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.15s;
+
+  &::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  &:focus {
+    border-color: var(--border);
+    background: #f8fafc;
+  }
+}
+
+/* ===== ACTIONS ===== */
+
+.ej-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.ej-action-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+
+  ion-icon {
+    font-size: 1rem;
+    color: var(--text-muted);
+  }
+
+  &:active {
+    background: #f1f5f9;
+  }
+
+  &.danger:active ion-icon {
+    color: var(--danger);
+  }
+}
+
+/* ===== EMPTY STATE ===== */
+
+.empty-exercises {
+  text-align: center;
+  padding: 32px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  ion-icon {
+    font-size: 2rem;
+    color: #d1d5db;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 4px;
+  }
+
+  span {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+}
+
+/* ===== ADD EXERCISE BUTTON ===== */
+
+.add-exercise-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  background: var(--teal-light);
+  border: 2px dashed var(--teal-border);
+  border-radius: 12px;
+  color: var(--teal);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+
+  ion-icon {
+    font-size: 1.2rem;
+  }
+
+  &:active {
+    transform: scale(0.98);
+    background: #ccfbf1;
+  }
+}
+
+/* ===== VIDEO WRAPPER ===== */
+
+.video-wrapper {
+  padding: 16px;
+
+  iframe {
+    border-radius: 12px;
+  }
+}

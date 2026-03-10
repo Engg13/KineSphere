@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
-import { RutinasTemplatesService } from '../../services/rutinas-templates.service';
-import { RutinasPacienteService } from '../../services/rutinas-paciente.service';
-import { RutinaTemplate } from '../../models/rutina-template.model';
+import { RutinasService } from '../../services/rutinas.service';
+import { Rutina } from '../../models/rutina.model';
 import { ActivatedRoute } from '@angular/router';
 import { NavController } from '@ionic/angular';
 
@@ -12,19 +11,18 @@ import { NavController } from '@ionic/angular';
   templateUrl: './asignar-rutina.page.html',
   styleUrls: ['./asignar-rutina.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule] 
+  imports: [CommonModule, IonicModule]
 })
 export class AsignarRutinaPage {
 
-  templates: RutinaTemplate[] = [];
+  templates: Rutina[] = [];
 
   pacienteId: string = '';
 
-  templateSeleccionado?: RutinaTemplate;
+  templateSeleccionado?: Rutina;
 
   constructor(
-    private templatesService: RutinasTemplatesService,
-    private rutinasPacienteService: RutinasPacienteService,
+    private rutinasService: RutinasService,
     private route: ActivatedRoute,
     private navCtrl: NavController
   ) {
@@ -35,13 +33,13 @@ export class AsignarRutinaPage {
 
   cargarTemplates() {
 
-    this.templatesService.getTemplates().subscribe(data => {
+    this.rutinasService.getTemplates().subscribe(data => {
       this.templates = data;
     });
 
-      }
+  }
 
-  seleccionarTemplate(template: RutinaTemplate) {
+  seleccionarTemplate(template: Rutina) {
     this.templateSeleccionado = template;
   }
 
@@ -49,7 +47,7 @@ export class AsignarRutinaPage {
 
     if (!this.templateSeleccionado || !this.pacienteId) return;
 
-    await this.rutinasPacienteService.asignarTemplateAPaciente(
+    await this.rutinasService.asignarTemplateAPaciente(
       this.pacienteId,
       this.templateSeleccionado
     );

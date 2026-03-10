@@ -1,0 +1,185 @@
+<!-- NOMBRE Y DESCRIPCION -->
+
+<div class="builder-header" *ngIf="mostrarNombre || mostrarDescripcion">
+
+  <input
+    *ngIf="mostrarNombre"
+    class="rutina-name-input"
+    type="text"
+    placeholder="Nombre de la rutina"
+    [(ngModel)]="rutina.nombre"
+    (ngModelChange)="onFieldChange()" />
+
+  <textarea
+    *ngIf="mostrarDescripcion"
+    class="rutina-desc-input"
+    placeholder="Descripcion (opcional)"
+    rows="2"
+    [(ngModel)]="rutina.descripcion"
+    (ngModelChange)="onFieldChange()">
+  </textarea>
+
+</div>
+
+<!-- EJERCICIOS HEADER -->
+
+<div class="section-header" *ngIf="rutina.ejercicios?.length">
+  <span class="section-label">Ejercicios</span>
+  <span class="section-count">{{ rutina.ejercicios.length }}</span>
+</div>
+
+<!-- LISTA DE EJERCICIOS -->
+
+<ion-list class="ejercicio-list" *ngIf="rutina.ejercicios?.length">
+
+  <ion-reorder-group
+    [disabled]="false"
+    (ionItemReorder)="reordenar($event)">
+
+    @for (ej of rutina.ejercicios; track ej.ejercicioId + '_' + $index; let i = $index) {
+
+      <div class="ejercicio-card">
+
+        <!-- DRAG HANDLE -->
+        <ion-reorder class="drag-handle">
+          <ion-icon name="menu-outline"></ion-icon>
+        </ion-reorder>
+
+        <!-- ORDER NUMBER -->
+        <div class="ej-order-num">{{ ej.orden }}</div>
+
+        <!-- CONTENT -->
+        <div class="ej-content">
+
+          <span class="ej-name">{{ ej.nombre }}</span>
+
+          <!-- PARAMS ROW -->
+          <div class="ej-params">
+
+            <div class="param-compact">
+              <label>Series</label>
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="ej.series"
+                (ngModelChange)="onFieldChange()" />
+            </div>
+
+            <div class="param-compact">
+              <label>Reps</label>
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="ej.repeticiones"
+                (ngModelChange)="onFieldChange()" />
+            </div>
+
+            <div class="param-compact">
+              <label>Tiempo</label>
+              <input
+                type="number"
+                min="0"
+                placeholder="seg"
+                [(ngModel)]="ej.tiempo"
+                (ngModelChange)="onFieldChange()" />
+            </div>
+
+            <div class="param-compact">
+              <label>Carga</label>
+              <input
+                type="number"
+                min="0"
+                placeholder="kg"
+                [(ngModel)]="ej.carga"
+                (ngModelChange)="onFieldChange()" />
+            </div>
+
+          </div>
+
+          <!-- NOTES -->
+          <div class="ej-notes">
+            <input
+              type="text"
+              class="notes-input"
+              placeholder="Notas..."
+              [(ngModel)]="ej.notas"
+              (ngModelChange)="onFieldChange()" />
+          </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="ej-actions">
+
+          <button
+            class="ej-action-btn"
+            (click)="duplicarEjercicio(i)"
+            title="Duplicar">
+            <ion-icon name="copy-outline"></ion-icon>
+          </button>
+
+          <button
+            class="ej-action-btn danger"
+            (click)="eliminarEjercicio(i)"
+            title="Eliminar">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+
+        </div>
+
+      </div>
+
+    }
+
+  </ion-reorder-group>
+
+</ion-list>
+
+<!-- EMPTY STATE -->
+
+<div class="empty-exercises" *ngIf="!rutina.ejercicios?.length">
+  <ion-icon name="barbell-outline"></ion-icon>
+  <p>Sin ejercicios</p>
+  <span>Agrega ejercicios desde la biblioteca</span>
+</div>
+
+<!-- ADD EXERCISE BUTTON -->
+
+<button class="add-exercise-btn" (click)="abrirSelectorEjercicios()">
+  <ion-icon name="add-circle-outline"></ion-icon>
+  <span>Agregar ejercicio</span>
+</button>
+
+<!-- VIDEO PREVIEW MODAL -->
+
+<ion-modal
+  [isOpen]="!!videoPreview"
+  (didDismiss)="cerrarPreview()">
+
+  <ng-template>
+
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Video ejercicio</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarPreview()">Cerrar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <div class="video-wrapper">
+        <iframe
+          *ngIf="videoPreview"
+          [src]="videoPreview"
+          width="100%"
+          height="250"
+          frameborder="0"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </ion-content>
+
+  </ng-template>
+
+</ion-modal>
