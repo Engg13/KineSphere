@@ -68,13 +68,15 @@ const routes: Routes = [
     path: 'asignar-rutina',
     loadComponent: () =>
       import('./pages/asignar-rutina/asignar-rutina.page')
-        .then(m => m.AsignarRutinaPage)
+        .then(m => m.AsignarRutinaPage),
+    canActivate: [AuthGuard]
   },
   {
     path: 'rutinas-templates',
     loadComponent: () =>
       import('./pages/rutinas-templates/rutinas-templates.page')
-        .then(m => m.RutinasTemplatesPage)
+        .then(m => m.RutinasTemplatesPage),
+    canActivate: [AuthGuard]
   },
   {
     path: 'perfil-profesional',
@@ -91,6 +93,13 @@ const routes: Routes = [
 
   {
     path: 'rutina-template-editor',
+    loadComponent: () =>
+      import('./pages/rutina-template-editor/rutina-template-editor.page')
+        .then(m => m.RutinaTemplateEditorPage),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'rutina-template-editor/:id',
     loadComponent: () =>
       import('./pages/rutina-template-editor/rutina-template-editor.page')
         .then(m => m.RutinaTemplateEditorPage),

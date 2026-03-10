@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { NavController } from '@ionic/angular';
+import { ActivatedRoute } from '@angular/router';
 import { EjerciciosFirestoreService } from '../../services/ejercicios-firestore.service';
 import { RutinasTemplatesService } from '../../services/rutinas-templates.service';
 import { YoutubeEmbedPipe } from '../../pipes/youtube-embed.pipe';
@@ -12,6 +13,7 @@ import { RutinaTemplateEjercicio } from '../../models/rutina-ejercicio.model';
 import { RutinaTemplate } from '../../models/rutina-template.model';
 import { ModalController } from '@ionic/angular';
 import { EjercicioPickerComponent } from '../../components/ejercicio-picker/ejercicio-picker.component';
+import { first } from 'rxjs/operators';
 
 @Component({
   selector: 'app-rutina-template-editor',
@@ -29,6 +31,7 @@ export class RutinaTemplateEditorPage {
   terminoBusqueda = '';
   categoriaFiltro = '';
   videoPreview?: string;
+  editandoId: string | null = null;
 
   rutina: RutinaTemplate = {
     nombre: '',
@@ -52,9 +55,24 @@ export class RutinaTemplateEditorPage {
     private ejerciciosService: EjerciciosFirestoreService,
     private templatesService: RutinasTemplatesService,
     private navCtrl: NavController,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private route: ActivatedRoute
   ) {
     this.cargarEjercicios();
+    this.cargarTemplateExistente();
+  }
+
+  private cargarTemplateExistente() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) return;
+
+    this.editandoId = id;
+    this.templatesService.getTemplates().pipe(first()).subscribe(templates => {
+      const found = templates.find(t => t.id === id);
+      if (found) {
+        this.rutina = { ...found };
+      }
+    });
   }
 
   // =============================
@@ -149,17 +167,18 @@ export class RutinaTemplateEditorPage {
 
     if (!this.rutina.nombre.trim()) return;
 
-    await this.templatesService.crearTemplate(this.rutina);
-
-    alert('Plantilla creada');
-
-    this.rutina = {
-      nombre: '',
-      descripcion: '',
-      clinicId: '',
-      createdBy: '',
-      ejercicios: []
-    };
+    if (this.editandoId) {
+      const { id, ...cambios } = this.rutina as RutinaTemplate & { id?: string };
+      await this.templatesService.actualizarTemplate(this.editandoId, {
+        nombre: cambios.nombre,
+        descripcion: cambios.descripcion,
+        ejercicios: cambios.ejercicios
+      });
+      this.navCtrl.back();
+    } else {
+      await this.templatesService.crearTemplate(this.rutina);
+      this.navCtrl.back();
+    }
 
   }
 

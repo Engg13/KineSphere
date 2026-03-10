@@ -174,7 +174,7 @@ export class DashboardPage {
 
   irAPlantillas() {
 
-    this.navCtrl.navigateRoot('/rutinas-templates');
+    this.navCtrl.navigateForward('/rutinas-templates');
 
   }
 
