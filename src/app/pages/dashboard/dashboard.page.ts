@@ -8,6 +8,7 @@ import { EvolucionesService } from '../../services/evoluciones.service';
 import { AuthService } from '../../services/auth.service';
 import { PacienteDocument } from '../../services/pacientes.service';
 import { TratamientoDocument } from '../../services/tratamientos.service';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -36,7 +37,8 @@ export class DashboardPage {
     private pacientesService: PacientesService,
     private tratamientosService: TratamientosService,
     private evolucionesService: EvolucionesService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   async ionViewDidEnter() {
@@ -161,26 +163,28 @@ export class DashboardPage {
   }
 
   irAPerfil() {
-  this.navCtrl.navigateRoot('/perfil-profesional');
+    this.navCtrl.navigateRoot('/perfil-profesional');
   }
 
   irASesion() {
-  this.navCtrl.navigateRoot('/sesion');
+    this.navCtrl.navigateRoot('/sesion');
   }
 
   irAEvaluaciones() {
-  this.navCtrl.navigateRoot('/evaluacion-final');
+    this.navCtrl.navigateRoot('/evaluacion-final');
   }
 
   irAPlantillas() {
 
-    this.navCtrl.navigateForward('/rutinas-templates');
+    (document.activeElement as HTMLElement)?.blur();
+
+    this.navCtrl.navigateRoot('/rutinas-templates').then(r => {
+      console.log('NAVIGATION RESULT', r);
+    });
 
   }
 
   irAEvaluacionesClinicas() {
-  this.navCtrl.navigateRoot('/tests-config');
+    this.navCtrl.navigateRoot('/tests-config');
   }
-
-
 }

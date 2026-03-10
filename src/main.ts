@@ -1,13 +1,13 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { importProvidersFrom, APP_INITIALIZER, ErrorHandler } from '@angular/core';
-import { RouteReuseStrategy } from '@angular/router';
 import { IonicRouteStrategy, IonicModule } from '@ionic/angular';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { provideAuth, getAuth } from '@angular/fire/auth';
-
+import { RouteReuseStrategy } from '@angular/router';
+import { NoReuseStrategy } from '././app/core/config/no-reuse.strategy';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -51,7 +51,7 @@ bootstrapApplication(AppComponent, {
       MatFormFieldModule
     ),
 
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    { provide: RouteReuseStrategy, useClass: NoReuseStrategy },
 
     provideHttpClient(withInterceptorsFromDi()),
 

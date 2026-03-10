@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, NavController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
-import { NavController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 
 import { RutinasTemplatesService } from '../../services/rutinas-templates.service';
@@ -26,10 +25,16 @@ export class RutinasTemplatesPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.sub = this.templatesService.getTemplates().subscribe(data => {
-      this.templates = data;
-      this.estaCargando = false;
-    });
+
+    this.sub = this.templatesService
+      .getTemplates()
+      .subscribe(data => {
+
+        this.templates = data;
+        this.estaCargando = false;
+
+      });
+
   }
 
   ngOnDestroy() {
@@ -37,15 +42,15 @@ export class RutinasTemplatesPage implements OnInit, OnDestroy {
   }
 
   nuevaPlantilla() {
-    this.navCtrl.navigateForward('/rutina-template-editor');
+    this.navCtrl.navigateRoot('/rutina-template-editor');
   }
 
   editarTemplate(id: string) {
-    this.navCtrl.navigateForward(`/rutina-template-editor/${id}`);
+    this.navCtrl.navigateRoot(`/rutina-template-editor/${id}`);
   }
 
   volver() {
-    this.navCtrl.back();
+    this.navCtrl.navigateRoot('/dashboard');
   }
 
 }
