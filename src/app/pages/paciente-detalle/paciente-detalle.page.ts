@@ -6,8 +6,8 @@ import { PacientesService } from '../../services/pacientes.service';
 import { EvolucionesService } from '../../services/evoluciones.service';
 import { Subscription } from 'rxjs';
 import { FlujoClinicoService } from 'src/app/services/flujoclinico.service';
-import { RutinaPaciente } from '../../models/rutina-paciente.model';
-import { RutinasPacienteService } from '../../services/rutinas-paciente.service';
+import { Rutina } from '../../models/rutina.model';
+import { RutinasService } from '../../services/rutinas.service';
 import { RutinaActivaComponent } from '../../components/rutina-activa/rutina-activa.component';
 
 @Component({
@@ -22,21 +22,21 @@ export class PacienteDetallePage implements OnDestroy {
   paciente: any = null;
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
-  rutinasCompletadas: RutinaPaciente[] = [];
+  rutinasCompletadas: Rutina[] = [];
   sesionesExpandidas: Set<string | number> = new Set();
   pacienteId: string = '';
   fechaActual = new Date();
   esAdmin: boolean = false;
   historialVisual: any[] = [];
   tratamientoActivo: any | null = null;
-  rutinaActiva: RutinaPaciente | null = null;
+  rutinaActiva: Rutina | null = null;
   tabActual: 'info' | 'sesiones' | 'rutinas' = 'info';
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
   private rutinaActivaSub?: Subscription;
-  
-  
+
+
   constructor(
     private navCtrl: NavController,
     private route: ActivatedRoute,
@@ -44,12 +44,12 @@ export class PacienteDetallePage implements OnDestroy {
     private evolucionesService: EvolucionesService,
     private alertCtrl: AlertController,
     private flujoClinicoService: FlujoClinicoService,
-    private rutinasPacienteService: RutinasPacienteService,
+    private rutinasService: RutinasService,
     private router: Router
   ) {}
 
   // ==============================
-  // 🔥 CICLO DE VIDA
+  // CICLO DE VIDA
   // ==============================
 
   async ionViewDidEnter() {
@@ -105,7 +105,7 @@ export class PacienteDetallePage implements OnDestroy {
   }
 
   // ==============================
-  // 👤 CARGA PACIENTE
+  // CARGA PACIENTE
   // ==============================
 
   private async cargarPaciente(id: string) {
@@ -139,7 +139,7 @@ export class PacienteDetallePage implements OnDestroy {
   }
 }
   // ==============================
-  // 📚 RUTINAS (REALTIME PRO)
+  // RUTINAS (REALTIME)
   // ==============================
 
   private cargarRutinasCompletadas(pacienteId: string) {
@@ -148,10 +148,10 @@ export class PacienteDetallePage implements OnDestroy {
       this.rutinasSub.unsubscribe();
     }
 
-    this.rutinasSub = this.rutinasPacienteService
+    this.rutinasSub = this.rutinasService
       .getRutinasPaciente(pacienteId)
       .subscribe({
-        next: (rutinas: RutinaPaciente[]) => {
+        next: (rutinas: Rutina[]) => {
 
           this.rutinasCompletadas = rutinas
             .filter(r => r.activa === false)
@@ -159,11 +159,11 @@ export class PacienteDetallePage implements OnDestroy {
 
               const fechaA = a.createdAt instanceof Date
                 ? a.createdAt.getTime()
-                : a.createdAt?.toDate?.().getTime() || 0;
+                : (a.createdAt as any)?.toDate?.().getTime() || 0;
 
               const fechaB = b.createdAt instanceof Date
                 ? b.createdAt.getTime()
-                : b.createdAt?.toDate?.().getTime() || 0;
+                : (b.createdAt as any)?.toDate?.().getTime() || 0;
 
               return fechaB - fechaA;
 
@@ -178,7 +178,7 @@ export class PacienteDetallePage implements OnDestroy {
   }
 
   // ==============================
-  // 📅 HISTORIAL SESIONES
+  // HISTORIAL SESIONES
   // ==============================
 
   private cargarHistorialSesiones(pacienteId: string) {
@@ -227,7 +227,7 @@ export class PacienteDetallePage implements OnDestroy {
   }
 
   // ==============================
-  // 🎂 EDAD
+  // EDAD
   // ==============================
 
   private verificarYCorregirEdad() {
@@ -264,7 +264,7 @@ export class PacienteDetallePage implements OnDestroy {
   }
 
   // ==============================
-  // 🔄 REFRESH
+  // REFRESH
   // ==============================
 
   async refrescarDatos(event?: any) {
@@ -278,7 +278,7 @@ export class PacienteDetallePage implements OnDestroy {
   }
 
   // ==============================
-  // 🔽 UI HELPERS
+  // UI HELPERS
   // ==============================
 
   toggleSesionExpandida(sesionId: string | number) {
@@ -324,7 +324,7 @@ export class PacienteDetallePage implements OnDestroy {
     return 'No registrada';
   }
   // ==============================
-  // 🧭 NAVEGACIÓN
+  // NAVEGACION
   // ==============================
 
   nuevaSesion() {
@@ -356,27 +356,18 @@ export class PacienteDetallePage implements OnDestroy {
     });
   }
 
-  async crearRutina() {
+  crearRutina() {
 
-  if (!this.pacienteId) return;
+    if (!this.pacienteId) return;
 
-  const docRef = await this.rutinasPacienteService.crearRutinaPaciente({
+    this.navCtrl.navigateRoot('/rutina-editor', {
+      queryParams: {
+        tipo: 'paciente',
+        pacienteId: this.pacienteId
+      }
+    });
 
-    pacienteId: this.pacienteId,
-    nombre: '',
-    descripcion: '',
-    ejercicios: [],
-    activa: true
-
-  });
-
-  const rutinaId = docRef.id;
-
-  this.navCtrl.navigateRoot(
-    `/rutina-paciente-editor/${rutinaId}`
-  );
-
-}
+  }
 
   editarPaciente() {
     if (!this.paciente) return;
@@ -401,8 +392,8 @@ export class PacienteDetallePage implements OnDestroy {
 
   async confirmarEliminacion(evolucionId: string) {
     const alert = await this.alertCtrl.create({
-      header: 'Eliminar evolución',
-      message: 'Esta acción la quitará del historial. ¿Desea continuar?',
+      header: 'Eliminar evolucion',
+      message: 'Esta accion la quitara del historial. Desea continuar?',
       buttons: [
         {
           text: 'Cancelar',
@@ -415,7 +406,7 @@ export class PacienteDetallePage implements OnDestroy {
             try {
               await this.evolucionesService.softDelete(evolucionId);
             } catch (error) {
-              console.error('Error eliminando evolución:', error);
+              console.error('Error eliminando evolucion:', error);
             }
           }
         }
@@ -451,7 +442,7 @@ export class PacienteDetallePage implements OnDestroy {
 
   async confirmarHardDelete(id: string) {
 
-    const confirmar = confirm('¿Eliminar esta sesión?');
+    const confirmar = confirm('Eliminar esta sesion?');
 
     if (!confirmar) return;
 
@@ -459,11 +450,11 @@ export class PacienteDetallePage implements OnDestroy {
 
       await this.evolucionesService.softDelete(id);
 
-      console.log('Sesión eliminada');
+      console.log('Sesion eliminada');
 
     } catch (error) {
 
-      console.error('Error eliminando sesión', error);
+      console.error('Error eliminando sesion', error);
 
     }
 
@@ -475,7 +466,7 @@ export class PacienteDetallePage implements OnDestroy {
       this.rutinaActivaSub.unsubscribe();
     }
 
-    this.rutinaActivaSub = this.rutinasPacienteService
+    this.rutinaActivaSub = this.rutinasService
       .getRutinaActivaPaciente(pacienteId)
       .subscribe({
         next: rutina => {
@@ -508,9 +499,13 @@ export class PacienteDetallePage implements OnDestroy {
 
   editarRutina(rutinaId: string) {
 
-  this.navCtrl.navigateRoot(
-    `/rutina-paciente-editor/${rutinaId}`
-  );
+    this.navCtrl.navigateRoot('/rutina-editor', {
+      queryParams: {
+        tipo: 'paciente',
+        id: rutinaId,
+        pacienteId: this.pacienteId
+      }
+    });
 
   }
 }
