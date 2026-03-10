@@ -321,3 +321,72 @@ ion-reorder-group {
     background: #ccfbf1;
   }
 }
+
+/* ===== TIPO BADGE ===== */
+
+.tipo-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #f0f9ff;
+  color: #0284c7;
+  margin-left: 6px;
+}
+
+/* ===== PUBLIC LINK BOX ===== */
+
+.public-link-box {
+  margin: 0 16px;
+  padding: 12px;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-radius: 10px;
+
+  .link-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 6px;
+  }
+
+  .link-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .link-text {
+    flex: 1;
+    font-size: 0.78rem;
+    color: var(--teal-dark);
+    word-break: break-all;
+    font-weight: 500;
+  }
+
+  .copy-btn {
+    background: var(--teal);
+    border: none;
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    ion-icon {
+      font-size: 1rem;
+      color: #ffffff;
+    }
+  }
+}
+
+/* ===== CLOSE ROUTINE ===== */
+
+.close-rutina {
+  margin: 12px 16px 16px;
+  width: calc(100% - 32px);
+  justify-content: center;
+  color: var(--danger) !important;
+  border-color: #fecaca !important;
+  background: #fef2f2 !important;
+}

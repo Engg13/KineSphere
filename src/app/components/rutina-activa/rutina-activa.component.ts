@@ -1,12 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, AlertController } from '@ionic/angular';
 
 import { Rutina } from '../../models/rutina.model';
 import { RutinaTemplateEjercicio } from '../../models/rutina-ejercicio.model';
 import { Ejercicio } from '../../models/ejercicio.model';
 
 import { RutinasService } from '../../services/rutinas.service';
+import { RutinasSesionesService } from '../../services/rutinas-sesiones.service';
 import { EjercicioPickerComponent } from '../ejercicio-picker/ejercicio-picker.component';
 import { FormsModule } from '@angular/forms';
 
@@ -21,9 +22,15 @@ export class RutinaActivaComponent {
 
   @Input() rutina: Rutina | null = null;
 
+  @Output() sesionClinicaIniciada = new EventEmitter<void>();
+
+  publicLink: string | null = null;
+
   constructor(
     private modalCtrl: ModalController,
-    private rutinasService: RutinasService
+    private alertCtrl: AlertController,
+    private rutinasService: RutinasService,
+    private sesionesService: RutinasSesionesService
   ) {}
 
   // ================================
@@ -190,6 +197,95 @@ export class RutinaActivaComponent {
     await this.rutinasService.guardarTemplate(templateRutina);
 
     alert('Plantilla creada desde esta rutina');
+
+  }
+
+  // ================================
+  // CLINICAL SESSION
+  // ================================
+
+  async iniciarSesionClinica() {
+
+    if (!this.rutina?.id || !this.rutina.pacienteId) return;
+
+    await this.sesionesService.registrarSesion({
+      rutinaId: this.rutina.id,
+      pacienteId: this.rutina.pacienteId,
+      clinicId: this.rutina.clinicId,
+      tipoSesion: 'clinica',
+      fecha: new Date()
+    });
+
+    this.sesionClinicaIniciada.emit();
+
+    const alert = await this.alertCtrl.create({
+      header: 'Sesion registrada',
+      message: 'La sesion clinica fue registrada correctamente.',
+      buttons: ['OK']
+    });
+
+    await alert.present();
+
+  }
+
+  // ================================
+  // HOME ROUTINE — PUBLIC LINK
+  // ================================
+
+  async enviarRutinaDomiciliaria() {
+
+    if (!this.rutina?.id) return;
+
+    if (this.rutina.publicToken && this.rutina.publicEnabled) {
+      this.publicLink = `${window.location.origin}/r/${this.rutina.publicToken}`;
+      return;
+    }
+
+    const token = await this.rutinasService.habilitarAccesoPublico(
+      this.rutina.id
+    );
+
+    this.rutina.publicToken = token;
+    this.rutina.publicEnabled = true;
+
+    this.publicLink = `${window.location.origin}/r/${token}`;
+
+  }
+
+  copiarLink() {
+
+    if (!this.publicLink) return;
+
+    navigator.clipboard.writeText(this.publicLink);
+
+    alert('Link copiado al portapapeles');
+
+  }
+
+  // ================================
+  // CLOSE ROUTINE
+  // ================================
+
+  async cerrarRutina() {
+
+    if (!this.rutina?.id) return;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Cerrar rutina',
+      message: 'La rutina sera marcada como cerrada.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Cerrar',
+          role: 'destructive',
+          handler: async () => {
+            await this.rutinasService.activarRutina(this.rutina!.id!, false);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
 
   }
 

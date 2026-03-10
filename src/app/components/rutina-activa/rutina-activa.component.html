@@ -23,6 +23,10 @@
 
         <span class="ej-count">{{ rutina.ejercicios?.length || 0 }} ejercicios</span>
 
+        <span class="tipo-badge" *ngIf="rutina.tipoRutina">
+          {{ rutina.tipoRutina === 'clinica' ? 'Clinica' : 'Domiciliaria' }}
+        </span>
+
       </div>
 
     </div>
@@ -41,9 +45,26 @@
 
       <button
         class="toolbar-btn"
+        *ngIf="!editando"
         (click)="convertirAPlantilla()">
         <ion-icon name="copy-outline"></ion-icon>
         <span>Plantilla</span>
+      </button>
+
+      <button
+        class="toolbar-btn"
+        *ngIf="!editando"
+        (click)="iniciarSesionClinica()">
+        <ion-icon name="play-outline"></ion-icon>
+        <span>Sesion</span>
+      </button>
+
+      <button
+        class="toolbar-btn"
+        *ngIf="!editando"
+        (click)="enviarRutinaDomiciliaria()">
+        <ion-icon name="share-outline"></ion-icon>
+        <span>Enviar</span>
       </button>
 
       <button
@@ -60,6 +81,24 @@
         (click)="guardarCambios()">
         <ion-icon name="checkmark-outline"></ion-icon>
         <span>Guardar</span>
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- PUBLIC LINK -->
+
+  <div class="public-link-box" *ngIf="publicLink">
+
+    <p class="link-label">Link para el paciente:</p>
+
+    <div class="link-row">
+
+      <span class="link-text">{{ publicLink }}</span>
+
+      <button class="copy-btn" (click)="copiarLink()">
+        <ion-icon name="clipboard-outline"></ion-icon>
       </button>
 
     </div>
@@ -141,6 +180,16 @@
     (click)="abrirSelectorEjercicios()">
     <ion-icon name="add-circle-outline"></ion-icon>
     <span>Agregar ejercicio</span>
+  </button>
+
+  <!-- CERRAR RUTINA -->
+
+  <button
+    class="toolbar-btn close-rutina"
+    *ngIf="!editando"
+    (click)="cerrarRutina()">
+    <ion-icon name="close-circle-outline"></ion-icon>
+    <span>Cerrar rutina</span>
   </button>
 
 </div>

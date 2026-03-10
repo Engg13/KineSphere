@@ -6,13 +6,30 @@ import { YoutubeEmbedPipe } from '../../pipes/youtube-embed.pipe';
 
 import {
   Firestore,
+  collectionGroup,
   collection,
   query,
   where,
+  limit,
   getDocs,
-  doc,
-  updateDoc
+  addDoc,
+  serverTimestamp
 } from '@angular/fire/firestore';
+
+import { RutinaTemplateEjercicio } from '../../models/rutina-ejercicio.model';
+
+interface SerieLocal {
+  numero: number;
+  repeticiones?: number;
+  completada: boolean;
+}
+
+interface EjercicioLocal {
+  ejercicioId: string;
+  nombre: string;
+  notas?: string;
+  series: SerieLocal[];
+}
 
 @Component({
   selector: 'app-rutina-publica',
@@ -27,9 +44,12 @@ export class RutinaPublicaPage implements OnInit {
 
   rutina: any = null;
   rutinaId: string | null = null;
+  rutinaPath: string | null = null;
+  ejerciciosLocales: EjercicioLocal[] = [];
   cargando = true;
   painScore: number | null = null;
-  guardandoDolor = false;
+  guardandoSesion = false;
+  sesionGuardada = false;
 
   async ngOnInit() {
 
@@ -42,75 +62,102 @@ export class RutinaPublicaPage implements OnInit {
         return;
       }
 
-      const ref = collection(this.firestore, 'rutinas');
+      // Query across all clinics using collectionGroup
+      const groupRef = collectionGroup(this.firestore, 'rutinas_paciente');
 
       const q = query(
-        ref,
+        groupRef,
         where('publicToken', '==', token),
-        where('publicEnabled', '==', true)
+        where('publicEnabled', '==', true),
+        limit(1)
       );
 
       const snap = await getDocs(q);
 
       if (!snap.empty) {
 
-        const docData = snap.docs[0];
+        const docSnap = snap.docs[0];
 
-        this.rutina = docData.data();
-        this.rutinaId = docData.id;
+        this.rutina = docSnap.data();
+        this.rutinaId = docSnap.id;
+        this.rutinaPath = docSnap.ref.path;
 
-        // registrar último acceso del paciente
-        await updateDoc(
-          doc(this.firestore, `rutinas/${this.rutinaId}`),
-          { ultimoAccesoPaciente: new Date().toISOString() }
+        // Build local exercise state for UI tracking
+        this.ejerciciosLocales = this.buildEjerciciosLocales(
+          this.rutina.ejercicios || []
         );
 
       }
 
     } catch (err) {
-
-      console.error('Error cargando rutina pública', err);
-
+      console.error('Error cargando rutina publica', err);
     }
 
     this.cargando = false;
 
   }
 
-  async toggleSerie(ejIdx: number, serieIdx: number) {
+  // ========================================
+  // BUILD LOCAL STATE FROM RUTINA EXERCISES
+  // ========================================
 
-    if (!this.rutina || !this.rutinaId) return;
+  private buildEjerciciosLocales(
+    ejercicios: RutinaTemplateEjercicio[]
+  ): EjercicioLocal[] {
 
-    // evitar mutación directa
-    const ejerciciosActualizados = structuredClone(this.rutina.ejercicios);
+    return ejercicios.map(ej => {
 
-    const serie = ejerciciosActualizados[ejIdx].series[serieIdx];
-    serie.completada = !serie.completada;
+      const series: SerieLocal[] = [];
 
-    // actualizar estado local
-    this.rutina.ejercicios = ejerciciosActualizados;
+      for (let i = 1; i <= ej.series; i++) {
+        series.push({
+          numero: i,
+          repeticiones: ej.repeticiones,
+          completada: false
+        });
+      }
 
-    await updateDoc(
-      doc(this.firestore, `rutinas/${this.rutinaId}`),
-      { ejercicios: ejerciciosActualizados }
-    );
+      return {
+        ejercicioId: ej.ejercicioId,
+        nombre: ej.nombre,
+        notas: ej.notas,
+        series
+      };
+
+    });
 
   }
 
-  getProgreso(): number {
+  // ========================================
+  // TOGGLE SERIES (LOCAL ONLY — no Firestore write)
+  // ========================================
 
-    if (!this.rutina?.ejercicios) return 0;
+  toggleSerie(ejIdx: number, serieIdx: number) {
+
+    if (this.sesionGuardada) return;
+
+    const serie = this.ejerciciosLocales[ejIdx]?.series[serieIdx];
+
+    if (serie) {
+      serie.completada = !serie.completada;
+    }
+
+  }
+
+  // ========================================
+  // PROGRESS
+  // ========================================
+
+  getProgreso(): number {
 
     let total = 0;
     let completadas = 0;
 
-    this.rutina.ejercicios.forEach((ej: any) => {
+    this.ejerciciosLocales.forEach(ej => {
 
       total += ej.series.length;
 
-      completadas += ej.series.filter(
-        (s: any) => s.completada
-      ).length;
+      completadas += ej.series.filter(s => s.completada).length;
 
     });
 
@@ -118,27 +165,70 @@ export class RutinaPublicaPage implements OnInit {
 
   }
 
-  async guardarDolorSesion() {
+  // ========================================
+  // FINISH SESSION — creates session + logs
+  // ========================================
 
-    if (!this.rutinaId || this.painScore === null) return;
+  async finalizarSesion() {
 
-    this.guardandoDolor = true;
+    if (!this.rutinaPath || !this.rutinaId || !this.rutina) return;
+    if (this.guardandoSesion || this.sesionGuardada) return;
+
+    this.guardandoSesion = true;
 
     try {
 
-      await updateDoc(
-        doc(this.firestore, `rutinas/${this.rutinaId}`),
-        {
-          painDuringSession: this.painScore,
-          painRecordedAt: new Date().toISOString()
-        }
+      // Extract clinicId from path: clinics/{clinicId}/rutinas_paciente/{id}
+      const pathParts = this.rutinaPath.split('/');
+      const clinicId = pathParts[1];
+
+      // Create session in top-level collection
+      const sesionesRef = collection(
+        this.firestore,
+        `clinics/${clinicId}/rutina_sesiones`
       );
 
+      const sesionDoc = await addDoc(sesionesRef, {
+        rutinaId: this.rutinaId,
+        pacienteId: this.rutina.pacienteId,
+        clinicId,
+        tipoSesion: 'domiciliaria',
+        fecha: new Date(),
+        painScore: this.painScore,
+        comentario: '',
+        createdAt: serverTimestamp()
+      });
+
+      // Create individual logs
+      const logsRef = collection(
+        this.firestore,
+        `clinics/${clinicId}/rutina_logs`
+      );
+
+      for (const ej of this.ejerciciosLocales) {
+
+        for (const serie of ej.series) {
+
+          await addDoc(logsRef, {
+            sesionId: sesionDoc.id,
+            ejercicioId: ej.ejercicioId,
+            serie: serie.numero,
+            completado: serie.completada,
+            dolor: this.painScore,
+            repeticiones: serie.repeticiones
+          });
+
+        }
+
+      }
+
+      this.sesionGuardada = true;
+
     } catch (err) {
-      console.error('Error guardando dolor', err);
+      console.error('Error guardando sesion', err);
     }
 
-    this.guardandoDolor = false;
+    this.guardandoSesion = false;
 
   }
 

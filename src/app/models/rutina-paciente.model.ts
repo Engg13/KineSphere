@@ -1,6 +1,10 @@
 import { Timestamp } from '@angular/fire/firestore';
 import { RutinaTemplateEjercicio } from './rutina-ejercicio.model';
 
+export type TipoRutina = 'clinica' | 'domiciliaria';
+
+export type EstadoRutina = 'activa' | 'cerrada';
+
 export interface RutinaPaciente {
 
   id?: string;
@@ -15,9 +19,18 @@ export interface RutinaPaciente {
 
   ejercicios: RutinaTemplateEjercicio[];
 
+  /** @deprecated Use estado instead. Kept for backward compatibility. */
   activa: boolean;
 
+  tipo?: TipoRutina;
+
+  estado?: EstadoRutina;
+
   templateId?: string;
+
+  publicToken?: string;
+
+  publicEnabled?: boolean;
 
   createdBy: string;
 

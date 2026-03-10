@@ -10,8 +10,8 @@ import { TestTemplate } from '../../models/test-template.model';
 import { TestTemplatesFirestoreService } from '../../services/test-templates-firestore.service';
 import { FlujoClinicoService} from '../../services/flujoclinico.service';
 import { PacientesService} from '../../services/pacientes.service';
-import { RutinasPacienteService } from '../../services/rutinas-paciente.service';
-import { RutinaPaciente } from '../../models/rutina-paciente.model';
+import { RutinasService } from '../../services/rutinas.service';
+import { Rutina } from '../../models/rutina.model';
 import { Chart } from 'chart.js/auto';
 import { ObjetivoClinico } from '../../models/evolucion.model';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -50,7 +50,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private flujoClinicoService = inject(FlujoClinicoService);
   private evolucionesService = inject(EvolucionesService);
   private tratamientosService = inject(TratamientosService);
-  private rutinasPacienteService: RutinasPacienteService;
+  private rutinasService = inject(RutinasService);
   private usarDatosDemo = true;
    // 🔥 poner en false en producción
 
@@ -337,9 +337,9 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     this.rutinasSub?.unsubscribe();
 
-    this.rutinasSub = this.rutinasPacienteService
+    this.rutinasSub = this.rutinasService
       .getRutinasPaciente(this.patientId)
-      .subscribe((rutinas: RutinaPaciente[]) => {
+      .subscribe((rutinas: Rutina[]) => {
 
         this.rutinasDisponibles = rutinas.filter(r => r.activa);
 
@@ -704,11 +704,14 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
   if (!this.patientId) return;
 
-  await this.rutinasPacienteService.crearRutinaPaciente({
-    pacienteId: this.patientId,
+  await this.rutinasService.guardarRutinaPaciente({
     nombre: 'Rutina de ejercicios',
     descripcion: '',
     ejercicios: [],
+    tipo: 'paciente',
+    pacienteId: this.patientId,
+    clinicId: '',
+    createdBy: '',
     activa: true
   });
 

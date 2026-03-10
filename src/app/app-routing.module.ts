@@ -121,21 +121,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
 
-  // Legacy routes kept for backward compatibility
+  // Legacy routes redirect to unified editor
   {
     path: 'rutina-template-editor',
-    loadComponent: () =>
-      import('./pages/rutina-template-editor/rutina-template-editor.page')
-        .then(m => m.RutinaTemplateEditorPage),
-    canActivate: [AuthGuard]
-  },
-
-  {
-    path: 'rutina-template-editor/:id',
-    loadComponent: () =>
-      import('./pages/rutina-template-editor/rutina-template-editor.page')
-        .then(m => m.RutinaTemplateEditorPage),
-    canActivate: [AuthGuard]
+    redirectTo: '/rutina-editor?tipo=template',
+    pathMatch: 'full'
   },
 
   {

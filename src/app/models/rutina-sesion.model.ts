@@ -1,3 +1,5 @@
+export type TipoSesion = 'clinica' | 'domiciliaria';
+
 export interface RutinaSesion {
 
   id?: string;
@@ -8,10 +10,18 @@ export interface RutinaSesion {
 
   clinicId: string;
 
+  tipoSesion?: TipoSesion;
+
   fecha: Date;
 
-  ejercicios: RutinaSesionEjercicio[];
+  comentario?: string;
 
+  painScore?: number;
+
+  /** @deprecated Kept for backward compat with subcollection sessions */
+  ejercicios?: RutinaSesionEjercicio[];
+
+  /** @deprecated Use comentario */
   notas?: string;
 
   createdAt: Date;
@@ -33,5 +43,27 @@ export interface RutinaSesionEjercicio {
   dolor?: number;
 
   completado?: boolean;
+
+}
+
+export interface RutinaLog {
+
+  id?: string;
+
+  sesionId: string;
+
+  ejercicioId: string;
+
+  serie: number;
+
+  completado: boolean;
+
+  dolor?: number;
+
+  repeticiones?: number;
+
+  tiempo?: number;
+
+  carga?: number;
 
 }
