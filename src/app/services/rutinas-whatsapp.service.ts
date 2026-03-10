@@ -1,26 +1,27 @@
 import { Injectable } from '@angular/core';
-import { RutinaEjercicios } from '../models/interfaces';
+import { RutinaPaciente } from '../models/rutina-paciente.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RutinasWhatsappService {
 
-  enviarRutina(rutina: RutinaEjercicios, telefono?: string) {
+  enviarRutina(rutina: RutinaPaciente, telefono?: string) {
 
-    let mensaje = `💪 *Rutina de ejercicios*\n\n`;
+    let mensaje = `*Rutina de ejercicios*\n\n`;
     mensaje += `*${rutina.nombre}*\n\n`;
 
-    rutina.ejercicios.forEach(ej => {
+    (rutina.ejercicios || []).forEach((ej, index) => {
 
-      mensaje += `🔹 *${ej.ejercicio.nombre}*\n`;
+      mensaje += `*${String.fromCharCode(65 + index)}) ${ej.nombre}*\n`;
 
-      ej.series.forEach(s => {
-        mensaje += `• Serie ${s.numero}: ${s.repeticiones ?? '-'} reps\n`;
-      });
+      for (let i = 1; i <= ej.series; i++) {
+        const reps = ej.repeticiones ?? '-';
+        mensaje += `  Serie ${i}: ${reps} reps\n`;
+      }
 
-      if (ej.ejercicio.videoUrl) {
-        mensaje += `🎥 ${ej.ejercicio.videoUrl}\n`;
+      if (ej.notas?.trim()) {
+        mensaje += `  Indicaciones: ${ej.notas.trim()}\n`;
       }
 
       mensaje += '\n';

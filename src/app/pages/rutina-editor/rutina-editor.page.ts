@@ -146,7 +146,7 @@ export class RutinaEditorPage {
     try {
 
       await this.rutinasService.guardar(this.rutina);
-      this.navCtrl.back();
+      this.navegarDespuesDeGuardar();
 
     } catch (err) {
       console.error('Error guardando rutina:', err);
@@ -157,7 +157,35 @@ export class RutinaEditorPage {
   }
 
   volver() {
-    this.navCtrl.back();
+
+    if (this.tipo === 'paciente' && this.pacienteId) {
+      this.navCtrl.navigateRoot('/paciente-detalle', {
+        queryParams: {
+          pacienteId: this.pacienteId,
+          tab: 'rutinas'
+        }
+      });
+    } else {
+      this.navCtrl.back();
+    }
+
+  }
+
+  private navegarDespuesDeGuardar() {
+
+    if (this.tipo === 'paciente' && this.pacienteId) {
+      this.navCtrl.navigateRoot('/paciente-detalle', {
+        queryParams: {
+          pacienteId: this.pacienteId,
+          tab: 'rutinas'
+        }
+      });
+    } else if (this.tipo === 'template') {
+      this.navCtrl.navigateRoot('/rutinas-templates');
+    } else {
+      this.navCtrl.back();
+    }
+
   }
 
 }

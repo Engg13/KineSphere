@@ -1,7 +1,7 @@
 import { Timestamp } from '@angular/fire/firestore';
 import { RutinaTemplateEjercicio } from './rutina-ejercicio.model';
 import { RutinaTemplate } from './rutina-template.model';
-import { RutinaPaciente } from './rutina-paciente.model';
+import { RutinaPaciente, TipoRutina, EstadoRutina } from './rutina-paciente.model';
 
 export interface Rutina {
 
@@ -22,6 +22,14 @@ export interface Rutina {
   clinicId: string;
 
   activa?: boolean;
+
+  tipoRutina?: TipoRutina;
+
+  estado?: EstadoRutina;
+
+  publicToken?: string;
+
+  publicEnabled?: boolean;
 
   createdBy: string;
 
@@ -57,6 +65,10 @@ export function pacienteToRutina(r: RutinaPaciente): Rutina {
     templateId: r.templateId,
     clinicId: r.clinicId,
     activa: r.activa,
+    tipoRutina: r.tipo,
+    estado: r.estado,
+    publicToken: r.publicToken,
+    publicEnabled: r.publicEnabled,
     createdBy: r.createdBy,
     createdAt: r.createdAt,
     fechaCompletada: r.fechaCompletada
@@ -84,6 +96,10 @@ export function rutinaToPaciente(r: Rutina): Omit<RutinaPaciente, 'id'> & { id?:
     pacienteId: r.pacienteId!,
     clinicId: r.clinicId,
     activa: r.activa ?? true,
+    tipo: r.tipoRutina,
+    estado: r.estado,
+    publicToken: r.publicToken,
+    publicEnabled: r.publicEnabled,
     createdBy: r.createdBy,
     createdAt: r.createdAt,
     templateId: r.templateId,
