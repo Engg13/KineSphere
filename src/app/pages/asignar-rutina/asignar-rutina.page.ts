@@ -52,7 +52,18 @@ export class AsignarRutinaPage {
       this.templateSeleccionado
     );
 
-    this.navCtrl.back();
+    this.volver();
+
+  }
+
+  volver() {
+
+    this.navCtrl.navigateRoot('/paciente-detalle', {
+      queryParams: {
+        pacienteId: this.pacienteId,
+        tab: 'rutinas'
+      }
+    });
 
   }
 

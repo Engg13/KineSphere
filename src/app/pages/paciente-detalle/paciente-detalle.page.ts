@@ -57,6 +57,11 @@ export class PacienteDetallePage implements OnDestroy {
     const queryId =
       this.route.snapshot.queryParamMap.get('pacienteId') ||
       this.route.snapshot.queryParamMap.get('id');
+      const tab = this.route.snapshot.queryParamMap.get('tab');
+
+    if (tab === 'rutinas') {
+      this.tabActual = 'rutinas';
+    }
 
     if (queryId) {
       this.pacienteId = queryId;
