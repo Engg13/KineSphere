@@ -71,6 +71,12 @@ const routes: Routes = [
         .then(m => m.AsignarRutinaPage)
   },
   {
+    path: 'rutinas-templates',
+    loadComponent: () =>
+      import('./pages/rutinas-templates/rutinas-templates.page')
+        .then(m => m.RutinasTemplatesPage)
+  },
+  {
     path: 'perfil-profesional',
     loadChildren: () => import('./pages/perfil-profesional/perfil-profesional.module').then(m => m.PerfilProfesionalPageModule),
     canActivate: [AuthGuard]

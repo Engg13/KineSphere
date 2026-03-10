@@ -22,31 +22,67 @@
 
     <div class="templates-list">
 
-      <button
-        *ngFor="let template of templates"
-        class="template-card"
-        [class.selected]="templateSeleccionado?.id === template.id"
-        (click)="seleccionarTemplate(template)">
+      <ng-container *ngFor="let template of templates">
 
-        <div class="template-icon">
-          <ion-icon name="document-text-outline"></ion-icon>
+        <button
+          class="template-card"
+          [class.selected]="templateSeleccionado?.id === template.id"
+          (click)="seleccionarTemplate(template)">
+
+          <div class="template-icon">
+            <ion-icon name="document-text-outline"></ion-icon>
+          </div>
+
+          <div class="template-info">
+
+            <span class="template-name">
+              {{ template.nombre }}
+            </span>
+
+            <span class="template-desc" *ngIf="template.descripcion">
+              {{ template.descripcion }}
+            </span>
+
+            <span class="template-meta">
+              {{ template.ejercicios.length }} ejercicios
+            </span>
+
+          </div>
+
+          <div
+            class="template-check"
+            *ngIf="templateSeleccionado?.id === template.id">
+
+            <ion-icon
+              name="checkmark-circle"
+              color="primary">
+            </ion-icon>
+
+          </div>
+
+        </button>
+
+        <!-- EJERCICIOS PREVIEW -->
+
+        <div
+          class="template-exercises"
+          *ngIf="templateSeleccionado?.id === template.id">
+
+          <ol>
+
+            <li *ngFor="let ej of template.ejercicios.slice(0,4)">
+              {{ ej.nombre }}
+            </li>
+
+            <li *ngIf="template.ejercicios.length > 4">
+              +{{ template.ejercicios.length - 4 }} más
+            </li>
+
+          </ol>
+
         </div>
 
-        <div class="template-info">
-          <span class="template-name">{{ template.nombre }}</span>
-          <span class="template-desc" *ngIf="template.descripcion">
-            {{ template.descripcion }}
-          </span>
-          <span class="template-meta">
-            {{ template.ejercicios.length }} ejercicios
-          </span>
-        </div>
-
-        <div class="template-check" *ngIf="templateSeleccionado?.id === template.id">
-          <ion-icon name="checkmark-circle" color="primary"></ion-icon>
-        </div>
-
-      </button>
+      </ng-container>
 
     </div>
 

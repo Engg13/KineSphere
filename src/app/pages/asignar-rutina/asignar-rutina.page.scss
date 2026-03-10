@@ -152,6 +152,24 @@ ion-content {
   }
 }
 
+.template-exercises {
+
+  margin-left: 56px;
+  padding: 8px 0 12px 0;
+
+  ol {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  li {
+    font-size: 14px;
+    color: var(--ion-color-medium);
+    margin-bottom: 4px;
+  }
+
+}
+
 /* ===== EMPTY STATE ===== */
 
 .empty-state {

@@ -1,0 +1,49 @@
+<ion-header>
+  <ion-toolbar>
+
+    <ion-title>
+      Plantillas de rutina
+    </ion-title>
+
+    <ion-buttons slot="end">
+
+      <ion-button (click)="nuevaPlantilla()">
+        <ion-icon name="add"></ion-icon>
+      </ion-button>
+
+    </ion-buttons>
+
+  </ion-toolbar>
+</ion-header>
+
+
+<ion-content>
+
+  <div class="templates-list">
+
+    <button
+      *ngFor="let template of templates"
+      class="template-card"
+      (click)="editarTemplate(template.id!)">
+
+      <div class="template-icon">
+        <ion-icon name="document-text-outline"></ion-icon>
+      </div>
+
+      <div class="template-info">
+
+        <span class="template-name">
+          {{ template.nombre }}
+        </span>
+
+        <span class="template-meta">
+          {{ template.ejercicios.length }} ejercicios
+        </span>
+
+      </div>
+
+    </button>
+
+  </div>
+
+</ion-content>
