@@ -29,12 +29,14 @@ export class PacienteDetallePage implements OnDestroy {
   esAdmin: boolean = false;
   historialVisual: any[] = [];
   tratamientoActivo: any | null = null;
-  rutinaActiva: Rutina | null = null;
+  rutinaClinicaActiva: Rutina | null = null;
+  rutinaDomiciliariaActiva: Rutina | null = null;
   tabActual: 'info' | 'sesiones' | 'rutinas' = 'info';
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
-  private rutinaActivaSub?: Subscription;
+  private rutinaClinicaSub?: Subscription;
+  private rutinaDomiciliariaSub?: Subscription;
 
 
   constructor(
@@ -45,7 +47,6 @@ export class PacienteDetallePage implements OnDestroy {
     private alertCtrl: AlertController,
     private flujoClinicoService: FlujoClinicoService,
     private rutinasService: RutinasService,
-    private router: Router
   ) {}
 
   // ==============================
@@ -103,9 +104,14 @@ export class PacienteDetallePage implements OnDestroy {
       this.evolucionesSub = undefined;
     }
 
-    if (this.rutinaActivaSub) {
-      this.rutinaActivaSub.unsubscribe();
-      this.rutinaActivaSub = undefined;
+    if (this.rutinaClinicaSub) {
+      this.rutinaClinicaSub.unsubscribe();
+      this.rutinaClinicaSub = undefined;
+    }
+
+    if (this.rutinaDomiciliariaSub) {
+      this.rutinaDomiciliariaSub.unsubscribe();
+      this.rutinaDomiciliariaSub = undefined;
     }
   }
 
@@ -130,7 +136,7 @@ export class PacienteDetallePage implements OnDestroy {
 
       this.cargarHistorialSesiones(pacienteIdReal);
       this.cargarRutinasCompletadas(pacienteIdReal);
-      this.cargarRutinaActiva(pacienteIdReal);
+      this.cargarRutinasActivas(pacienteIdReal);;
 
     } else {
       this.paciente = null;
@@ -159,7 +165,7 @@ export class PacienteDetallePage implements OnDestroy {
         next: (rutinas: Rutina[]) => {
 
           this.rutinasCompletadas = rutinas
-            .filter(r => r.activa === false)
+            .filter(r => r.estado === 'cerrada')
             .sort((a, b) => {
 
               const fechaA = a.createdAt instanceof Date
@@ -465,21 +471,37 @@ export class PacienteDetallePage implements OnDestroy {
 
   }
 
-  private cargarRutinaActiva(pacienteId: string) {
+  private cargarRutinasActivas(pacienteId: string) {
 
-    if (this.rutinaActivaSub) {
-      this.rutinaActivaSub.unsubscribe();
+    if (this.rutinaClinicaSub) {
+      this.rutinaClinicaSub.unsubscribe();
     }
 
-    this.rutinaActivaSub = this.rutinasService
-      .getRutinaActivaPaciente(pacienteId)
+    if (this.rutinaDomiciliariaSub) {
+      this.rutinaDomiciliariaSub.unsubscribe();
+    }
+
+    this.rutinaClinicaSub = this.rutinasService
+      .getRutinaClinicaActiva(pacienteId)
       .subscribe({
         next: rutina => {
-          this.rutinaActiva = rutina;
+          this.rutinaClinicaActiva = rutina;
         },
         error: err => {
-          console.error('Error cargando rutina activa', err);
-          this.rutinaActiva = null;
+          console.error('Error cargando rutina clinica', err);
+          this.rutinaClinicaActiva = null;
+        }
+      });
+
+    this.rutinaDomiciliariaSub = this.rutinasService
+      .getRutinaDomiciliariaActiva(pacienteId)
+      .subscribe({
+        next: rutina => {
+          this.rutinaDomiciliariaActiva = rutina;
+        },
+        error: err => {
+          console.error('Error cargando rutina domiciliaria', err);
+          this.rutinaDomiciliariaActiva = null;
         }
       });
 

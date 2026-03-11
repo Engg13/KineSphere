@@ -12,7 +12,9 @@
 
       <div class="rutina-title-info">
 
-        <h3 *ngIf="!editando">{{ rutina.nombre || 'Rutina activa' }}</h3>
+        <h3 *ngIf="!editando">
+          {{ rutina.nombre || 'Rutina activa' }}
+        </h3>
 
         <input
           *ngIf="editando"
@@ -21,10 +23,12 @@
           [(ngModel)]="rutina.nombre"
           placeholder="Nombre de la rutina" />
 
-        <span class="ej-count">{{ rutina.ejercicios?.length || 0 }} ejercicios</span>
+        <span class="ej-count">
+          {{ rutina.ejercicios?.length || 0 }} ejercicios
+        </span>
 
         <span class="tipo-badge" *ngIf="rutina.tipoRutina">
-          {{ rutina.tipoRutina === 'clinica' ? 'Clinica' : 'Domiciliaria' }}
+          {{ rutina.tipoRutina === 'clinica' ? 'Clínica' : 'Domiciliaria' }}
         </span>
 
       </div>
@@ -51,21 +55,39 @@
         <span>Plantilla</span>
       </button>
 
-      <button
-        class="toolbar-btn"
-        *ngIf="!editando"
-        (click)="iniciarSesionClinica()">
-        <ion-icon name="play-outline"></ion-icon>
-        <span>Sesion</span>
-      </button>
+      <!-- SESION CLINICA SOLO SI ES CLINICA -->
 
       <button
         class="toolbar-btn"
-        *ngIf="!editando"
+        *ngIf="!editando && rutina.tipoRutina === 'clinica'"
+        (click)="iniciarSesionClinica()">
+        <ion-icon name="play-outline"></ion-icon>
+        <span>Sesión</span>
+      </button>
+
+      <!-- ENVIAR SOLO SI ES DOMICILIARIA -->
+
+      <button
+        class="toolbar-btn"
+        *ngIf="!editando && rutina.tipoRutina === 'domiciliaria'"
         (click)="enviarRutinaDomiciliaria()">
         <ion-icon name="share-outline"></ion-icon>
         <span>Enviar</span>
       </button>
+
+      <!-- PREVIEW PACIENTE -->
+
+      <button
+        class="toolbar-btn"
+        *ngIf="rutina.tipoRutina === 'domiciliaria' && rutina.publicToken"
+        (click)="previewRutinaPaciente()">
+
+        <ion-icon name="eye-outline"></ion-icon>
+        <span>Vista previa</span>
+
+      </button>
+
+      <!-- CANCELAR EDICION -->
 
       <button
         class="toolbar-btn cancel"
@@ -74,6 +96,8 @@
         <ion-icon name="close-outline"></ion-icon>
         <span>Cancelar</span>
       </button>
+
+      <!-- GUARDAR -->
 
       <button
         class="toolbar-btn save"
@@ -87,6 +111,7 @@
 
   </div>
 
+
   <!-- PUBLIC LINK -->
 
   <div class="public-link-box" *ngIf="publicLink">
@@ -95,15 +120,22 @@
 
     <div class="link-row">
 
-      <span class="link-text">{{ publicLink }}</span>
+      <span class="link-text">
+        {{ publicLink }}
+      </span>
 
-      <button class="copy-btn" (click)="copiarLink()">
+      <button
+        class="copy-btn"
+        (click)="copiarLink()">
+
         <ion-icon name="clipboard-outline"></ion-icon>
+
       </button>
 
     </div>
 
   </div>
+
 
   <!-- LISTA EJERCICIOS -->
 
@@ -121,44 +153,69 @@
             <ion-icon name="menu-outline"></ion-icon>
           </ion-reorder>
 
-          <div class="ej-order-num" *ngIf="!editando">{{ ej.orden }}</div>
+          <div class="ej-order-num" *ngIf="!editando">
+            {{ ej.orden }}
+          </div>
 
           <div class="ej-content">
 
-            <span class="ej-name">{{ ej.nombre }}</span>
+            <span class="ej-name">
+              {{ ej.nombre }}
+            </span>
 
             <!-- LECTURA -->
+
             <div class="ej-stats" *ngIf="!editando">
-              <span class="stat">{{ ej.series }} series</span>
+
+              <span class="stat">
+                {{ ej.series }} series
+              </span>
+
               <span class="stat-dot"></span>
-              <span class="stat">{{ ej.repeticiones }} reps</span>
+
+              <span class="stat">
+                {{ ej.repeticiones }} reps
+              </span>
+
             </div>
 
             <!-- EDICION -->
+
             <div class="ej-edit-params" *ngIf="editando">
 
               <div class="param-compact">
                 <label>Series</label>
-                <input type="number" min="1" [(ngModel)]="ej.series" />
+                <input
+                  type="number"
+                  min="1"
+                  [(ngModel)]="ej.series" />
               </div>
 
               <div class="param-compact">
                 <label>Reps</label>
-                <input type="number" min="1" [(ngModel)]="ej.repeticiones" />
+                <input
+                  type="number"
+                  min="1"
+                  [(ngModel)]="ej.repeticiones" />
               </div>
 
             </div>
 
           </div>
 
-          <!-- ACCIONES POR EJERCICIO -->
+          <!-- ACCIONES EJERCICIO -->
+
           <div class="ej-actions" *ngIf="editando">
 
-            <button class="ej-action-btn" (click)="duplicarEjercicio(ej.ejercicioId)">
+            <button
+              class="ej-action-btn"
+              (click)="duplicarEjercicio(ej.ejercicioId)">
               <ion-icon name="copy-outline"></ion-icon>
             </button>
 
-            <button class="ej-action-btn danger" (click)="eliminarEjercicio(ej.ejercicioId)">
+            <button
+              class="ej-action-btn danger"
+              (click)="eliminarEjercicio(ej.ejercicioId)">
               <ion-icon name="trash-outline"></ion-icon>
             </button>
 
@@ -172,15 +229,19 @@
 
   </ion-list>
 
-  <!-- AGREGAR EJERCICIO (edit mode) -->
+
+  <!-- AGREGAR EJERCICIO -->
 
   <button
     class="add-btn"
     *ngIf="editando"
     (click)="abrirSelectorEjercicios()">
+
     <ion-icon name="add-circle-outline"></ion-icon>
     <span>Agregar ejercicio</span>
+
   </button>
+
 
   <!-- CERRAR RUTINA -->
 
@@ -188,8 +249,10 @@
     class="toolbar-btn close-rutina"
     *ngIf="!editando"
     (click)="cerrarRutina()">
+
     <ion-icon name="close-circle-outline"></ion-icon>
     <span>Cerrar rutina</span>
+
   </button>
 
 </div>

@@ -251,19 +251,37 @@ class="action-card"
 
   </div>
 
-  @if (rutinaActiva) {
+  <!-- RUTINA CLÍNICA ACTIVA -->
+
+  @if (rutinaClinicaActiva) {
 
     <div class="rutina-section-label animated-item">
-      <span>Rutina activa</span>
+      <span>Rutina de sesión</span>
     </div>
 
     <app-rutina-activa
-      [rutina]="rutinaActiva">
+      [rutina]="rutinaClinicaActiva">
     </app-rutina-activa>
 
   }
 
-  @if (!rutinaActiva) {
+  <!-- RUTINA DOMICILIARIA ACTIVA -->
+
+  @if (rutinaDomiciliariaActiva) {
+
+    <div class="rutina-section-label animated-item">
+      <span>Rutina domiciliaria</span>
+    </div>
+
+    <app-rutina-activa
+      [rutina]="rutinaDomiciliariaActiva">
+    </app-rutina-activa>
+
+  }
+
+  <!-- EMPTY STATE -->
+
+  @if (!rutinaClinicaActiva && !rutinaDomiciliariaActiva) {
 
     <div class="empty-rutina animated-item">
       <ion-icon name="barbell-outline"></ion-icon>
@@ -272,6 +290,8 @@ class="action-card"
     </div>
 
   }
+
+  <!-- HISTORIAL -->
 
   @if (rutinasCompletadas.length > 0) {
 

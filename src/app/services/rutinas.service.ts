@@ -114,14 +114,34 @@ export class RutinasService extends BaseClinicService {
 
   }
 
-  getRutinaActivaPaciente(pacienteId: string): Observable<Rutina | null> {
+  getRutinaClinicaActiva(pacienteId: string): Observable<Rutina | null> {
 
     const ref = collection(this.firestore, this.pacientePath);
 
     const q = query(
       ref,
       where('pacienteId', '==', pacienteId),
-      where('activa', '==', true),
+      where('tipo', '==', 'clinica'),
+      where('estado', '==', 'activa'),
+      limit(1)
+    );
+
+    return (collectionData(q, { idField: 'id' }) as Observable<RutinaPaciente[]>)
+      .pipe(
+        map(data => data.length ? pacienteToRutina(data[0]) : null)
+      );
+
+  }
+
+  getRutinaDomiciliariaActiva(pacienteId: string): Observable<Rutina | null> {
+
+    const ref = collection(this.firestore, this.pacientePath);
+
+    const q = query(
+      ref,
+      where('pacienteId', '==', pacienteId),
+      where('tipo', '==', 'domiciliaria'),
+      where('estado', '==', 'activa'),
       limit(1)
     );
 
@@ -150,7 +170,6 @@ export class RutinasService extends BaseClinicService {
       descripcion: rutina.descripcion ?? '',
       ejercicios: rutina.ejercicios,
       pacienteId: rutina.pacienteId,
-      activa: rutina.activa ?? true,
       clinicId: this.clinicId,
       createdBy: this.professionalId
     };
@@ -163,9 +182,8 @@ export class RutinasService extends BaseClinicService {
       data.tipo = rutina.tipoRutina;
     }
 
-    if (rutina.estado) {
-      data.estado = rutina.estado;
-    }
+    
+      data.estado = rutina.estado ?? 'activa';
 
     if (rutina.publicToken) {
       data.publicToken = rutina.publicToken;
@@ -199,15 +217,12 @@ export class RutinasService extends BaseClinicService {
 
   }
 
-  async activarRutina(rutinaId: string, activa: boolean): Promise<void> {
+  async activarRutina(rutinaId: string, estado: 'activa' | 'cerrada'): Promise<void> {
 
-    const updates: any = { activa };
+    const updates: any = { estado };
 
-    if (!activa) {
-      updates.estado = 'cerrada';
+    if (estado === 'cerrada') {
       updates.fechaCompletada = serverTimestamp();
-    } else {
-      updates.estado = 'activa';
     }
 
     await updateDoc(
@@ -237,7 +252,6 @@ export class RutinasService extends BaseClinicService {
       ejercicios,
       tipo: 'clinica' as TipoRutina,
       estado: 'activa',
-      activa: true,
       clinicId: this.clinicId,
       createdBy: this.professionalId,
       createdAt: serverTimestamp()
@@ -258,7 +272,7 @@ export class RutinasService extends BaseClinicService {
     await updateDoc(
       doc(this.firestore, `${this.pacientePath}/${rutinaId}`),
       {
-        activa: false,
+        
         estado: 'cerrada',
         fechaCompletada: serverTimestamp()
       }
@@ -283,12 +297,13 @@ export class RutinasService extends BaseClinicService {
     const q = query(
       rutinasRef,
       where('pacienteId', '==', pacienteId),
-      where('activa', '==', true)
+      where('tipo', '==', 'domiciliaria'),
+      where('estado', '==', 'activa')
     );
 
     const snapshot = await getDocs(q);
 
-    const token = this.generarToken();
+    const token = crypto.randomUUID();
 
     let newId = '';
 
@@ -296,7 +311,7 @@ export class RutinasService extends BaseClinicService {
 
       snapshot.forEach(docSnap => {
         transaction.update(docSnap.ref, {
-          activa: false,
+          
           estado: 'cerrada',
           fechaCompletada: serverTimestamp()
         });
@@ -312,7 +327,6 @@ export class RutinasService extends BaseClinicService {
         ejercicios,
         tipo: 'domiciliaria' as TipoRutina,
         estado: 'activa',
-        activa: true,
         publicToken: token,
         publicEnabled: true,
         clinicId: this.clinicId,
@@ -334,7 +348,7 @@ export class RutinasService extends BaseClinicService {
 
   async habilitarAccesoPublico(rutinaId: string): Promise<string> {
 
-    const token = this.generarToken();
+    const token = crypto.randomUUID();
 
     await updateDoc(
       doc(this.firestore, `${this.pacientePath}/${rutinaId}`),
@@ -394,18 +408,19 @@ export class RutinasService extends BaseClinicService {
     const q = query(
       rutinasRef,
       where('pacienteId', '==', pacienteId),
-      where('activa', '==', true)
+      where('tipo', '==', 'domiciliaria'),
+      where('estado', '==', 'activa')
     );
 
     const snapshot = await getDocs(q);
 
-    const token = tipoRutina === 'domiciliaria' ? this.generarToken() : undefined;
+    const token = tipoRutina === 'domiciliaria' ? crypto.randomUUID() : undefined;
 
     await runTransaction(this.firestore, async (transaction) => {
 
       snapshot.forEach(docSnap => {
         transaction.update(docSnap.ref, {
-          activa: false,
+          
           estado: 'cerrada',
           fechaCompletada: serverTimestamp()
         });
@@ -421,7 +436,6 @@ export class RutinasService extends BaseClinicService {
         templateId: template.id,
         tipo: tipoRutina,
         estado: 'activa',
-        activa: true,
         clinicId: this.clinicId,
         createdBy: this.professionalId,
         createdAt: serverTimestamp()
@@ -449,23 +463,6 @@ export class RutinasService extends BaseClinicService {
     }
 
     return this.guardarRutinaPaciente(rutina);
-
-  }
-
-  // ========================================
-  // PRIVATE HELPERS
-  // ========================================
-
-  private generarToken(): string {
-
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let token = '';
-
-    for (let i = 0; i < 16; i++) {
-      token += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    return token;
 
   }
 

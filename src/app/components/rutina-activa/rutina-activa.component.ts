@@ -191,7 +191,10 @@ export class RutinaActivaComponent {
       id: undefined,
       tipo: 'template',
       pacienteId: undefined,
-      activa: undefined
+      estado: undefined,
+      publicToken: undefined,
+      publicEnabled: undefined,
+      clinicId: this.rutina.clinicId
     };
 
     await this.rutinasService.guardarTemplate(templateRutina);
@@ -236,11 +239,15 @@ export class RutinaActivaComponent {
 
     if (!this.rutina?.id) return;
 
+    const baseUrl = window.location.origin;
+
+    // Si ya existe token activo
     if (this.rutina.publicToken && this.rutina.publicEnabled) {
-      this.publicLink = `${window.location.origin}/r/${this.rutina.publicToken}`;
+      this.publicLink = `${baseUrl}/r/${this.rutina.publicToken}`;
       return;
     }
 
+    // Crear token público
     const token = await this.rutinasService.habilitarAccesoPublico(
       this.rutina.id
     );
@@ -248,15 +255,42 @@ export class RutinaActivaComponent {
     this.rutina.publicToken = token;
     this.rutina.publicEnabled = true;
 
-    this.publicLink = `${window.location.origin}/r/${token}`;
+    this.publicLink = `${baseUrl}/r/${token}`;
+
+  }
+
+  async previewRutinaPaciente() {
+
+    if (!this.rutina?.id) return;
+
+    const baseUrl = window.location.origin;
+
+    if (!this.rutina.publicToken) {
+
+      const token = await this.rutinasService.habilitarAccesoPublico(
+        this.rutina.id
+      );
+
+      this.rutina.publicToken = token;
+      this.rutina.publicEnabled = true;
+
+    }
+
+    const url = `${baseUrl}/r/${this.rutina.publicToken}`;
+
+    window.open(url, '_blank');
 
   }
 
   copiarLink() {
 
-    if (!this.publicLink) return;
+    if (!this.rutina?.publicToken) return;
 
-    navigator.clipboard.writeText(this.publicLink);
+    const baseUrl = window.location.origin;
+
+    const link = `${baseUrl}/r/${this.rutina.publicToken}`;
+
+    navigator.clipboard.writeText(link);
 
     alert('Link copiado al portapapeles');
 
@@ -279,7 +313,7 @@ export class RutinaActivaComponent {
           text: 'Cerrar',
           role: 'destructive',
           handler: async () => {
-            await this.rutinasService.activarRutina(this.rutina!.id!, false);
+            await this.rutinasService.activarRutina(this.rutina!.id!, 'cerrada');
           }
         }
       ]
