@@ -37,7 +37,8 @@ interface EjercicioLocal {
   selector: 'app-rutina-publica',
   standalone: true,
   imports: [IonicModule, CommonModule, YoutubeEmbedPipe],
-  templateUrl: './rutina-publica.page.html'
+  templateUrl: './rutina-publica.page.html',
+  styleUrls: ['./rutina-publica.page.scss']
 })
 export class RutinaPublicaPage implements OnInit {
 
