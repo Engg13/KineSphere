@@ -202,6 +202,40 @@ rules_version = '2';
 
     match /clinics/{clinicIdDoc}/rutinas_paciente/{id} {
 
+        // acceso interno (staff)
+        allow read: if sameClinicPath(clinicIdDoc);
+
+        // acceso público por token
+        allow get: if resource.data.publicEnabled == true;
+
+        allow create: if sameClinicPath(clinicIdDoc);
+
+        allow update: if sameClinicPath(clinicIdDoc);
+
+        allow delete: if sameClinicPath(clinicIdDoc) &&
+                      isAdmin();
+      }
+
+    /* ================= SESIONES RUTINA ================= */
+
+    match /clinics/{clinicIdDoc}/rutinas_paciente/{rutinaId}/sesiones/{id} {
+
+      allow read: if sameClinicPath(clinicIdDoc);
+
+      allow create: if sameClinicPath(clinicIdDoc) &&
+              request.resource.data.clinicId == clinicIdDoc;
+
+      allow update: if sameClinicPath(clinicIdDoc);
+
+      allow delete: if sameClinicPath(clinicIdDoc) &&
+                    isAdmin();
+
+    }
+
+    /* ================= SESIONES RUTINA ================= */
+
+    match /clinics/{clinicIdDoc}/rutina_sesiones/{id} {
+
       allow read: if sameClinicPath(clinicIdDoc);
 
       allow create: if sameClinicPath(clinicIdDoc);
@@ -213,9 +247,9 @@ rules_version = '2';
 
     }
 
-    /* ================= SESIONES RUTINA ================= */
+    /* ================= LOGS RUTINA ================= */
 
-    match /clinics/{clinicIdDoc}/rutinas_paciente/{rutinaId}/sesiones/{id} {
+    match /clinics/{clinicIdDoc}/rutina_logs/{id} {
 
       allow read: if sameClinicPath(clinicIdDoc);
 

@@ -1,0 +1,55 @@
+.rutina-publica {
+
+  padding: 16px;
+  max-width: 600px;
+  margin: auto;
+
+}
+
+.titulo-rutina {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.progreso-box {
+  margin-bottom: 24px;
+}
+
+.progreso-text {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.ejercicio-card {
+  margin-bottom: 16px;
+}
+
+.ejercicio-notas {
+  margin-bottom: 12px;
+  color: var(--ion-color-medium);
+}
+
+.series-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pain-section {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.pain-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0 20px;
+}
+
+.sesion-ok {
+  text-align: center;
+  margin-top: 30px;
+}

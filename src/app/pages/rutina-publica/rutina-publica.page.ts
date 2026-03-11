@@ -37,13 +37,14 @@ interface EjercicioLocal {
   selector: 'app-rutina-publica',
   standalone: true,
   imports: [IonicModule, CommonModule, YoutubeEmbedPipe],
-  templateUrl: './rutina-publica.page.html'
+  templateUrl: './rutina-publica.page.html',
+  styleUrls: ['./rutina-publica.page.scss']
 })
 export class RutinaPublicaPage implements OnInit {
 
   private route = inject(ActivatedRoute);
   private firestore = inject(Firestore);
-  private sesionesService: RutinasSesionesService;
+  private sesionesService = inject(RutinasSesionesService);
 
   rutina: any = null;
   rutinaId: string | null = null;
@@ -65,17 +66,25 @@ export class RutinaPublicaPage implements OnInit {
         return;
       }
 
-      // Query across all clinics using collectionGroup
-      const groupRef = collectionGroup(this.firestore, 'rutinas_paciente');
+      console.log('TOKEN', token);
+
+      const clinicId = 'clinic_kinesiologia_fundadores';
+
+      const ref = collection(
+        this.firestore,
+        `clinics/${clinicId}/rutinas_paciente`
+      );
 
       const q = query(
-        groupRef,
+        ref,
         where('publicToken', '==', token),
         where('publicEnabled', '==', true),
         limit(1)
       );
 
       const snap = await getDocs(q);
+
+      console.log('QUERY RESULT', snap);
 
       if (!snap.empty) {
 
@@ -85,15 +94,20 @@ export class RutinaPublicaPage implements OnInit {
         this.rutinaId = docSnap.id;
         this.rutinaPath = docSnap.ref.path;
 
-        // Build local exercise state for UI tracking
         this.ejerciciosLocales = this.buildEjerciciosLocales(
           this.rutina.ejercicios || []
         );
 
+      } else {
+
+        console.warn('Rutina no encontrada para token');
+
       }
 
     } catch (err) {
+
       console.error('Error cargando rutina publica', err);
+
     }
 
     this.cargando = false;

@@ -1,127 +1,157 @@
 <ion-header>
-  <ion-toolbar color="primary">
+  <ion-toolbar>
     <ion-title>Rutina de ejercicios</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content>
 
-  <!-- Cargando -->
-  <div *ngIf="cargando" class="ion-text-center">
-    <ion-spinner></ion-spinner>
-    <p>Cargando rutina...</p>
-  </div>
+  <!-- LOADING -->
 
-  <!-- Rutina no encontrada -->
-  <div *ngIf="!cargando && !rutina" class="ion-text-center">
-    <h2>Rutina no encontrada</h2>
-  </div>
-
-  <!-- Rutina -->
-  <div *ngIf="rutina">
-
-    <h2 class="ion-text-center">
-      {{ rutina.nombre }}
-    </h2>
-
-    <!-- PROGRESO -->
-    <div style="margin:20px 0">
-
-      <ion-progress-bar
-        [value]="getProgreso()/100"
-        color="success">
-      </ion-progress-bar>
-
-      <p class="ion-text-center">
-        {{ getProgreso() }} % completado
-      </p>
-
+  @if (cargando) {
+    <div class="loading-container">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando rutina...</p>
     </div>
+  }
 
-    <!-- EJERCICIOS -->
-    <ion-card *ngFor="let ej of ejerciciosLocales; let i = index">
+  <!-- RUTINA NO ENCONTRADA -->
 
-      <ion-card-header>
-        <ion-card-title>
-          {{ i + 1 }}. {{ ej.nombre }}
-        </ion-card-title>
-      </ion-card-header>
+  @if (!cargando && !rutina) {
+    <div class="loading-container">
+      <h2>Rutina no encontrada</h2>
+    </div>
+  }
 
-      <ion-card-content>
+  <!-- RUTINA -->
 
-        <p *ngIf="ej.notas">
-          {{ ej.notas }}
+  @if (!cargando && rutina) {
+
+    <div class="editor-container rutina-publica">
+
+      <h2 class="titulo-rutina">
+        {{ rutina.nombre }}
+      </h2>
+
+      <!-- PROGRESO -->
+
+      <div class="progreso-box">
+
+        <ion-progress-bar
+          [value]="getProgreso()/100"
+          >
+        </ion-progress-bar>
+
+        <p class="progreso-text">
+          {{ getProgreso() }} % completado
         </p>
 
-        <!-- SERIES -->
-        <div style="margin-top:10px">
+      </div>
 
-          <ion-button
-            size="small"
-            *ngFor="let s of ej.series; let j = index"
-            [color]="s.completada ? 'success' : 'medium'"
-            (click)="toggleSerie(i,j)"
-            [disabled]="sesionGuardada"
-            style="margin:4px"
-          >
+      <!-- EJERCICIOS -->
 
-            Serie {{ s.numero }} &bull; {{ s.repeticiones ?? '-' }} reps
+      @for (ej of ejerciciosLocales; track ej.ejercicioId; let i = $index) {
 
-          </ion-button>
+        <ion-card class="ejercicio-card">
+
+          <ion-card-header>
+            <ion-card-title>
+              {{ i + 1 }}. {{ ej.nombre }}
+            </ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+
+            @if (ej.notas) {
+              <p class="ejercicio-notas">
+                {{ ej.notas }}
+              </p>
+            }
+
+            <!-- SERIES -->
+
+            <div class="series-grid">
+
+              @for (s of ej.series; track s.numero; let j = $index) {
+
+                <ion-button
+                  size="small"
+                  [color]="s.completada ? 'success' : 'medium'"
+                  (click)="toggleSerie(i,j)"
+                  [disabled]="sesionGuardada"
+                >
+                  Serie {{ s.numero }}
+                  <br>
+                  {{ s.repeticiones ?? '-' }} reps
+                </ion-button>
+
+              }
+
+            </div>
+
+          </ion-card-content>
+
+        </ion-card>
+
+      }
+
+      <!-- SESION GUARDADA -->
+
+      @if (sesionGuardada) {
+
+        <div class="sesion-ok">
+
+          <h2>Sesión guardada</h2>
+          <p>¡Excelente trabajo!</p>
 
         </div>
 
-      </ion-card-content>
+      }
 
-    </ion-card>
+      <!-- FINALIZAR SESION -->
 
-    <!-- SESSION SAVED -->
-    <div
-      *ngIf="sesionGuardada"
-      class="ion-text-center"
-      style="margin-top:30px"
-    >
+      @if (getProgreso() === 100 && !sesionGuardada) {
 
-      <h2>Sesion guardada</h2>
-      <p>Excelente trabajo!</p>
+        <div class="pain-section">
 
-    </div>
+          <h3>¿Cómo estuvo el dolor durante la rutina?</h3>
 
-    <!-- FINISH SESSION -->
-    <div *ngIf="getProgreso() === 100 && !sesionGuardada" style="margin-top:30px">
+          <div class="pain-grid">
 
-      <h3 class="ion-text-center">
-        Como estuvo el dolor durante la rutina?
-      </h3>
+            @for (n of [0,1,2,3,4,5,6,7,8,9,10]; track n) {
 
-      <div style="display:flex;flex-wrap:wrap;justify-content:center;margin-top:10px">
+              <ion-button
+                size="small"
+                [color]="painScore === n ? 'danger' : 'medium'"
+                (click)="painScore = n"
+              >
+                {{ n }}
+              </ion-button>
 
-        <ion-button
-          *ngFor="let n of [0,1,2,3,4,5,6,7,8,9,10]"
-          size="small"
-          [color]="painScore === n ? 'danger' : 'medium'"
-          (click)="painScore = n"
-          style="margin:4px"
-        >
-          {{ n }}
-        </ion-button>
+            }
 
-      </div>
+          </div>
 
-      <div class="ion-text-center" style="margin-top:15px">
+          <button
+            class="save-btn"
+            [disabled]="painScore === null || guardandoSesion"
+            [class.disabled]="painScore === null || guardandoSesion"
+            (click)="finalizarSesion()">
 
-        <ion-button
-          color="primary"
-          [disabled]="painScore === null || guardandoSesion"
-          (click)="finalizarSesion()"
-        >
-          Finalizar sesion
-        </ion-button>
+            @if (guardandoSesion) {
+              <ion-spinner name="crescent" color="light"></ion-spinner>
+            } @else {
+              Finalizar sesión
+            }
 
-      </div>
+          </button>
+
+        </div>
+
+      }
 
     </div>
 
-  </div>
+  }
 
 </ion-content>
