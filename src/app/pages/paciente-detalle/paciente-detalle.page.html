@@ -279,6 +279,28 @@ class="action-card"
 
   }
 
+  @if (rutinaDomiciliariaActiva && adherenciaDomiciliaria !== null) {
+
+    <div class="adherencia-card animated-item">
+
+      <div class="adherencia-header">
+        <span class="label">Adherencia domiciliaria</span>
+        <span class="value">{{ adherenciaDomiciliaria }}%</span>
+      </div>
+
+      <div class="progress-bar">
+
+        <div
+          class="progress-fill"
+          [style.width.%]="adherenciaDomiciliaria">
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
   <!-- EMPTY STATE -->
 
   @if (!rutinaClinicaActiva && !rutinaDomiciliariaActiva) {

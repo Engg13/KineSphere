@@ -6,11 +6,12 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  writeBatch,
+  doc
 } from '@angular/fire/firestore';
-
-import { Observable } from 'rxjs';
-
+import { Rutina } from '../models/rutina.model';
+import { Observable, map } from 'rxjs';
 import { BaseClinicService } from '../core/services/base-clinic.service';
 import { RutinaSesion, RutinaLog } from '../models/rutina-sesion.model';
 
@@ -85,19 +86,33 @@ export class RutinasSesionesService extends BaseClinicService {
 
     const ref = collection(this.firestore, this.logsPath);
 
-    const docRef = await addDoc(ref, log);
+    const docRef = await addDoc(ref, {
+      ...log,
+      createdAt: serverTimestamp()
+    });
 
     return docRef.id;
 
-  }
+}
 
   async registrarLogs(logs: Omit<RutinaLog, 'id'>[]): Promise<void> {
 
-    const ref = collection(this.firestore, this.logsPath);
+    const batch = writeBatch(this.firestore);
 
     for (const log of logs) {
-      await addDoc(ref, log);
+
+      const logRef = doc(
+        collection(this.firestore, this.logsPath)
+      );
+
+      batch.set(logRef, {
+        ...log,
+        createdAt: serverTimestamp()
+      });
+
     }
+
+    await batch.commit();
 
   }
 
@@ -111,6 +126,34 @@ export class RutinasSesionesService extends BaseClinicService {
     );
 
     return collectionData(q, { idField: 'id' }) as Observable<RutinaLog[]>;
+
+  }
+
+  getAdherenciaRutina(rutina: Rutina): Observable<number> {
+
+    const ref = collection(this.firestore, this.logsPath);
+
+    const q = query(
+      ref,
+      where('rutinaId', '==', rutina.id)
+    );
+
+    const totalSeries = rutina.ejercicios
+      .reduce((acc, ej) => acc + (ej.series || 0), 0);
+
+    return collectionData(q).pipe(
+
+      map(logs => {
+
+        const realizadas = logs.length;
+
+        if (!totalSeries) return 0;
+
+        return Math.round((realizadas / totalSeries) * 100);
+
+      })
+
+    );
 
   }
 

@@ -614,4 +614,31 @@
   span {
     color: #b91c1c;
   }
+
+  .adherencia-card {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--ion-color-light);
+  }
+
+  .adherencia-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: #e5e5e5;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--ion-color-success);
+    transition: width 0.3s ease;
+  }
 }

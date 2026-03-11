@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { YoutubeEmbedPipe } from '../../pipes/youtube-embed.pipe';
-
+import { RutinasSesionesService } from '../../services/rutinas-sesiones.service';
 import {
   Firestore,
   collectionGroup,
@@ -12,6 +12,8 @@ import {
   where,
   limit,
   getDocs,
+  doc,
+  writeBatch,
   addDoc,
   serverTimestamp
 } from '@angular/fire/firestore';
@@ -41,6 +43,7 @@ export class RutinaPublicaPage implements OnInit {
 
   private route = inject(ActivatedRoute);
   private firestore = inject(Firestore);
+  private sesionesService: RutinasSesionesService;
 
   rutina: any = null;
   rutinaId: string | null = null;
@@ -178,58 +181,63 @@ export class RutinaPublicaPage implements OnInit {
 
     try {
 
-      // Extract clinicId from path: clinics/{clinicId}/rutinas_paciente/{id}
+      // clinics/{clinicId}/rutinas_paciente/{rutinaId}
       const pathParts = this.rutinaPath.split('/');
       const clinicId = pathParts[1];
 
-      // Create session in top-level collection
-      const sesionesRef = collection(
-        this.firestore,
-        `clinics/${clinicId}/rutina_sesiones`
-      );
+      // =========================
+      // Crear sesión
+      // =========================
 
-      const sesionDoc = await addDoc(sesionesRef, {
+      const sesionId = await this.sesionesService.registrarSesion({
         rutinaId: this.rutinaId,
         pacienteId: this.rutina.pacienteId,
         clinicId,
         tipoSesion: 'domiciliaria',
         fecha: new Date(),
         painScore: this.painScore,
-        comentario: '',
-        createdAt: serverTimestamp()
+        comentario: ''
       });
 
-      // Create individual logs
-      const logsRef = collection(
-        this.firestore,
-        `clinics/${clinicId}/rutina_logs`
-      );
+      // =========================
+      // Crear logs
+      // =========================
+
+      const logs = [];
 
       for (const ej of this.ejerciciosLocales) {
 
         for (const serie of ej.series) {
 
-          await addDoc(logsRef, {
-            sesionId: sesionDoc.id,
+          if (!serie.completada) continue;
+
+          logs.push({
+            sesionId,
+            rutinaId: this.rutinaId,
+            pacienteId: this.rutina.pacienteId,
             ejercicioId: ej.ejercicioId,
             serie: serie.numero,
-            completado: serie.completada,
-            dolor: this.painScore,
-            repeticiones: serie.repeticiones
+            repeticiones: serie.repeticiones,
+            dolor: this.painScore
           });
 
         }
 
       }
 
+      if (logs.length) {
+        await this.sesionesService.registrarLogs(logs);
+      }
+
       this.sesionGuardada = true;
 
     } catch (err) {
-      console.error('Error guardando sesion', err);
+
+      console.error('Error guardando sesión', err);
+
     }
 
     this.guardandoSesion = false;
 
   }
-
 }

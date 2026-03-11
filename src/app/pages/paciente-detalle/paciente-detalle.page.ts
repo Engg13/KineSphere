@@ -9,6 +9,7 @@ import { FlujoClinicoService } from 'src/app/services/flujoclinico.service';
 import { Rutina } from '../../models/rutina.model';
 import { RutinasService } from '../../services/rutinas.service';
 import { RutinaActivaComponent } from '../../components/rutina-activa/rutina-activa.component';
+import { RutinasSesionesService } from '../../services/rutinas-sesiones.service';
 
 @Component({
   selector: 'app-paciente-detalle',
@@ -32,11 +33,13 @@ export class PacienteDetallePage implements OnDestroy {
   rutinaClinicaActiva: Rutina | null = null;
   rutinaDomiciliariaActiva: Rutina | null = null;
   tabActual: 'info' | 'sesiones' | 'rutinas' = 'info';
+  adherenciaDomiciliaria: number | null = null;
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
   private rutinaClinicaSub?: Subscription;
   private rutinaDomiciliariaSub?: Subscription;
+  private adherenciaSub?: Subscription;
 
 
   constructor(
@@ -47,6 +50,7 @@ export class PacienteDetallePage implements OnDestroy {
     private alertCtrl: AlertController,
     private flujoClinicoService: FlujoClinicoService,
     private rutinasService: RutinasService,
+    private rutinasSesionesService: RutinasSesionesService
   ) {}
 
   // ==============================
@@ -97,6 +101,11 @@ export class PacienteDetallePage implements OnDestroy {
     if (this.rutinasSub) {
       this.rutinasSub.unsubscribe();
       this.rutinasSub = undefined;
+    }
+
+    if (this.adherenciaSub) {
+      this.adherenciaSub.unsubscribe();
+      this.adherenciaSub = undefined;
     }
 
     if (this.evolucionesSub) {
@@ -481,27 +490,73 @@ export class PacienteDetallePage implements OnDestroy {
       this.rutinaDomiciliariaSub.unsubscribe();
     }
 
+    // =========================
+    // Rutina clínica
+    // =========================
+
     this.rutinaClinicaSub = this.rutinasService
       .getRutinaClinicaActiva(pacienteId)
       .subscribe({
         next: rutina => {
+
           this.rutinaClinicaActiva = rutina;
+
         },
         error: err => {
+
           console.error('Error cargando rutina clinica', err);
           this.rutinaClinicaActiva = null;
+
         }
       });
+
+    // =========================
+    // Rutina domiciliaria
+    // =========================
 
     this.rutinaDomiciliariaSub = this.rutinasService
       .getRutinaDomiciliariaActiva(pacienteId)
       .subscribe({
         next: rutina => {
+
           this.rutinaDomiciliariaActiva = rutina;
+
+          // Cancelar suscripción anterior
+          if (this.adherenciaSub) {
+            this.adherenciaSub.unsubscribe();
+            this.adherenciaSub = undefined;
+          }
+
+          // Si no hay rutina domiciliaria
+          if (!rutina) {
+
+            this.adherenciaDomiciliaria = null;
+            return;
+
+          }
+
+          // Calcular adherencia
+          this.adherenciaSub = this.rutinasSesionesService
+            .getAdherenciaRutina(rutina)
+            .subscribe(valor => {
+
+              this.adherenciaDomiciliaria = valor;
+
+            });
+
         },
         error: err => {
+
           console.error('Error cargando rutina domiciliaria', err);
+
           this.rutinaDomiciliariaActiva = null;
+          this.adherenciaDomiciliaria = null;
+
+          if (this.adherenciaSub) {
+            this.adherenciaSub.unsubscribe();
+            this.adherenciaSub = undefined;
+          }
+
         }
       });
 
