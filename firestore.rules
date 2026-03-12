@@ -113,7 +113,7 @@ rules_version = '2';
 
   match /ejercicios_globales/{id} {
 
-    allow read: if hasProfile();
+    allow read: if true;
 
     allow create: if hasProfile();
 
@@ -206,7 +206,7 @@ rules_version = '2';
         allow read: if sameClinicPath(clinicIdDoc);
 
         // acceso público por token
-        allow get: if resource.data.publicEnabled == true;
+        allow read: if resource.data.publicEnabled == true;
 
         allow create: if sameClinicPath(clinicIdDoc);
 
@@ -238,7 +238,7 @@ rules_version = '2';
 
       allow read: if sameClinicPath(clinicIdDoc);
 
-      allow create: if sameClinicPath(clinicIdDoc);
+      allow create: if true;
 
       allow update: if sameClinicPath(clinicIdDoc);
 
@@ -253,7 +253,7 @@ rules_version = '2';
 
       allow read: if sameClinicPath(clinicIdDoc);
 
-      allow create: if sameClinicPath(clinicIdDoc);
+      allow create: if true;
 
       allow update: if sameClinicPath(clinicIdDoc);
 

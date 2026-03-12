@@ -2,8 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
-import { YoutubeEmbedPipe } from '../../pipes/youtube-embed.pipe';
 import { RutinasSesionesService } from '../../services/rutinas-sesiones.service';
+import { FormsModule } from '@angular/forms';
 import {
   Firestore,
   collectionGroup,
@@ -17,7 +17,6 @@ import {
   addDoc,
   serverTimestamp
 } from '@angular/fire/firestore';
-
 import { RutinaTemplateEjercicio } from '../../models/rutina-ejercicio.model';
 
 interface SerieLocal {
@@ -30,13 +29,17 @@ interface EjercicioLocal {
   ejercicioId: string;
   nombre: string;
   notas?: string;
+  videoUrl?: string;
+  videoThumbnail?: string;
+  videoOpen?: boolean; 
   series: SerieLocal[];
 }
+
 
 @Component({
   selector: 'app-rutina-publica',
   standalone: true,
-  imports: [IonicModule, CommonModule, YoutubeEmbedPipe],
+  imports: [IonicModule, CommonModule, FormsModule],
   templateUrl: './rutina-publica.page.html',
   styleUrls: ['./rutina-publica.page.scss']
 })
@@ -46,6 +49,7 @@ export class RutinaPublicaPage implements OnInit {
   private firestore = inject(Firestore);
   private sesionesService = inject(RutinasSesionesService);
 
+
   rutina: any = null;
   rutinaId: string | null = null;
   rutinaPath: string | null = null;
@@ -54,8 +58,11 @@ export class RutinaPublicaPage implements OnInit {
   painScore: number | null = null;
   guardandoSesion = false;
   sesionGuardada = false;
+  ejerciciosGlobales: Record<string, any> = {};
+  
 
   async ngOnInit() {
+    
 
     try {
 
@@ -66,9 +73,11 @@ export class RutinaPublicaPage implements OnInit {
         return;
       }
 
-      console.log('TOKEN', token);
-
       const clinicId = 'clinic_kinesiologia_fundadores';
+
+      // =============================
+      // 1️⃣ Buscar rutina por token
+      // =============================
 
       const ref = collection(
         this.firestore,
@@ -84,25 +93,52 @@ export class RutinaPublicaPage implements OnInit {
 
       const snap = await getDocs(q);
 
-      console.log('QUERY RESULT', snap);
+      if (snap.empty) {
+        console.warn('Rutina no encontrada para token');
+        this.cargando = false;
+        return;
+      }
 
-      if (!snap.empty) {
+      const docSnap = snap.docs[0];
 
-        const docSnap = snap.docs[0];
+      this.rutina = docSnap.data();
+      this.rutinaId = docSnap.id;
+      this.rutinaPath = docSnap.ref.path;
 
-        this.rutina = docSnap.data();
-        this.rutinaId = docSnap.id;
-        this.rutinaPath = docSnap.ref.path;
+      // =============================
+      // 2️⃣ Obtener IDs de ejercicios
+      // =============================
 
-        this.ejerciciosLocales = this.buildEjerciciosLocales(
-          this.rutina.ejercicios || []
+      const ejerciciosIds = (this.rutina.ejercicios || []).map(
+        (e: any) => e.ejercicioId
+      );
+
+      if (ejerciciosIds.length > 0) {
+
+        const ejerciciosRef = collection(this.firestore, 'ejercicios_globales');
+
+        const ejerciciosQuery = query(
+          ejerciciosRef,
+          where('__name__', 'in', ejerciciosIds)
         );
 
-      } else {
+        const ejerciciosSnap = await getDocs(ejerciciosQuery);
 
-        console.warn('Rutina no encontrada para token');
+        this.ejerciciosGlobales = {};
+
+        ejerciciosSnap.forEach(doc => {
+          this.ejerciciosGlobales[doc.id] = doc.data();
+        });
 
       }
+
+      // =============================
+      // 3️⃣ Construir ejercicios locales
+      // =============================
+
+      this.ejerciciosLocales = this.buildEjerciciosLocales(
+        this.rutina.ejercicios || []
+      );
 
     } catch (err) {
 
@@ -134,10 +170,15 @@ export class RutinaPublicaPage implements OnInit {
         });
       }
 
+      const ejercicioGlobal = this.ejerciciosGlobales[ej.ejercicioId];
+
       return {
         ejercicioId: ej.ejercicioId,
         nombre: ej.nombre,
         notas: ej.notas,
+        videoUrl: ejercicioGlobal?.videoUrl,
+        videoThumbnail: ejercicioGlobal?.videoThumbnail,
+        videoOpen: false,
         series
       };
 
@@ -254,4 +295,17 @@ export class RutinaPublicaPage implements OnInit {
     this.guardandoSesion = false;
 
   }
+
+  reproducirVideo(event: any) {
+
+    const video = event.target as HTMLVideoElement;
+
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
+
+  }
+  
 }

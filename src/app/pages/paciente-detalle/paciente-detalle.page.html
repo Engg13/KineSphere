@@ -226,12 +226,12 @@ class="action-card"
 
 </div>
 
+  }
 }
 
-
-<!-- TAB RUTINAS -->
-
 @if (tabActual === 'rutinas') {
+
+  <!-- ACCIONES -->
 
   <div class="rutina-actions-row animated-item">
 
@@ -251,12 +251,13 @@ class="action-card"
 
   </div>
 
+
   <!-- RUTINA CLÍNICA ACTIVA -->
 
   @if (rutinaClinicaActiva) {
 
     <div class="rutina-section-label animated-item">
-      <span>Rutina de sesión</span>
+      <span>Rutina de sesión (clínica)</span>
     </div>
 
     <app-rutina-activa
@@ -264,6 +265,7 @@ class="action-card"
     </app-rutina-activa>
 
   }
+
 
   <!-- RUTINA DOMICILIARIA ACTIVA -->
 
@@ -279,6 +281,9 @@ class="action-card"
 
   }
 
+
+  <!-- ADHERENCIA DOMICILIARIA -->
+
   @if (rutinaDomiciliariaActiva && adherenciaDomiciliaria !== null) {
 
     <div class="adherencia-card animated-item">
@@ -289,73 +294,115 @@ class="action-card"
       </div>
 
       <div class="progress-bar">
-
         <div
           class="progress-fill"
           [style.width.%]="adherenciaDomiciliaria">
         </div>
-
       </div>
 
     </div>
 
   }
 
+
+  <!-- HISTORIAL CLÍNICO -->
+
+  @if (rutinasCompletadas.length > 0) {
+
+  <div class="sessions-card animated-item">
+
+  <h3 class="section-title">Rutinas de sesión realizadas</h3>
+
+  @for (rutina of rutinasCompletadas; track rutina.id) {
+
+  <div class="session-item">
+
+  <div class="session-number rutina-icon">
+  <ion-icon name="fitness-outline"></ion-icon>
+  </div>
+
+  <div class="session-info">
+
+  <span class="session-date">
+  {{ rutina.nombre }}
+  </span>
+
+  <span class="session-eva">
+  {{ rutina.ejercicios.length }} ejercicios
+  </span>
+
+  <span class="session-obs">
+  Realizada:
+  {{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
+  </span>
+
+  </div>
+
+  </div>
+
+  }
+
+  </div>
+
+  }
+
+
+  <!-- HISTORIAL DOMICILIARIO -->
+
+  @if (sesionesDomiciliarias.length > 0) {
+
+  <div class="sessions-card animated-item">
+
+  <h3 class="section-title">Rutinas domiciliarias realizadas</h3>
+
+  @for (sesion of sesionesDomiciliarias; track sesion.id) {
+
+  <div class="session-item">
+
+  <div class="session-number rutina-icon">
+  <ion-icon name="home-outline"></ion-icon>
+  </div>
+
+  <div class="session-info">
+
+  <span class="session-date">
+  {{ formatearFecha(sesion.fecha) }}
+  </span>
+
+  <span class="session-eva">
+  Dolor: {{ sesion.painScore ?? '-' }}/10
+  </span>
+
+  </div>
+
+  </div>
+
+  }
+
+  </div>
+
+  }
+
+
   <!-- EMPTY STATE -->
 
   @if (!rutinaClinicaActiva && !rutinaDomiciliariaActiva) {
 
     <div class="empty-rutina animated-item">
+
       <ion-icon name="barbell-outline"></ion-icon>
+
       <p>Sin rutina activa</p>
-      <span>Crea una nueva o asigna desde plantilla</span>
-    </div>
 
-  }
-
-  <!-- HISTORIAL -->
-
-  @if (rutinasCompletadas.length > 0) {
-
-    <div class="sessions-card animated-item">
-
-      <h3 class="section-title">Rutinas completadas</h3>
-
-      @for (rutina of rutinasCompletadas; track rutina.id) {
-
-        <div class="session-item">
-
-          <div class="session-number rutina-icon">
-            <ion-icon name="barbell-outline"></ion-icon>
-          </div>
-
-          <div class="session-info">
-
-            <span class="session-date">
-              {{ rutina.nombre }}
-            </span>
-
-            <span class="session-eva">
-              {{ rutina.ejercicios.length }} ejercicios
-            </span>
-
-            <span class="session-obs">
-              Completada:
-              {{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
-            </span>
-
-          </div>
-
-        </div>
-
-      }
+      <span>
+        Crea una nueva o asigna desde plantilla
+      </span>
 
     </div>
 
   }
 
 }
-
 
 <!-- TAB SESIONES -->
 
@@ -428,9 +475,3 @@ Agregar sesión
 </div>
 
 }
-
-}
-
-</div>
-
-</ion-content>

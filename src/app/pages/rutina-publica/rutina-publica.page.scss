@@ -1,55 +1,291 @@
-.rutina-publica {
+/* =============================================
+RUTINA PUBLICA — Modern Patient UI
+============================================= */
 
-  padding: 16px;
-  max-width: 600px;
-  margin: auto;
-
+.rutina-toolbar {
+  --background: #ffffff;
+  --border-width: 0;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
 }
 
-.titulo-rutina {
+.rutina-toolbar-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: #1a1a2e;
+}
+
+/* Screen states */
+
+.screen-state {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:60vh;
+  padding:32px 24px;
+  text-align:center;
+}
+
+.screen-spinner{
+  width:44px;
+  height:44px;
+  margin-bottom:16px;
+}
+
+.screen-state-title{
+  font-size:20px;
+  font-weight:700;
+  color:#1a1a2e;
+  margin:0 0 8px;
+}
+
+.screen-state-text{
+  font-size:15px;
+  color:#6b7280;
+}
+
+/* Container */
+
+.rutina-container{
+  max-width:540px;
+  margin:0 auto;
+  padding:0 16px 260px;
+}
+
+/* Hero */
+
+.rutina-hero{
+  text-align:center;
+  padding:20px 8px 6px;
+}
+
+.rutina-nombre{
+  font-size:22px;
+  font-weight:700;
+  color:#1a1a2e;
+  margin:0;
+}
+
+/* Progress */
+
+.progreso-card{
+  background:#f0f4ff;
+  border-radius:14px;
+  padding:16px;
+  margin:16px 0 20px;
+}
+
+.progreso-top{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:8px;
+}
+
+.progreso-label{
+  font-size:13px;
+  font-weight:600;
+  color:#6b7280;
+}
+
+.progreso-value{
+  font-size:18px;
+  font-weight:700;
+  color:var(--ion-color-primary);
+}
+
+.progreso-bar{
+  --border-radius:8px;
+  height:10px;
+}
+
+/* Exercise list */
+
+.ejercicios-list{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.ejercicio-card{
+  margin:0;
+  border-radius:14px !important;
+  border:1px solid #e5e7eb;
+  box-shadow:0 2px 12px rgba(0,0,0,0.05);
+}
+
+.ejercicio-card-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px 6px !important;
+}
+
+.ejercicio-badge{
+  width:30px;
+  height:30px;
+  border-radius:8px;
+  background:var(--ion-color-primary);
+  color:white;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.ejercicio-title{
+  font-size:16px !important;
+  font-weight:600 !important;
+  color:#1a1a2e;
+}
+
+/* Video */
+
+.video-player{
+  margin-top:6px;
+}
+
+.video-player video{
+  width:100%;
+  border-radius:14px;
+  display:block;
+  cursor:pointer;
+}
+
+/* Notes */
+
+.ejercicio-notas{
+  font-size:13px;
+  color:#6b7280;
+  margin:10px 0 10px;
+}
+
+/* Series */
+
+.series-label{
+  font-size:12px;
+  font-weight:600;
+  color:#9ca3af;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+
+.series-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.serie-chip{
+  flex:1;
+  min-width:80px;
+  padding:12px 8px;
+  border-radius:12px;
+  border:2px solid #d1d5db;
+  background:#fff;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.serie-chip--done{
+  border-color:var(--ion-color-success);
+  background:rgba(var(--ion-color-success-rgb),0.08);
+}
+
+.serie-chip-label{
+  font-size:13px;
+  font-weight:600;
+}
+
+.serie-chip-reps{
+  font-size:11px;
+  color:#9ca3af;
+}
+
+/* Footer */
+
+.rutina-footer{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:white;
+  border-top:1px solid #e5e7eb;
+  padding:12px 16px;
+  box-shadow:0 -4px 12px rgba(0,0,0,0.08);
+  z-index:10;
+}
+
+.footer-progreso{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:8px;
+  font-size:14px;
+  font-weight:500;
+}
+
+.footer-progress-bar{
+  margin-bottom:14px;
+}
+
+/* Pain */
+
+/* ===== EVA SCALE ===== */
+
+.eva-container {
+  padding: 4px 0;
+}
+
+.eva-range {
+  --bar-background: #e5e7eb;
+  --bar-background-active: var(--ion-color-primary);
+  --knob-background: var(--ion-color-primary);
+  --knob-size: 24px;
+  padding: 6px 0;
+}
+
+.eva-value-display {
   text-align: center;
-  margin-bottom: 20px;
+  margin: 6px 0 2px;
 }
 
-.progreso-box {
-  margin-bottom: 24px;
+.eva-number {
+  font-size: 1.8rem;
+  font-weight: 700;
 }
 
-.progreso-text {
-  text-align: center;
-  margin-top: 8px;
-  font-size: 14px;
+.eva-low { color: #10b981; }
+.eva-mid { color: #f59e0b; }
+.eva-high { color: #ef4444; }
+
+.eva-label {
+  font-size: 0.9rem;
+  color: #9ca3af;
 }
 
-.ejercicio-card {
-  margin-bottom: 16px;
-}
-
-.ejercicio-notas {
-  margin-bottom: 12px;
-  color: var(--ion-color-medium);
-}
-
-.series-grid {
+.eva-indicators {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 0 4px;
 }
 
-.pain-section {
-  margin-top: 30px;
-  text-align: center;
+.eva-indicators span {
+  font-size: 0.7rem;
+  font-weight: 500;
 }
 
-.pain-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  margin: 10px 0 20px;
-}
+.ind-low { color: #10b981; }
+.ind-mid { color: #f59e0b; }
+.ind-high { color: #ef4444; }
 
-.sesion-ok {
-  text-align: center;
-  margin-top: 30px;
+/* Button */
+
+.finalizar-btn{
+  margin-top:8px;
+  --border-radius:14px;
+  height:50px;
+  font-weight:700;
 }

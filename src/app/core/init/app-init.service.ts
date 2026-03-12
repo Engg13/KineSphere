@@ -22,23 +22,26 @@ export class AppInitService {
     try {
 
       const user = await firstValueFrom(
-        this.authService.user$.pipe(
-          filter(user => !!user),
-          take(1)
-        )
+        this.authService.user$.pipe(take(1))
       );
 
       console.log('Auth initialized', user?.uid);
+
+      // 👇 si no hay usuario, no cargar nada interno
+      if (!user) {
+        console.log('Public access detected, skipping clinic init');
+        return;
+      }
 
       // cargar contexto multi-tenant
       await this.clinicContext.init();
 
       console.log('Clinic context loaded');
 
-      // 🌱 seed ejercicios si no existen
+      // seed ejercicios
       await this.ejerciciosSeeder.seed();
 
-      // 🌱 seed tests clínicos
+      // seed tests
       await this.testTemplatesService.seedTestsIfEmpty();
 
       console.log('App initialization complete');

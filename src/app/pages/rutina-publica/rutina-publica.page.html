@@ -1,157 +1,206 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Rutina de ejercicios</ion-title>
+<ion-header class="ion-no-border">
+  <ion-toolbar class="rutina-toolbar">
+    <ion-title class="rutina-toolbar-title">Mi Rutina</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
 
   <!-- LOADING -->
-
-  @if (cargando) {
-    <div class="loading-container">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p>Cargando rutina...</p>
-    </div>
-  }
+  <div *ngIf="cargando" class="screen-state">
+    <ion-spinner name="crescent" color="primary" class="screen-spinner"></ion-spinner>
+    <p class="screen-state-text">Cargando tu rutina...</p>
+  </div>
 
   <!-- RUTINA NO ENCONTRADA -->
-
-  @if (!cargando && !rutina) {
-    <div class="loading-container">
-      <h2>Rutina no encontrada</h2>
-    </div>
-  }
+  <div *ngIf="!cargando && !rutina" class="screen-state">
+    <div class="screen-state-icon screen-state-icon--error">!</div>
+    <h2 class="screen-state-title">Rutina no encontrada</h2>
+    <p class="screen-state-text">El enlace puede haber expirado o no es valido.</p>
+  </div>
 
   <!-- RUTINA -->
+  <div *ngIf="rutina" class="rutina-container">
 
-  @if (!cargando && rutina) {
+    <!-- HEADER -->
+    <div class="rutina-hero">
+      <h1 class="rutina-nombre">{{ rutina.nombre }}</h1>
+    </div>
 
-    <div class="editor-container rutina-publica">
-
-      <h2 class="titulo-rutina">
-        {{ rutina.nombre }}
-      </h2>
-
-      <!-- PROGRESO -->
-
-      <div class="progreso-box">
-
-        <ion-progress-bar
-          [value]="getProgreso()/100"
-          >
-        </ion-progress-bar>
-
-        <p class="progreso-text">
-          {{ getProgreso() }} % completado
-        </p>
-
+    <!-- PROGRESO -->
+    <div class="progreso-card">
+      <div class="progreso-top">
+        <span class="progreso-label">Progreso</span>
+        <span class="progreso-value" [class.progreso-value--done]="getProgreso() === 100">
+          {{ getProgreso() }}%
+        </span>
       </div>
+      <ion-progress-bar
+        [value]="getProgreso() / 100"
+        [color]="getProgreso() === 100 ? 'success' : 'primary'"
+        class="progreso-bar">
+      </ion-progress-bar>
+    </div>
 
-      <!-- EJERCICIOS -->
+    <!-- EJERCICIOS -->
+    <div class="ejercicios-list">
 
-      @for (ej of ejerciciosLocales; track ej.ejercicioId; let i = $index) {
+      <ion-card
+        *ngFor="let ej of ejerciciosLocales; let i = index"
+        class="ejercicio-card">
 
-        <ion-card class="ejercicio-card">
+        <ion-card-header class="ejercicio-card-header">
+          <div class="ejercicio-badge">{{ i + 1 }}</div>
+          <ion-card-title class="ejercicio-title">{{ ej.nombre }}</ion-card-title>
+        </ion-card-header>
 
-          <ion-card-header>
-            <ion-card-title>
-              {{ i + 1 }}. {{ ej.nombre }}
-            </ion-card-title>
-          </ion-card-header>
+        <ion-card-content>
 
-          <ion-card-content>
+          <!-- VIDEO THUMB -->
 
-            @if (ej.notas) {
-              <p class="ejercicio-notas">
-                {{ ej.notas }}
-              </p>
-            }
+          <div *ngIf="ej.videoUrl" class="video-player">
 
-            <!-- SERIES -->
-
-            <div class="series-grid">
-
-              @for (s of ej.series; track s.numero; let j = $index) {
-
-                <ion-button
-                  size="small"
-                  [color]="s.completada ? 'success' : 'medium'"
-                  (click)="toggleSerie(i,j)"
-                  [disabled]="sesionGuardada"
-                >
-                  Serie {{ s.numero }}
-                  <br>
-                  {{ s.repeticiones ?? '-' }} reps
-                </ion-button>
-
-              }
-
-            </div>
-
-          </ion-card-content>
-
-        </ion-card>
-
-      }
-
-      <!-- SESION GUARDADA -->
-
-      @if (sesionGuardada) {
-
-        <div class="sesion-ok">
-
-          <h2>Sesión guardada</h2>
-          <p>¡Excelente trabajo!</p>
-
-        </div>
-
-      }
-
-      <!-- FINALIZAR SESION -->
-
-      @if (getProgreso() === 100 && !sesionGuardada) {
-
-        <div class="pain-section">
-
-          <h3>¿Cómo estuvo el dolor durante la rutina?</h3>
-
-          <div class="pain-grid">
-
-            @for (n of [0,1,2,3,4,5,6,7,8,9,10]; track n) {
-
-              <ion-button
-                size="small"
-                [color]="painScore === n ? 'danger' : 'medium'"
-                (click)="painScore = n"
-              >
-                {{ n }}
-              </ion-button>
-
-            }
+            <video
+              [src]="ej.videoUrl"
+              muted
+              loop
+              playsinline
+              preload="metadata"
+              (click)="reproducirVideo($event)">
+            </video>
 
           </div>
 
-          <button
-            class="save-btn"
-            [disabled]="painScore === null || guardandoSesion"
-            [class.disabled]="painScore === null || guardandoSesion"
-            (click)="finalizarSesion()">
+          <p *ngIf="ej.notas" class="ejercicio-notas">{{ ej.notas }}</p>
 
-            @if (guardandoSesion) {
-              <ion-spinner name="crescent" color="light"></ion-spinner>
-            } @else {
-              Finalizar sesión
-            }
+          <p class="series-label">Series</p>
 
-          </button>
+          <!-- SERIES -->
+          <div class="series-grid">
 
-        </div>
+            <button
+              *ngFor="let s of ej.series; let j = index"
+              class="serie-chip"
+              [class.serie-chip--done]="s.completada"
+              [disabled]="sesionGuardada"
+              (click)="toggleSerie(i, j)">
+              <span *ngIf="s.completada" class="serie-check-icon">&#10003;</span>
+              <span class="serie-chip-label">Serie {{ s.numero }}</span>
+              <span class="serie-chip-reps">{{ s.repeticiones ?? '-' }} reps</span>
+            </button>
 
-      }
+          </div>
+
+        </ion-card-content>
+
+      </ion-card>
 
     </div>
 
-  }
+    <!-- SESION GUARDADA -->
+    <div *ngIf="sesionGuardada" class="sesion-ok-card">
+      <div class="sesion-ok-icon">&#10003;</div>
+      <h2 class="sesion-ok-title">Sesion guardada</h2>
+      <p class="sesion-ok-subtitle">Excelente trabajo! Tu progreso fue registrado.</p>
+      </div>
+    </div>
 
+    <!-- PANEL INFERIOR -->
+
+    <div class="rutina-footer" *ngIf="!sesionGuardada">
+
+      <!-- PROGRESO -->
+
+      <div class="footer-progreso">
+
+        <span class="footer-progreso-label">
+          Progreso
+        </span>
+
+        <span class="footer-progreso-value">
+          {{ getProgreso() }}%
+        </span>
+
+      </div>
+
+      <ion-progress-bar
+        [value]="getProgreso() / 100"
+        color="success"
+        class="footer-progress-bar">
+      </ion-progress-bar>
+
+      <!-- DOLOR -->
+
+      <div class="pain-card">
+
+        <h3 class="pain-title">
+          ¿Cómo estuvo el dolor?
+        </h3>
+
+        <div class="eva-container">
+
+          <ion-range
+            min="0"
+            max="10"
+            step="1"
+            snaps="true"
+            ticks="true"
+            [(ngModel)]="painScore"
+            class="eva-range">
+
+            <ion-label slot="start">0</ion-label>
+            <ion-label slot="end">10</ion-label>
+
+          </ion-range>
+
+          <div class="eva-value-display" *ngIf="painScore !== null">
+
+            <span
+              class="eva-number"
+              [class.eva-low]="painScore <= 3"
+              [class.eva-mid]="painScore > 3 && painScore <= 6"
+              [class.eva-high]="painScore > 6">
+
+              {{ painScore }}
+
+            </span>
+
+            <span class="eva-label">/10</span>
+
+          </div>
+
+          <div class="eva-indicators">
+
+            <span class="ind-low">Sin dolor</span>
+            <span class="ind-mid">Moderado</span>
+            <span class="ind-high">Máximo</span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- BOTON FINALIZAR -->
+
+      <ion-button
+        expand="block"
+        size="large"
+        class="finalizar-btn"
+        [disabled]="getProgreso() < 100 || painScore === null || guardandoSesion"
+        (click)="finalizarSesion()">
+
+        <ion-spinner
+          *ngIf="guardandoSesion"
+          name="crescent">
+        </ion-spinner>
+
+        <span *ngIf="!guardandoSesion">
+          Finalizar sesión
+        </span>
+
+      </ion-button>
+
+    </div>
 </ion-content>
+

@@ -15,5 +15,7 @@ export interface RutinaTemplateEjercicio {
   carga?: number;
 
   notas?: string;
+  
+  videoUrl?: string;
 
 }

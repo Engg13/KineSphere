@@ -34,6 +34,7 @@ export class PacienteDetallePage implements OnDestroy {
   rutinaDomiciliariaActiva: Rutina | null = null;
   tabActual: 'info' | 'sesiones' | 'rutinas' = 'info';
   adherenciaDomiciliaria: number | null = null;
+  sesionesDomiciliarias: any[] = [];
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
@@ -145,7 +146,8 @@ export class PacienteDetallePage implements OnDestroy {
 
       this.cargarHistorialSesiones(pacienteIdReal);
       this.cargarRutinasCompletadas(pacienteIdReal);
-      this.cargarRutinasActivas(pacienteIdReal);;
+      this.cargarRutinasActivas(pacienteIdReal);
+      this.cargarSesionesDomiciliarias(pacienteIdReal);
 
     } else {
       this.paciente = null;
@@ -588,6 +590,43 @@ export class PacienteDetallePage implements OnDestroy {
         pacienteId: this.pacienteId
       }
     });
+
+  }
+
+  private cargarSesionesDomiciliarias(pacienteId: string) {
+
+    this.rutinasSesionesService
+      .getSesionesPaciente(pacienteId)
+      .subscribe({
+        next: sesiones => {
+
+          this.sesionesDomiciliarias = sesiones
+            .filter(s => s.tipoSesion === 'domiciliaria')
+            .sort((a, b) => this.getTime(b.fecha) - this.getTime(a.fecha));
+
+        },
+        error: err => {
+          console.error('Error cargando sesiones domiciliarias', err);
+          this.sesionesDomiciliarias = [];
+        }
+      });
+
+  }
+
+
+  private getTime(fecha: any): number {
+
+    if (!fecha) return 0;
+
+    if (fecha.toDate) {
+      return fecha.toDate().getTime();
+    }
+
+    if (fecha instanceof Date) {
+      return fecha.getTime();
+    }
+
+    return new Date(fecha).getTime() || 0;
 
   }
 }
