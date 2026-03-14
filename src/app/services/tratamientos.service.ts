@@ -22,6 +22,7 @@ export interface TratamientoDocument {
   professionalId: string;
   estado: 'active' | 'completed';
   totalSesiones: number;
+  nextSessionNumber: number;
   zonaPrincipal: string | null;
   zonasSecundarias: string[];
   createdAt: Timestamp;
@@ -57,6 +58,7 @@ export class TratamientosService extends BaseClinicService {
 
         estado: 'active',
         totalSesiones: 0,
+        nextSessionNumber: 1,
 
         zonaPrincipal: data?.zonaPrincipal ?? null,
         zonasSecundarias: data?.zonasSecundarias ?? [],
@@ -68,22 +70,6 @@ export class TratamientosService extends BaseClinicService {
     );
 
     return this.getByIdOrThrow(ref.id, clinicId);
-  }
-
-  async incrementTotalSesiones(id: string, newTotal: number): Promise<void> {
-
-    const clinicId = this.clinicId;
-
-    const tratamiento = await this.getByIdOrThrow(id, clinicId);
-
-    await updateDoc(
-      doc(this.firestore, `${this.collectionName}/${tratamiento.id}`),
-      {
-        totalSesiones: newTotal,
-        updatedAt: serverTimestamp()
-      }
-    );
-
   }
 
   async close(id: string): Promise<void> {

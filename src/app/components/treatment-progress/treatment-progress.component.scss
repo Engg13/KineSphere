@@ -1,0 +1,54 @@
+.treatment-progress {
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 10px;
+
+}
+
+.progress-label {
+
+  font-size: 11px;
+  font-weight: 700;
+
+  color: rgba(255,255,255,0.85);
+
+}
+
+.progress-bar {
+
+  display: flex;
+  gap: 4px;
+
+}
+
+.progress-dot {
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: white;
+
+}
+
+.progress-dot.pending {
+
+  background: rgba(255,255,255,0.3);
+
+}
+
+.progress-count {
+
+  text-align: center;
+  margin-top: 4px;
+
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+
+}

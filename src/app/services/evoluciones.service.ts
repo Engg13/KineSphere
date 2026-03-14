@@ -470,4 +470,33 @@ export class EvolucionesService extends BaseClinicService {
     private docRef(id: string) {
       return doc(this.firestore, `${this.collectionName}/${id}`);
     }
+
+    async getBySessionNumber(
+      patientId: string,
+      sessionNumber: number
+    ): Promise<EvolucionDocument | null> {
+
+      const clinicId = this.clinicId;
+
+      const q = query(
+        this.getCollection(),
+        where('clinicId', '==', clinicId),
+        where('patientId', '==', patientId),
+        where('tipoEvolucion', '==', 'progress'),
+        where('sessionNumber', '==', sessionNumber),
+        where('activo', '==', true),
+        limit(1)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) return null;
+
+      const docSnap = snapshot.docs[0];
+
+      return {
+        id: docSnap.id,
+        ...(docSnap.data() as Omit<EvolucionDocument, 'id'>)
+      };
+    }
 }

@@ -7,6 +7,31 @@ export abstract class BaseClinicService {
   protected firestore = inject(Firestore);
   protected clinicContext = inject(ClinicContextService);
 
+  // 🔒 Sanitizador global para Firestore
+  protected sanitize(data: any) {
+    return this.removeUndefinedDeep(data);
+  }
+
+  // 🔥 Eliminación profunda de undefined
+  private removeUndefinedDeep(obj: any): any {
+
+    if (Array.isArray(obj)) {
+      return obj.map(v => this.removeUndefinedDeep(v));
+    }
+
+    if (obj !== null && typeof obj === 'object') {
+
+      return Object.fromEntries(
+        Object.entries(obj)
+          .filter(([_, v]) => v !== undefined)
+          .map(([k, v]) => [k, this.removeUndefinedDeep(v)])
+      );
+
+    }
+
+    return obj;
+  }
+
   protected get clinicId(): string {
 
     const clinicId = this.clinicContext.clinicId;

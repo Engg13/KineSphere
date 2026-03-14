@@ -1,0 +1,135 @@
+<ion-header>
+  <ion-toolbar>
+
+    <ion-buttons slot="start">
+      <ion-button (click)="cerrar()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+
+    <ion-title>
+      Sesión {{ evolucion.sessionNumber }}
+    </ion-title>
+
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+<div class="viewer-wrapper">
+
+  <!-- EVA -->
+
+  <div class="section">
+    <h3>EVA</h3>
+    <p>{{ evolucion.painScale ?? '-' }}/10</p>
+  </div>
+
+  <!-- Sueño -->
+
+  <div class="section" *ngIf="evolucion.sleepQuality">
+    <h3>Calidad del sueño</h3>
+    <p>{{ evolucion.sleepQuality }}/5</p>
+  </div>
+
+  <!-- Zona tratamiento -->
+
+  <div class="section" *ngIf="evolucion.zonaPrincipal">
+    <h3>Zona de tratamiento</h3>
+    <p>{{ evolucion.zonaPrincipal }}</p>
+  </div>
+
+  <!-- Técnicas -->
+
+  <div class="section" *ngIf="evolucion.tecnicasAplicadas?.length">
+    <h3>Técnicas aplicadas</h3>
+
+    <ul>
+      <li *ngFor="let t of evolucion.tecnicasAplicadas">
+        {{ t }}
+      </li>
+    </ul>
+
+  </div>
+
+  <!-- ROM -->
+
+  <div class="section" *ngIf="evolucion.rom?.length">
+
+    <h3>Rango de movimiento</h3>
+
+    <div *ngFor="let art of evolucion.rom" class="rom-block">
+
+      <strong>{{ art.articulacion }}</strong>
+
+      <div *ngFor="let mov of art.movimientos" class="rom-row">
+
+        <span>{{ mov.movimiento }}</span>
+
+        <span *ngIf="mov.arom?.valor">
+          AROM: {{ mov.arom.valor }}°
+        </span>
+
+        <span *ngIf="mov.prom?.valor">
+          PROM: {{ mov.prom.valor }}°
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Rutina -->
+
+  <div class="section" *ngIf="evolucion.rutinaNombre">
+
+    <h3>Rutina realizada</h3>
+
+    <p>{{ evolucion.rutinaNombre }}</p>
+
+  </div>
+
+  <!-- Subjetivo -->
+
+  <div class="section" *ngIf="evolucion.subjective">
+
+    <h3>Subjetivo</h3>
+
+    <p>{{ evolucion.subjective }}</p>
+
+  </div>
+
+  <!-- Objetivo -->
+
+  <div class="section" *ngIf="evolucion.objective">
+
+    <h3>Objetivo</h3>
+
+    <p>{{ evolucion.objective }}</p>
+
+  </div>
+
+  <!-- Análisis -->
+
+  <div class="section" *ngIf="evolucion.assessment">
+
+    <h3>Análisis</h3>
+
+    <p>{{ evolucion.assessment }}</p>
+
+  </div>
+
+  <!-- Plan -->
+
+  <div class="section" *ngIf="evolucion.plan">
+
+    <h3>Plan</h3>
+
+    <p>{{ evolucion.plan }}</p>
+
+  </div>
+
+</div>
+
+</ion-content>

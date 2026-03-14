@@ -41,6 +41,11 @@ class="status-badge-large">
 
 </ion-badge>
 
+<app-treatment-progress
+  [sesiones]="sesionesTratamientoActivo"
+  [sesionesPlanificadas]="paciente.sesionesPlanificadas || 10">
+</app-treatment-progress>
+
 </div>
 </div>
 
@@ -490,27 +495,117 @@ class="action-card"
 
 <h3 class="section-title">Historial de Sesiones</h3>
 
-@if (historialSesiones.length > 0) {
+@if (tratamientosHistorial.length > 0) {
 
-@for (sesion of historialVisual; track sesion.id || $index) {
+@for (tratamiento of tratamientosHistorial; track tratamiento.treatmentId) {
 
-<div class="session-item clickable">
+<div class="tratamiento-bloque">
 
-<div class="session-number">
+<!-- HEADER TRATAMIENTO -->
+
+<div
+class="tratamiento-header clickable"
+(click)="toggleTratamiento(tratamiento)"
+>
+
+<div class="tratamiento-meta">
+
+@if (tratamiento.fechaInicio) {
+
+<div class="tratamiento-fecha">
+{{ formatearFecha(tratamiento.fechaInicio) }}
+</div>
+
+}
+
+@if (tratamiento.diagnostico) {
+
+<div class="tratamiento-diagnostico">
+{{ tratamiento.diagnostico }}
+</div>
+
+}
+
+</div>
+
+@if (!tratamiento.activo) {
+
+<div class="tratamiento-toggle">
+
+@if (!tratamiento.expandido) {
+<span class="compact-range">EI — EF</span>
+}
+
+<ion-icon
+[name]="tratamiento.expandido ? 'chevron-up-outline' : 'chevron-down-outline'">
+</ion-icon>
+
+</div>
+
+}
+
+</div>
+
+<!-- SESIONES DEL TRATAMIENTO -->
+
+@if (tratamiento.activo || tratamiento.expandido) {
+
+@for (sesion of tratamiento.sesiones; track sesion.id || $index) {
+
+<div
+class="session-item clickable"
+(click)="abrirSesion(sesion)"
+>
+
+<div class="timeline-node">
+
+<div
+class="session-number"
+[class.initial]="sesion.tipoEvolucion === 'initial'"
+[class.discharge]="sesion.tipoEvolucion === 'discharge'"
+>
+
+@if (sesion.tipoEvolucion === 'initial') {
+EI
+}
+
+@else if (sesion.tipoEvolucion === 'discharge') {
+EF
+}
+
+@else {
 {{ sesion.sessionNumber }}
+}
+
+</div>
+
+<div class="timeline-line"></div>
+
 </div>
 
 <div class="session-info">
 
-<span class="session-date">
+<div class="session-date">
 {{ formatearFecha(sesion.createdAt) }}
-</span>
+</div>
 
-<span class="session-eva">
-EVA: {{ sesion.painScale ?? '-' }}/10
+<div class="session-eva">
+
+<span class="eva-label">EVA</span>
+
+<span class="eva-value">
+{{ sesion.painScale ?? '-' }}/10
 </span>
 
 </div>
+
+</div>
+
+</div>
+
+}
+
+}
 
 </div>
 

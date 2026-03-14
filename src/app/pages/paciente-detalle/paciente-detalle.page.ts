@@ -1,22 +1,34 @@
 import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AlertController, NavController, IonicModule } from '@ionic/angular';
+import { AlertController, NavController, IonicModule, ModalController } from '@ionic/angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PacientesService } from '../../services/pacientes.service';
 import { EvolucionesService } from '../../services/evoluciones.service';
+import { EvolucionPage } from '../evolucion/evolucion.page';
 import { Subscription } from 'rxjs';
 import { FlujoClinicoService } from 'src/app/services/flujoclinico.service';
 import { Rutina } from '../../models/rutina.model';
 import { RutinasService } from '../../services/rutinas.service';
 import { RutinaActivaComponent } from '../../components/rutina-activa/rutina-activa.component';
 import { RutinasSesionesService } from '../../services/rutinas-sesiones.service';
+import { EvolucionViewerComponent } from '../../components/evolucion-viewer/evolucion-viewer.component';
+import { EvolucionDocument } from '../../services/evoluciones.service';
+import { TreatmentProgressComponent } from 'src/app/components/treatment-progress/treatment-progress.component';
 
+interface TratamientoHistorial {
+  treatmentId: string
+  sesiones: EvolucionDocument[]
+  expandido: boolean
+  activo: boolean
+  fechaInicio?: any
+  diagnostico?: string
+}
 @Component({
   selector: 'app-paciente-detalle',
   templateUrl: './paciente-detalle.page.html',
   styleUrls: ['./paciente-detalle.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, RutinaActivaComponent]
+  imports: [IonicModule, CommonModule, RutinaActivaComponent, TreatmentProgressComponent]
 })
 export class PacienteDetallePage implements OnDestroy {
 
@@ -37,6 +49,7 @@ export class PacienteDetallePage implements OnDestroy {
   adherenciaDomiciliaria: number | null = null;
   sesionesDomiciliarias: any[] = [];
   rutinaAbiertaId: string | null = null;
+  tratamientosHistorial: TratamientoHistorial[] = [];
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
@@ -53,7 +66,8 @@ export class PacienteDetallePage implements OnDestroy {
     private alertCtrl: AlertController,
     private flujoClinicoService: FlujoClinicoService,
     private rutinasService: RutinasService,
-    private rutinasSesionesService: RutinasSesionesService
+    private rutinasSesionesService: RutinasSesionesService,
+    private modalCtrl: ModalController
   ) {}
 
   // ==============================
@@ -216,6 +230,7 @@ export class PacienteDetallePage implements OnDestroy {
   // ==============================
 
   private cargarHistorialSesiones(pacienteId: string) {
+
     if (this.evolucionesSub) {
       this.evolucionesSub.unsubscribe();
     }
@@ -227,38 +242,18 @@ export class PacienteDetallePage implements OnDestroy {
 
           this.historialSesiones = evoluciones || [];
 
-          this.historialVisual = this.historialSesiones.map(e => {
+          // Agrupar por tratamiento
+          this.agruparSesionesPorTratamiento();
 
-            if (e.tipoEvolucion === 'progress') {
-              return {
-                ...e,
-                numeroVisual: e.sessionNumber ?? '-'
-              };
-            }
-
-            if (e.tipoEvolucion === 'initial') {
-              return {
-                ...e,
-                numeroVisual: 'E'
-              };
-            }
-
-            if (e.tipoEvolucion === 'discharge') {
-              return {
-                ...e,
-                numeroVisual: 'A'
-              };
-            }
-
-            return e;
-          });
         },
         error: (error) => {
           console.error('Error cargando historial:', error);
           this.historialSesiones = [];
+          this.tratamientosHistorial = [];
         }
       });
-  }
+
+}
 
   // ==============================
   // EDAD
@@ -658,6 +653,89 @@ export class PacienteDetallePage implements OnDestroy {
 
     this.cargarRutinasCompletadas(this.paciente.id);
     this.cargarSesionesDomiciliarias(this.paciente.id);
+
+  }
+
+  async abrirSesion(sesion: any) {
+
+    const modal = await this.modalCtrl.create({
+      component: EvolucionViewerComponent,
+      componentProps: {
+        evolucion: sesion
+      }
+    });
+
+    await modal.present();
+
+  }
+
+  private agruparSesionesPorTratamiento() {
+
+    const mapa = new Map<string, TratamientoHistorial>();
+
+    for (const sesion of this.historialSesiones) {
+
+      const treatmentId = sesion.treatmentId || 'sin-tratamiento';
+
+      if (!mapa.has(treatmentId)) {
+
+        mapa.set(treatmentId, {
+          treatmentId,
+          sesiones: [],
+          expandido: false,
+          activo: treatmentId === this.tratamientoActivo?.id,
+          fechaInicio: null,
+          diagnostico: this.paciente?.diagnostico
+        });
+
+      }
+
+      const tratamiento = mapa.get(treatmentId)!;
+
+      tratamiento.sesiones.push(sesion);
+
+      // 🔹 Detectar fecha de inicio desde la evaluación inicial
+      if (sesion.tipoEvolucion === 'initial') {
+        tratamiento.fechaInicio = sesion.createdAt;
+      }
+
+    }
+
+    this.tratamientosHistorial = Array.from(mapa.values()).map(tratamiento => {
+
+      tratamiento.sesiones.sort((a, b) => {
+
+        const aNum = a.sessionNumber ?? 0;
+        const bNum = b.sessionNumber ?? 0;
+
+        return aNum - bNum;
+
+      });
+
+      this.tratamientosHistorial.sort((a, b) => {
+
+        const aTime = a.fechaInicio?.toMillis?.() ?? 0;
+        const bTime = b.fechaInicio?.toMillis?.() ?? 0;
+
+        return bTime - aTime;
+
+      });
+
+      return tratamiento;
+
+    });
+
+  }
+
+  toggleTratamiento(tratamiento: TratamientoHistorial) {
+    tratamiento.expandido = !tratamiento.expandido;
+  }
+
+  get sesionesTratamientoActivo() {
+
+    return this.historialSesiones.filter(
+      s => s.treatmentId === this.tratamientoActivo?.id
+    );
 
   }
 }

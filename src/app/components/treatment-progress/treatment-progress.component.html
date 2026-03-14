@@ -1,0 +1,23 @@
+<div class="treatment-progress">
+
+<span class="progress-label">EI</span>
+
+<div class="progress-bar">
+
+@for (sesion of sesionesProgreso; track sesion.id) {
+<div class="progress-dot"></div>
+}
+
+@for (i of [].constructor(sesionesPlanificadas - sesionesProgreso.length); track i) {
+<div class="progress-dot pending"></div>
+}
+
+</div>
+
+<span class="progress-label">EF</span>
+
+</div>
+
+<div class="progress-count">
+{{ sesionesProgreso.length }} / {{ sesionesPlanificadas }} sesiones
+</div>

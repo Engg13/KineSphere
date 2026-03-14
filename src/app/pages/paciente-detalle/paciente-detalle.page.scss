@@ -231,16 +231,6 @@
   }
 }
 
-.session-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 0;
-
-  &.clickable {
-    cursor: pointer;
-  }
-}
 
 .session-expand-icon {
   color: #9ca3af;
@@ -614,6 +604,7 @@
   span {
     color: #b91c1c;
   }
+}
 
   .adherencia-card {
     margin-top: 12px;
@@ -689,4 +680,225 @@
   margin-left: auto;
   color: var(--text-muted);
 }
+
+
+.timeline-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
 }
+
+.timeline-line {
+  width: 2px;
+  flex: 1;
+  background: #e5e7eb;
+  margin-top: 4px;
+}
+
+.session-item:last-child .timeline-line {
+  display: none;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tratamiento-bloque {
+  margin-bottom: 20px;
+}
+
+.tratamiento-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  padding: 10px 0;
+}
+
+.tratamiento-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-range {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.tratamiento-title {
+  display: flex;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.tratamiento-fecha {
+  color: #111827;
+}
+
+.tratamiento-diagnostico {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* ===== TRATAMIENTOS HISTORIAL ===== */
+
+.tratamiento-bloque {
+  margin-bottom: 18px;
+}
+
+.tratamiento-header {
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 10px 12px;
+  margin-bottom: 8px;
+
+  background: #f8fafc;
+  border-radius: 10px;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+
+}
+
+.tratamiento-title {
+  display: flex;
+  gap: 6px;
+}
+
+.tratamiento-fecha {
+  color: #111827;
+}
+
+.tratamiento-diagnostico {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.tratamiento-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-range {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ===== TIMELINE SESIONES ===== */
+
+.session-item {
+  display: flex;
+  gap: 14px;
+  padding: 12px 4px;
+}
+
+.timeline-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 36px;
+}
+
+.timeline-line {
+  width: 2px;
+  flex: 1;
+  background: #e5e7eb;
+  margin-top: 4px;
+}
+
+.session-item:last-child .timeline-line {
+  display: none;
+}
+
+.session-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.session-number.initial {
+  background: #6366f1;
+}
+
+.session-number.discharge {
+  background: #10b981;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.session-eva {
+  font-size: 0.8rem;
+  color: #0d9488;
+  font-weight: 500;
+}
+
+/* ===== PROGRESO TRATAMIENTO ===== */
+
+.tratamiento-progreso {
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 6px 0 12px 0;
+
+}
+
+.progreso-label {
+
+  font-size: 11px;
+  font-weight: 700;
+
+  color: #64748b;
+
+}
+
+.progreso-linea {
+
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+}
+
+.progreso-punto {
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #0d9488;
+
+}
+

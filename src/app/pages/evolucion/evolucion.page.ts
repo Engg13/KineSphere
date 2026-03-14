@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, Input } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
@@ -51,19 +51,20 @@ export class EvolucionPage implements OnInit, OnDestroy {
   private evolucionesService = inject(EvolucionesService);
   private tratamientosService = inject(TratamientosService);
   private rutinasService = inject(RutinasService);
-  private usarDatosDemo = true;
-   // 🔥 poner en false en producción
+  private usarDatosDemo = false;
 
-  patientId = '';
-  pacienteNombre = 'Paciente';
-  pacienteDiagnostico = '';
+  @Input() patientId = '';
+  @Input() pacienteNombre = '';
+  @Input() pacienteDiagnostico = '';
+  @Input() treatmentId: string | null = null;
+
+
+ 
   numeroSesion = 1;
   sesionesPlanificadas = 10;
   guardando = false;
   modulosColapsablesAbiertos: string[] = [];
-  treatmentId: string | null = null;
   mode: TipoEvolucion = 'progress';
-
   rutinasDisponibles: any[] = [];
   rutinaSeleccionada: any = null;
   testsDisponibles: TestTemplate[] = [];
@@ -176,17 +177,27 @@ export class EvolucionPage implements OnInit, OnDestroy {
   return null;
   }
 
-  async ngOnInit(): Promise<void> {setTimeout(() => {
-  document.body.style.background = 'red';
-}, 500);
+  async ngOnInit(): Promise<void> {
 
     const params = this.route.snapshot.queryParamMap;
 
-    this.patientId = params.get('patientId') || params.get('pacienteId') || '';
-    this.pacienteNombre = params.get('pacienteNombre') || 'Paciente';
-    this.pacienteDiagnostico = params.get('diagnostico') || '';
+    if (!this.patientId) {
+      this.patientId = params.get('patientId') || params.get('pacienteId') || '';
+    }
+
+    if (!this.pacienteNombre) {
+      this.pacienteNombre = params.get('pacienteNombre') || 'Paciente';
+    }
+
+    if (!this.pacienteDiagnostico) {
+      this.pacienteDiagnostico = params.get('diagnostico') || '';
+    }
+
+    if (!this.treatmentId) {
+      this.treatmentId = params.get('treatmentId');
+    }
+
     this.mode = (params.get('mode') as TipoEvolucion) || 'progress';
-    this.treatmentId = params.get('treatmentId');
 
     this.form.controls.tipoEvolucion.setValue(this.mode, { emitEvent: false });
     this.form.controls.tipoEvolucion.disable({ emitEvent: false });
@@ -194,38 +205,58 @@ export class EvolucionPage implements OnInit, OnDestroy {
     this.setupZonaPrincipalLock();
 
     const tipoActual = this.form.get('tipoEvolucion')?.value;
+
     this.applyZonaLock(tipoActual);
     this.actualizarEstadoObjetivos();
 
     this.form.get('tipoEvolucion')?.valueChanges.subscribe(async (tipo) => {
+
       this.applyZonaLock(tipo);
       this.actualizarEstadoObjetivos();
 
       if (tipo === 'discharge') {
+
         await this.cargarEvaluacionInicial();
+
         const evoluciones = await this.cargarEvolucionesParaGrafico();
+
         this.construirDatosEva(evoluciones);
+
         setTimeout(() => this.crearGraficoEva(), 0);
+
       }
+
     });
 
     this.form.get('test')?.valueChanges.subscribe((test) => {
+
       if (this.esDischarge && test?.puntajeTotal != null) {
+
         this.testFinal = test.puntajeTotal;
         this.resultadoTestFinal = test.resultado;
+
       }
+
     });
+
     console.log('EvolucionPage INIT');
 
     try {
+
       await this.cargarContexto();
+
+      await this.cargarNumeroSesion();
+
     } catch (error) {
+
       console.error('Error en cargarContexto:', error);
+
     } finally {
-      
+
       this.cargando = false;
-      console.log('Cargando terminó:', this.cargando);
+
     }
+
   }
 
   ngOnDestroy(): void {
@@ -275,14 +306,15 @@ export class EvolucionPage implements OnInit, OnDestroy {
   }
 
   async cargarNumeroSesion(): Promise<void> {
-    const tipo = this.form.controls.tipoEvolucion.getRawValue();
-    if (tipo !== 'progress') {
-      this.numeroSesion = 0;
-      return;
-    }
 
-    const totalSesiones = await this.obtenerTotalSesionesTratamiento();
-    this.numeroSesion = totalSesiones + 1;
+    if (!this.treatmentId) return;
+
+    const tratamiento = await this.tratamientosService.getById(this.treatmentId);
+
+    if (!tratamiento) return;
+
+    this.numeroSesion = Number(tratamiento.nextSessionNumber ?? 1);
+
   }
 
   async cargarEvaluacionInicial(): Promise<void> {

@@ -16,7 +16,8 @@ export class FlujoClinicoService extends BaseClinicService {
   private readonly evolucionesCollection = 'evoluciones';
 
   private buildCleanPayload(payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>) {
-    return {
+
+    const clean = {
       subjective: payload.subjective ?? '',
       objective: payload.objective ?? '',
       assessment: payload.assessment ?? '',
@@ -33,7 +34,10 @@ export class FlujoClinicoService extends BaseClinicService {
       rutinaNombre: payload.rutinaNombre ?? null,
       test: payload.test ?? null
     };
-}
+
+    return this.sanitize(clean);
+
+  }
 
  async crearEvaluacionInicial(
   patientId: string,
