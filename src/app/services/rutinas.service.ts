@@ -171,17 +171,17 @@ export class RutinasService extends BaseClinicService {
       ejercicios: rutina.ejercicios,
       pacienteId: rutina.pacienteId,
       clinicId: this.clinicId,
-      createdBy: this.professionalId
+      createdBy: this.professionalId,
+      tipo : rutina.tipoRutina ?? 'clinica'
     };
 
     if (rutina.templateId) {
       data.templateId = rutina.templateId;
     }
 
-    if (rutina.tipoRutina) {
-      data.tipo = rutina.tipoRutina;
+    if (!rutina.ejercicios || rutina.ejercicios.length === 0) {
+      throw new Error('La rutina debe tener al menos un ejercicio');
     }
-
     
       data.estado = rutina.estado ?? 'activa';
 
@@ -453,7 +453,7 @@ export class RutinasService extends BaseClinicService {
   }
 
   // ========================================
-  // UNIFIED SAVE (dispatches by tipo)
+  // UNIFIED SAVE
   // ========================================
 
   async guardar(rutina: Rutina): Promise<string> {
@@ -463,6 +463,17 @@ export class RutinasService extends BaseClinicService {
     }
 
     return this.guardarRutinaPaciente(rutina);
+
+  }
+
+  async eliminarRutina(rutinaId: string): Promise<void> {
+
+    const ref = doc(
+      this.firestore,
+      `clinics/${this.clinicId}/rutinas_paciente/${rutinaId}`
+    );
+
+    await deleteDoc(ref);
 
   }
 

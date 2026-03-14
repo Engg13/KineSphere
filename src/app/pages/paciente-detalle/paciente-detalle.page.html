@@ -261,7 +261,8 @@ class="action-card"
     </div>
 
     <app-rutina-activa
-      [rutina]="rutinaClinicaActiva">
+      [rutina]="rutinaClinicaActiva"
+      (rutinaEliminada)="recargarRutinas()">
     </app-rutina-activa>
 
   }
@@ -276,7 +277,8 @@ class="action-card"
     </div>
 
     <app-rutina-activa
-      [rutina]="rutinaDomiciliariaActiva">
+      [rutina]="rutinaDomiciliariaActiva"
+      (rutinaEliminada)="recargarRutinas()">
     </app-rutina-activa>
 
   }
@@ -305,7 +307,7 @@ class="action-card"
   }
 
 
-  <!-- HISTORIAL CLÍNICO -->
+<!-- HISTORIAL CLÍNICO -->
 
   @if (rutinasCompletadas.length > 0) {
 
@@ -315,30 +317,66 @@ class="action-card"
 
   @for (rutina of rutinasCompletadas; track rutina.id) {
 
-  <div class="session-item">
+  <!-- ITEM RESUMEN -->
 
-  <div class="session-number rutina-icon">
-  <ion-icon name="fitness-outline"></ion-icon>
+  <div
+    class="session-item clickable"
+    (click)="toggleRutina(rutina.id)"
+  >
+
+    <div class="session-number rutina-icon">
+      <ion-icon name="fitness-outline"></ion-icon>
+    </div>
+
+    <div class="session-info">
+
+      <span class="session-date">
+        {{ rutina.nombre }}
+      </span>
+
+      <span class="session-eva">
+        {{ rutina.ejercicios.length }} ejercicios
+      </span>
+
+      <span class="session-obs">
+        Realizada:
+        {{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
+      </span>
+
+    </div>
+
+    <ion-icon
+      class="expand-icon"
+      [name]="rutinaAbiertaId === rutina.id ? 'chevron-down-outline' : 'chevron-forward-outline'">
+    </ion-icon>
+
   </div>
 
-  <div class="session-info">
+  <!-- DETALLE EJERCICIOS -->
 
-  <span class="session-date">
-  {{ rutina.nombre }}
-  </span>
+  @if (rutinaAbiertaId === rutina.id) {
 
-  <span class="session-eva">
-  {{ rutina.ejercicios.length }} ejercicios
-  </span>
+  <div class="rutina-detalle">
 
-  <span class="session-obs">
-  Realizada:
-  {{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
-  </span>
+    @for (ej of rutina.ejercicios; track ej.orden) {
+
+    <div class="ej-row">
+
+      <span class="ej-nombre">
+        {{ ej.nombre }}
+      </span>
+
+      <span class="ej-reps">
+        {{ ej.series }} x {{ ej.repeticiones }}
+      </span>
+
+    </div>
+
+    }
 
   </div>
 
-  </div>
+  }
 
   }
 
@@ -349,33 +387,73 @@ class="action-card"
 
   <!-- HISTORIAL DOMICILIARIO -->
 
-  @if (sesionesDomiciliarias.length > 0) {
+  @if (rutinasDomiciliarias.length > 0) {
 
   <div class="sessions-card animated-item">
 
   <h3 class="section-title">Rutinas domiciliarias realizadas</h3>
 
-  @for (sesion of sesionesDomiciliarias; track sesion.id) {
+  @for (rutina of rutinasDomiciliarias; track rutina.id) {
 
-  <div class="session-item">
+  <!-- ITEM -->
 
-  <div class="session-number rutina-icon">
-  <ion-icon name="home-outline"></ion-icon>
+  <div
+    class="session-item clickable"
+    (click)="toggleRutina(rutina.id)"
+  >
+
+    <div class="session-number rutina-icon">
+      <ion-icon name="home-outline"></ion-icon>
+    </div>
+
+    <div class="session-info">
+
+      <span class="session-date">
+        {{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
+      </span>
+
+      <span class="session-eva">
+        {{ rutina.ejercicios.length }} ejercicios
+      </span>
+
+    </div>
+
+    <!-- CHEVRON -->
+
+    <ion-icon
+      class="expand-icon"
+      [name]="rutinaAbiertaId === rutina.id
+        ? 'chevron-down-outline'
+        : 'chevron-forward-outline'">
+    </ion-icon>
+
   </div>
 
-  <div class="session-info">
+  <!-- DETALLE -->
 
-  <span class="session-date">
-  {{ formatearFecha(sesion.fecha) }}
-  </span>
+  @if (rutinaAbiertaId === rutina.id) {
 
-  <span class="session-eva">
-  Dolor: {{ sesion.painScore ?? '-' }}/10
-  </span>
+  <div class="rutina-detalle">
+
+    @for (ej of rutina.ejercicios; track ej.orden) {
+
+    <div class="ej-row">
+
+      <span class="ej-nombre">
+        {{ ej.nombre }}
+      </span>
+
+      <span class="ej-reps">
+        {{ ej.series }} x {{ ej.repeticiones }}
+      </span>
+
+    </div>
+
+    }
 
   </div>
 
-  </div>
+  }
 
   }
 

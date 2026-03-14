@@ -97,6 +97,7 @@
 }
 
 .toolbar-btn {
+
   display: flex;
   align-items: center;
   gap: 4px;
@@ -109,7 +110,6 @@
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: inherit;
 
   ion-icon {
     font-size: 0.9rem;
@@ -125,8 +125,41 @@
     color: #ffffff;
   }
 
-  &.cancel {
-    color: var(--text-muted);
+  &.finalize {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+
+  &.danger {
+    border-color: #fecaca;
+    color: #ef4444;
+    background: #fef2f2;
+  }
+
+}
+
+.rutina-final-actions {
+  display: flex;
+  gap: 10px;
+
+  padding: 14px 16px 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+  button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .toolbar-btn.small {
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  gap: 3px;
+
+  ion-icon {
+    font-size: 0.8rem;
   }
 }
 

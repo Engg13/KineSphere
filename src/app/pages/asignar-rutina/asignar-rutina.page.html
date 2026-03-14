@@ -13,6 +13,32 @@
 
   <div class="assign-container">
 
+    <!-- SELECTOR TIPO -->
+
+    <div class="tipo-selector">
+
+      <button
+        class="tipo-btn"
+        [class.active]="tipoSeleccionado === 'clinica'"
+        (click)="seleccionarTipo('clinica')">
+
+        <ion-icon name="barbell-outline"></ion-icon>
+        Rutina clínica
+
+      </button>
+
+      <button
+        class="tipo-btn"
+        [class.active]="tipoSeleccionado === 'domiciliaria'"
+        (click)="seleccionarTipo('domiciliaria')">
+
+        <ion-icon name="home-outline"></ion-icon>
+        Rutina domiciliaria
+
+      </button>
+
+    </div>
+
     <!-- SECTION HEADER -->
 
     <div class="section-header">
@@ -29,7 +55,8 @@
         <button
           class="template-card"
           [class.selected]="templateSeleccionado?.id === template.id"
-          (click)="seleccionarTemplate(template)">
+          [class.disabled]="!tipoSeleccionado"
+          (click)="tipoSeleccionado && seleccionarTemplate(template)">
 
           <div class="template-icon">
             <ion-icon name="document-text-outline"></ion-icon>
@@ -101,7 +128,7 @@
     <button
       class="assign-btn"
       [class.disabled]="!templateSeleccionado"
-      [disabled]="!templateSeleccionado"
+      [disabled]="!templateSeleccionado || !tipoSeleccionado"
       (click)="asignar()">
       Asignar rutina al paciente
     </button>

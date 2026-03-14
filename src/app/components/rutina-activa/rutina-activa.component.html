@@ -40,7 +40,7 @@
     <div class="rutina-toolbar">
 
       <button
-        class="toolbar-btn"
+        class="toolbar-btn small"
         *ngIf="!editando"
         (click)="activarEdicion()">
         <ion-icon name="create-outline"></ion-icon>
@@ -48,27 +48,17 @@
       </button>
 
       <button
-        class="toolbar-btn"
+        class="toolbar-btn small"
         *ngIf="!editando"
         (click)="convertirAPlantilla()">
         <ion-icon name="copy-outline"></ion-icon>
-        <span>Plantilla</span>
-      </button>
-
-      <!-- SESION CLINICA SOLO SI ES CLINICA -->
-
-      <button
-        class="toolbar-btn"
-        *ngIf="!editando && rutina.tipoRutina === 'clinica'"
-        (click)="iniciarSesionClinica()">
-        <ion-icon name="play-outline"></ion-icon>
-        <span>Sesión</span>
+        <span>Guardar como plantilla</span>
       </button>
 
       <!-- ENVIAR SOLO SI ES DOMICILIARIA -->
 
       <button
-        class="toolbar-btn"
+        class="toolbar-btn small"
         *ngIf="!editando && rutina.tipoRutina === 'domiciliaria'"
         (click)="enviarRutinaDomiciliaria()">
         <ion-icon name="share-outline"></ion-icon>
@@ -78,7 +68,7 @@
       <!-- PREVIEW PACIENTE -->
 
       <button
-        class="toolbar-btn"
+        class="toolbar-btn small"
         *ngIf="rutina.tipoRutina === 'domiciliaria' && rutina.publicToken"
         (click)="previewRutinaPaciente()">
 
@@ -243,16 +233,26 @@
   </button>
 
 
-  <!-- CERRAR RUTINA -->
+  <!-- ACCIONES FINALES RUTINA -->
 
-  <button
-    class="toolbar-btn close-rutina"
-    *ngIf="!editando"
-    (click)="cerrarRutina()">
+  <div class="rutina-final-actions" *ngIf="!editando">
 
-    <ion-icon name="close-circle-outline"></ion-icon>
-    <span>Cerrar rutina</span>
+    <button
+      class="toolbar-btn finalize"
+      (click)="cerrarRutina()">
 
-  </button>
+      <ion-icon name="checkmark-circle-outline"></ion-icon>
+      <span>Finalizar</span>
 
-</div>
+    </button>
+
+    <button
+      class="toolbar-btn danger"
+      (click)="descartarRutina()">
+
+      <ion-icon name="trash-outline"></ion-icon>
+      <span>Descartar</span>
+
+    </button>
+
+  </div>

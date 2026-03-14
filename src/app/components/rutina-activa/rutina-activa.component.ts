@@ -23,6 +23,7 @@ export class RutinaActivaComponent {
   @Input() rutina: Rutina | null = null;
 
   @Output() sesionClinicaIniciada = new EventEmitter<void>();
+  @Output() rutinaEliminada = new EventEmitter<void>();
 
   publicLink: string | null = null;
 
@@ -314,6 +315,32 @@ export class RutinaActivaComponent {
           role: 'destructive',
           handler: async () => {
             await this.rutinasService.activarRutina(this.rutina!.id!, 'cerrada');
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+
+  }
+
+  async descartarRutina() {
+
+    if (!this.rutina?.id) return;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Descartar rutina',
+      message: 'Esta rutina se eliminará y no quedará registrada.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Descartar',
+          role: 'destructive',
+          handler: async () => {
+
+            await this.rutinasService.eliminarRutina(this.rutina!.id!);
+            this.rutinaEliminada.emit();
+
           }
         }
       ]

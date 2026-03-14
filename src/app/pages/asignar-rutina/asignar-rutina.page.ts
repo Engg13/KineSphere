@@ -5,6 +5,7 @@ import { RutinasService } from '../../services/rutinas.service';
 import { Rutina } from '../../models/rutina.model';
 import { ActivatedRoute } from '@angular/router';
 import { NavController } from '@ionic/angular';
+import { AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-asignar-rutina',
@@ -16,15 +17,15 @@ import { NavController } from '@ionic/angular';
 export class AsignarRutinaPage {
 
   templates: Rutina[] = [];
-
   pacienteId: string = '';
-
   templateSeleccionado?: Rutina;
+  tipoSeleccionado: 'clinica' | 'domiciliaria' | null = null;
 
   constructor(
     private rutinasService: RutinasService,
     private route: ActivatedRoute,
-    private navCtrl: NavController
+    private navCtrl: NavController,
+    private alertCtrl: AlertController
   ) {
     this.pacienteId =
     this.route.snapshot.queryParamMap.get('pacienteId') || '';
@@ -45,26 +46,31 @@ export class AsignarRutinaPage {
 
   async asignar() {
 
-    if (!this.templateSeleccionado || !this.pacienteId) return;
+    if (!this.templateSeleccionado || !this.pacienteId || !this.tipoSeleccionado) return;
 
     await this.rutinasService.asignarTemplateAPaciente(
       this.pacienteId,
-      this.templateSeleccionado
+      this.templateSeleccionado,
+      this.tipoSeleccionado
     );
 
     this.volver();
 
   }
 
-  volver() {
+    volver() {
 
-    this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: {
-        pacienteId: this.pacienteId,
-        tab: 'rutinas'
-      }
-    });
+      this.navCtrl.navigateRoot('/paciente-detalle', {
+        queryParams: {
+          pacienteId: this.pacienteId,
+          tab: 'rutinas'
+        }
+      });
 
+    }
+
+  seleccionarTipo(tipo: 'clinica' | 'domiciliaria') {
+    this.tipoSeleccionado = tipo;
   }
 
 }

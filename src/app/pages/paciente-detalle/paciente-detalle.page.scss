@@ -641,4 +641,52 @@
     background: var(--ion-color-success);
     transition: width 0.3s ease;
   }
+
+  .rutina-detalle {
+  margin-top: 10px;
+  padding-left: 50px;
+  border-left: 2px solid var(--ion-color-light);
+}
+
+.ejercicio-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.session-item.clickable {
+  cursor: pointer;
+}
+
+.rutina-detalle {
+  margin-left: 52px; 
+  margin-top: 6px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-left: 2px solid #e5e7eb;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.ej-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 0.85rem;
+}
+
+.ej-nombre {
+  color: var(--text-primary);
+}
+
+.ej-reps {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.expand-icon {
+  margin-left: auto;
+  color: var(--text-muted);
+}
 }

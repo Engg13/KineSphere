@@ -24,6 +24,7 @@ export class PacienteDetallePage implements OnDestroy {
   estaCargando: boolean = true;
   historialSesiones: any[] = [];
   rutinasCompletadas: Rutina[] = [];
+  rutinasDomiciliarias: Rutina[] = [];
   sesionesExpandidas: Set<string | number> = new Set();
   pacienteId: string = '';
   fechaActual = new Date();
@@ -35,6 +36,7 @@ export class PacienteDetallePage implements OnDestroy {
   tabActual: 'info' | 'sesiones' | 'rutinas' = 'info';
   adherenciaDomiciliaria: number | null = null;
   sesionesDomiciliarias: any[] = [];
+  rutinaAbiertaId: string | null = null;
 
   private rutinasSub?: Subscription;
   private evolucionesSub?: Subscription;
@@ -175,7 +177,7 @@ export class PacienteDetallePage implements OnDestroy {
       .subscribe({
         next: (rutinas: Rutina[]) => {
 
-          this.rutinasCompletadas = rutinas
+          const rutinasCerradas = rutinas
             .filter(r => r.estado === 'cerrada')
             .sort((a, b) => {
 
@@ -191,12 +193,22 @@ export class PacienteDetallePage implements OnDestroy {
 
             });
 
+          // 🏋 Rutinas clínicas realizadas
+          this.rutinasCompletadas = rutinasCerradas
+            .filter(r => r.tipoRutina === 'clinica');
+
+          // 🏠 Rutinas domiciliarias realizadas
+          this.rutinasDomiciliarias = rutinasCerradas
+            .filter(r => r.tipoRutina === 'domiciliaria');
+
         },
         error: (error) => {
           console.error('Error cargando rutinas:', error);
           this.rutinasCompletadas = [];
+          this.rutinasDomiciliarias = [];
         }
       });
+
   }
 
   // ==============================
@@ -309,6 +321,16 @@ export class PacienteDetallePage implements OnDestroy {
     } else {
       this.sesionesExpandidas.add(sesionId);
     }
+  }
+
+  toggleRutina(rutinaId: string) {
+
+    if (this.rutinaAbiertaId === rutinaId) {
+      this.rutinaAbiertaId = null;
+    } else {
+      this.rutinaAbiertaId = rutinaId;
+    }
+
   }
 
   isSesionExpandida(sesionId: string | number): boolean {
@@ -627,6 +649,15 @@ export class PacienteDetallePage implements OnDestroy {
     }
 
     return new Date(fecha).getTime() || 0;
+
+  }
+  
+  recargarRutinas() {
+
+    if (!this.paciente?.id) return;
+
+    this.cargarRutinasCompletadas(this.paciente.id);
+    this.cargarSesionesDomiciliarias(this.paciente.id);
 
   }
 }

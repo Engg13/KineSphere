@@ -222,3 +222,38 @@ ion-content {
     cursor: not-allowed;
   }
 }
+
+.tipo-selector {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 18px;
+}
+
+.tipo-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.tipo-btn.active {
+  background: white;
+  color: var(--teal);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.template-card.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
