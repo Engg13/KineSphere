@@ -64,13 +64,13 @@ export class RutinasSesionesService extends BaseClinicService {
 
   }
 
-  getSesionesPaciente(pacienteId: string): Observable<RutinaSesion[]> {
+  getSesionesPaciente(patientId: string): Observable<RutinaSesion[]> {
 
     const ref = collection(this.firestore, this.sesionesPath);
 
     const q = query(
       ref,
-      where('pacienteId', '==', pacienteId),
+      where('patientId', '==', patientId),
       orderBy('fecha', 'desc')
     );
 

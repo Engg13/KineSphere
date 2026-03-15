@@ -4,6 +4,7 @@ import { TratamientosService } from './tratamientos.service';
 import { EvolucionesService } from './evoluciones.service';
 import { EvolucionCreateInput } from '../models/evolucion.model';
 import { BaseClinicService } from '../core/services/base-clinic.service';
+import { PacientesService } from '../services/pacientes.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,7 @@ export class FlujoClinicoService extends BaseClinicService {
   
   private readonly tratamientosService = inject(TratamientosService);
   private readonly evolucionesService = inject(EvolucionesService);
+  private pacientesService = inject(PacientesService);
   private readonly evolucionesCollection = 'evoluciones';
 
   private buildCleanPayload(payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>) {
@@ -40,32 +42,49 @@ export class FlujoClinicoService extends BaseClinicService {
   }
 
  async crearEvaluacionInicial(
-  patientId: string,
-  payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
-): Promise<string> {
+    patientId: string,
+    payload: Omit<EvolucionCreateInput, 'patientId' | 'tipoEvolucion'>
+  ): Promise<string> {
+    const paciente = await this.pacientesService.getById(patientId);
+    const clinicId = this.clinicContext.clinicId;
 
-  const existente = await this.tratamientosService.getActivoByPaciente(patientId);
-  
+    if (!paciente || paciente.clinicId !== clinicId) {
+      throw new Error('Paciente no pertenece a esta clínica');}
 
-  if (existente) {
-    throw new Error('El paciente ya tiene un tratamiento activo');
+    const existente = await this.tratamientosService.getActivoByPaciente(patientId);
+
+    if (existente) {
+      throw new Error('El paciente ya tiene un tratamiento activo');
+    }
+
+    const evolucionId = await runTransaction(this.firestore, async (transaction) => {
+
+      const tratamientoRef = doc(collection(this.firestore, 'tratamientos'));
+
+      transaction.set(tratamientoRef, {
+        patientId,
+        zonaPrincipal: payload.zonaPrincipal ?? null,
+        zonasSecundarias: [],
+        estado: 'activo',
+        createdAt: new Date()
+      });
+
+      const evolucionRef = doc(collection(this.firestore, 'evoluciones'));
+
+      transaction.set(evolucionRef, {
+        ...payload,
+        patientId,
+        treatmentId: tratamientoRef.id,
+        tipoEvolucion: 'initial',
+        sessionNumber: null,
+        createdAt: new Date()
+      });
+
+      return evolucionRef.id;
+    });
+
+    return evolucionId;
   }
-
-  const tratamiento = await this.tratamientosService.create(patientId, {
-    zonaPrincipal: payload.zonaPrincipal ?? null,
-    zonasSecundarias: []
-  });
-
-  const evolucion = await this.evolucionesService.create({
-    ...payload,
-    patientId,
-    treatmentId: tratamiento.id,
-    tipoEvolucion: 'initial',
-    sessionNumber: null
-  });
-
-  return evolucion.id;
-}
 
   async crearSesionProgreso(
     treatmentId: string,

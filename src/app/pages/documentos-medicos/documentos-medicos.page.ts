@@ -17,7 +17,7 @@ export class DocumentosMedicosPage implements OnInit {
   private clinicContext = inject(ClinicContextService);
   
   documentos: any[] = [];
-  pacienteId: string = "";
+  patientId: string = "";
   pacienteNombre: string = 'Paciente';
 
   clinicId: string = '';
@@ -38,8 +38,8 @@ export class DocumentosMedicosPage implements OnInit {
     this.professionalId = this.clinicContext.uid;
 
     this.route.queryParams.subscribe(params => {
-      if (params['pacienteId']) {
-        this.pacienteId = String(params['pacienteId']);
+      if (params['patientId']) {
+        this.patientId = String(params['patientId']);
         this.pacienteNombre = params['pacienteNombre'] || 'Paciente';
         this.cargarDocumentos();
       }
@@ -48,12 +48,12 @@ export class DocumentosMedicosPage implements OnInit {
   }
 
   private cargarDocumentos() {
-    if (!this.pacienteId) {
+    if (!this.patientId) {
       this.documentos = [];
       return;
     }
 
-    this.documentosService.getDocumentosByPaciente(this.pacienteId).subscribe({
+    this.documentosService.getDocumentosByPaciente(this.patientId).subscribe({
       next: documentos => {
         this.documentos = documentos || [];
       },
@@ -108,18 +108,18 @@ export class DocumentosMedicosPage implements OnInit {
 
   private async guardarDocumento(dataUrl: string, tipo: string) {
     try {
-      const nuevoDocumento = {
-        imagen: dataUrl,
-        fecha: new Date().toLocaleString('es-CL'),
-        tipo,
-        pacienteId: this.pacienteId,
-        clinicId: this.clinicId,
-        professionalId: this.professionalId,
-        descripcion: `Documento médico - ${new Date().toLocaleDateString('es-CL')}`
-      };
 
-      await this.documentosService.addDocumento(nuevoDocumento);
+      await this.documentosService.addDocumento({
+        patientId: this.patientId,
+        nombre: `Documento médico - ${new Date().toLocaleDateString('es-CL')}`,
+        url: dataUrl,
+        tipo,
+        professionalId: this.professionalId,
+        createdAt: new Date()
+      });
+
       this.mostrarMensaje('Documento guardado exitosamente');
+
     } catch (error) {
       console.error('Error guardando documento:', error);
       this.mostrarError('Error al guardar el documento');
@@ -184,7 +184,7 @@ export class DocumentosMedicosPage implements OnInit {
 
   volverAlPaciente() {
     this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: { pacienteId: this.pacienteId }
+      queryParams: { patientId: this.patientId }
     });
   }
 }

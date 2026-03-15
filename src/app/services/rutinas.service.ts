@@ -102,10 +102,10 @@ export class RutinasService extends BaseClinicService {
     return `clinics/${this.clinicId}/rutinas_paciente`;
   }
 
-  getRutinasPaciente(pacienteId: string): Observable<Rutina[]> {
+  getRutinasPaciente(patientId: string): Observable<Rutina[]> {
 
     const ref = collection(this.firestore, this.pacientePath);
-    const q = query(ref, where('pacienteId', '==', pacienteId));
+    const q = query(ref, where('patientId', '==', patientId));
 
     return (collectionData(q, { idField: 'id' }) as Observable<RutinaPaciente[]>)
       .pipe(
@@ -114,13 +114,13 @@ export class RutinasService extends BaseClinicService {
 
   }
 
-  getRutinaClinicaActiva(pacienteId: string): Observable<Rutina | null> {
+  getRutinaClinicaActiva(patientId: string): Observable<Rutina | null> {
 
     const ref = collection(this.firestore, this.pacientePath);
 
     const q = query(
       ref,
-      where('pacienteId', '==', pacienteId),
+      where('patientId', '==', patientId),
       where('tipo', '==', 'clinica'),
       where('estado', '==', 'activa'),
       limit(1)
@@ -133,13 +133,13 @@ export class RutinasService extends BaseClinicService {
 
   }
 
-  getRutinaDomiciliariaActiva(pacienteId: string): Observable<Rutina | null> {
+  getRutinaDomiciliariaActiva(patientId: string): Observable<Rutina | null> {
 
     const ref = collection(this.firestore, this.pacientePath);
 
     const q = query(
       ref,
-      where('pacienteId', '==', pacienteId),
+      where('patientId', '==', patientId),
       where('tipo', '==', 'domiciliaria'),
       where('estado', '==', 'activa'),
       limit(1)
@@ -169,7 +169,7 @@ export class RutinasService extends BaseClinicService {
       nombre: rutina.nombre,
       descripcion: rutina.descripcion ?? '',
       ejercicios: rutina.ejercicios,
-      pacienteId: rutina.pacienteId,
+      patientId: rutina.patientId,
       clinicId: this.clinicId,
       createdBy: this.professionalId,
       tipo : rutina.tipoRutina ?? 'clinica'
@@ -237,7 +237,7 @@ export class RutinasService extends BaseClinicService {
   // ========================================
 
   async crearRutinaClinica(
-    pacienteId: string,
+    patientId: string,
     nombre: string,
     ejercicios: any[],
     templateId?: string
@@ -246,7 +246,7 @@ export class RutinasService extends BaseClinicService {
     const rutinasRef = collection(this.firestore, this.pacientePath);
 
     const data: any = {
-      pacienteId,
+      patientId,
       nombre,
       descripcion: '',
       ejercicios,
@@ -285,7 +285,7 @@ export class RutinasService extends BaseClinicService {
   // ========================================
 
   async crearRutinaDomiciliaria(
-    pacienteId: string,
+    patientId: string,
     nombre: string,
     ejercicios: any[],
     templateId?: string
@@ -296,7 +296,7 @@ export class RutinasService extends BaseClinicService {
     // Deactivate existing active routines
     const q = query(
       rutinasRef,
-      where('pacienteId', '==', pacienteId),
+      where('patientId', '==', patientId),
       where('tipo', '==', 'domiciliaria'),
       where('estado', '==', 'activa')
     );
@@ -321,7 +321,7 @@ export class RutinasService extends BaseClinicService {
       newId = nuevaDoc.id;
 
       const data: any = {
-        pacienteId,
+        patientId,
         nombre,
         descripcion: '',
         ejercicios,
@@ -398,7 +398,7 @@ export class RutinasService extends BaseClinicService {
   // ========================================
 
   async asignarTemplateAPaciente(
-    pacienteId: string,
+    patientId: string,
     template: Rutina | RutinaTemplate,
     tipoRutina: TipoRutina = 'domiciliaria'
   ): Promise<void> {
@@ -407,7 +407,7 @@ export class RutinasService extends BaseClinicService {
 
     const q = query(
       rutinasRef,
-      where('pacienteId', '==', pacienteId),
+      where('patientId', '==', patientId),
       where('tipo', '==', 'domiciliaria'),
       where('estado', '==', 'activa')
     );
@@ -429,7 +429,7 @@ export class RutinasService extends BaseClinicService {
       const nuevaDoc = doc(rutinasRef);
 
       const data: any = {
-        pacienteId,
+        patientId,
         nombre: template.nombre,
         descripcion: template.descripcion ?? '',
         ejercicios: template.ejercicios,

@@ -158,7 +158,7 @@ export class DashboardPage {
 
   verDetallePaciente(paciente: PacienteDocument) {
     this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: { pacienteId: paciente.id }
+      queryParams: { patientId: paciente.id }
     });
   }
 

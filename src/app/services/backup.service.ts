@@ -156,8 +156,8 @@ export class BackupService {
 
       // Importar sesiones
       if (backup.sesiones) {
-        for (const [pacienteId, sesiones] of Object.entries(backup.sesiones)) {
-          const key = `sesiones_${pacienteId}`;
+        for (const [patientId, sesiones] of Object.entries(backup.sesiones)) {
+          const key = `sesiones_${patientId}`;
           const existentes = this.obtenerArray(key);
           const idsExistentes = new Set(existentes.map((s: any) => String(s.id)));
 
@@ -173,8 +173,8 @@ export class BackupService {
 
       // Importar documentos
       if (backup.documentos) {
-        for (const [pacienteId, docs] of Object.entries(backup.documentos)) {
-          const key = `documentos_${pacienteId}`;
+        for (const [patientId, docs] of Object.entries(backup.documentos)) {
+          const key = `documentos_${patientId}`;
           const existentes = this.obtenerArray(key);
           const idsExistentes = new Set(existentes.map((d: any) => String(d.id)));
 

@@ -11,7 +11,7 @@ export interface RutinaPaciente {
 
   clinicId: string;
 
-  pacienteId: string;
+  patientId: string;
 
   nombre: string;
 

@@ -17,7 +17,7 @@ import { AlertController } from '@ionic/angular';
 export class AsignarRutinaPage {
 
   templates: Rutina[] = [];
-  pacienteId: string = '';
+  patientId: string = '';
   templateSeleccionado?: Rutina;
   tipoSeleccionado: 'clinica' | 'domiciliaria' | null = null;
 
@@ -27,8 +27,8 @@ export class AsignarRutinaPage {
     private navCtrl: NavController,
     private alertCtrl: AlertController
   ) {
-    this.pacienteId =
-    this.route.snapshot.queryParamMap.get('pacienteId') || '';
+    this.patientId =
+    this.route.snapshot.queryParamMap.get('patientId') || '';
     this.cargarTemplates();
   }
 
@@ -46,10 +46,10 @@ export class AsignarRutinaPage {
 
   async asignar() {
 
-    if (!this.templateSeleccionado || !this.pacienteId || !this.tipoSeleccionado) return;
+    if (!this.templateSeleccionado || !this.patientId || !this.tipoSeleccionado) return;
 
     await this.rutinasService.asignarTemplateAPaciente(
-      this.pacienteId,
+      this.patientId,
       this.templateSeleccionado,
       this.tipoSeleccionado
     );
@@ -62,7 +62,7 @@ export class AsignarRutinaPage {
 
       this.navCtrl.navigateRoot('/paciente-detalle', {
         queryParams: {
-          pacienteId: this.pacienteId,
+          patientId: this.patientId,
           tab: 'rutinas'
         }
       });

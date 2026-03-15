@@ -27,7 +27,7 @@ export class AgregarPacientePage implements ViewWillEnter {
   };
 
   modoEdicion = false;
-  pacienteIdOriginal: string = '';
+  patientIdOriginal: string = '';
 
   // Propiedades para control del teclado
   tecladoVisible = false;
@@ -47,11 +47,11 @@ export class AgregarPacientePage implements ViewWillEnter {
   async ionViewWillEnter() {
     // 1) Leer desde query params actuales del Router
     const urlTree = this.router.parseUrl(this.router.url);
-    const urlId = urlTree.queryParams['pacienteId'] || urlTree.queryParams['id'];
+    const urlId = urlTree.queryParams['patientId'] || urlTree.queryParams['id'];
     const urlModo = urlTree.queryParams['modoEdicion'];
 
     // 2) Fallback: leer desde snapshot de ActivatedRoute
-    const snapId = this.route.snapshot.queryParams['pacienteId'] || this.route.snapshot.queryParams['id'];
+    const snapId = this.route.snapshot.queryParams['patientId'] || this.route.snapshot.queryParams['id'];
     const snapModo = this.route.snapshot.queryParams['modoEdicion'];
 
     // Usar el primer valor disponible
@@ -59,17 +59,17 @@ export class AgregarPacientePage implements ViewWillEnter {
 
     console.log('=== agregar-paciente ionViewWillEnter ===');
     console.log('router.url:', this.router.url);
-    console.log('urlParams (pacienteId|id):', { urlId, urlModo });
-    console.log('snapParams (pacienteId|id):', { snapId, snapModo });
+    console.log('urlParams (patientId|id):', { urlId, urlModo });
+    console.log('snapParams (patientId|id):', { snapId, snapModo });
     console.log('ID final usado:', id);
 
     if (id) {
       this.modoEdicion = true;
-      this.pacienteIdOriginal = String(id);
+      this.patientIdOriginal = String(id);
       await this.cargarPacienteParaEditar(String(id));
     } else {
       this.modoEdicion = false;
-      this.pacienteIdOriginal = '';
+      this.patientIdOriginal = '';
       this.resetFormulario();
     }
 
@@ -243,7 +243,7 @@ export class AgregarPacientePage implements ViewWillEnter {
       };
 
       if (this.modoEdicion) {
-        await this.pacientesService.update(this.pacienteIdOriginal, payload);
+        await this.pacientesService.update(this.patientIdOriginal, payload);
         this.mostrarToast('Paciente actualizado exitosamente', 'success');
       } else {
         await this.pacientesService.create(payload);
@@ -253,7 +253,7 @@ export class AgregarPacientePage implements ViewWillEnter {
       setTimeout(() => {
         if (this.modoEdicion) {
           this.navCtrl.navigateRoot('/paciente-detalle', {
-            queryParams: { pacienteId: this.pacienteIdOriginal }
+            queryParams: { patientId: this.patientIdOriginal }
           });
         } else {
           this.navCtrl.navigateRoot('/pacientes-lista');

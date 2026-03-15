@@ -57,14 +57,31 @@ rules_version = '2';
 
   match /users/{userId} {
 
-    allow read: if isSuperAdmin() || request.auth.uid == userId;
+    // Leer su propio perfil
+    allow read: if request.auth != null &&
+             (
+               request.auth.uid == userId ||
+               isSuperAdmin()
+             );
 
+    // Crear usuarios solo superadmin
     allow create: if isSuperAdmin();
 
-    allow update: if isSuperAdmin() || request.auth.uid == userId;
+    // Usuario puede editar su perfil
+    // pero no role ni clinicId
+    allow update: if request.auth.uid == userId
+                  &&
+                  !request.resource.data
+                    .diff(resource.data)
+                    .affectedKeys()
+                    .hasAny([
+                      'role',
+                      'clinicId',
+                      'createdAt'
+                    ]);
 
-    allow delete: if isSuperAdmin();
-
+    // Superadmin puede modificar todo
+    allow update, delete: if isSuperAdmin();
   }
 
   /* ================= PACIENTES ================= */
@@ -238,7 +255,24 @@ rules_version = '2';
 
       allow read: if sameClinicPath(clinicIdDoc);
 
-      allow create: if true;
+      allow create: if
+            sameClinicPath(clinicIdDoc)
+            ||
+            (
+              request.auth == null
+              &&
+              request.resource.data.publicToken != null
+              &&
+              exists(
+                /databases/$(database)/documents/clinics/$(clinicIdDoc)/rutinas_paciente/$(request.resource.data.rutinaId)
+              )
+              &&
+              get(
+                /databases/$(database)/documents/clinics/$(clinicIdDoc)/rutinas_paciente/$(request.resource.data.rutinaId)
+              ).data.publicToken
+              ==
+              request.resource.data.publicToken
+            );
 
       allow update: if sameClinicPath(clinicIdDoc);
 
@@ -253,7 +287,24 @@ rules_version = '2';
 
       allow read: if sameClinicPath(clinicIdDoc);
 
-      allow create: if true;
+      allow create: if
+            sameClinicPath(clinicIdDoc)
+            ||
+            (
+              request.auth == null
+              &&
+              request.resource.data.publicToken != null
+              &&
+              exists(
+                /databases/$(database)/documents/clinics/$(clinicIdDoc)/rutinas_paciente/$(request.resource.data.rutinaId)
+              )
+              &&
+              get(
+                /databases/$(database)/documents/clinics/$(clinicIdDoc)/rutinas_paciente/$(request.resource.data.rutinaId)
+              ).data.publicToken
+              ==
+              request.resource.data.publicToken
+            );
 
       allow update: if sameClinicPath(clinicIdDoc);
 

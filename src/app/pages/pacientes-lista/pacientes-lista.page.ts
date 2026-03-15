@@ -116,7 +116,7 @@ export class PacientesListaPage {
     if (!paciente?.id) return;
 
     this.navCtrl.navigateRoot('/paciente-detalle', {
-      queryParams: { pacienteId: paciente.id }
+      queryParams: { patientId: paciente.id }
     });
   }
 

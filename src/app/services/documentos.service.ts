@@ -11,6 +11,7 @@ import {
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { ClinicContextService } from '../core/tenancy/clinic-context.service';
+import { Documento } from '../models/documento.model';
 
 @Injectable({
   providedIn: 'root'
@@ -22,27 +23,37 @@ export class DocumentosService {
 
   private documentosRef = collection(this.firestore, 'documentos');
 
-  getDocumentosByPaciente(pacienteId: string): Observable<any[]> {
+  getDocumentosByPaciente(patientId: string): Observable<Documento[]> {
 
     const clinicId = this.clinicContext.clinicId
 
     const q = query(
       this.documentosRef,
-      where('patientId', '==', pacienteId),
+      where('patientId', '==', patientId),
       where('clinicId', '==', clinicId)
     );
 
-    return collectionData(q, { idField: 'id' }) as Observable<any[]>;
+    return collectionData(q, { idField: 'id' }) as Observable<Documento[]>;
   }
 
-  addDocumento(documento: any) {
-    return addDoc(this.documentosRef, documento);
+  addDocumento(documento: Omit<Documento, 'clinicId'>) {
+
+    const clinicId = this.clinicContext.clinicId;
+
+    if (!clinicId) {
+      throw new Error('Clinic context not loaded');
+    }
+
+    const data: Documento = {
+      ...documento,
+      clinicId
+    };
+
+    return addDoc(this.documentosRef, data);
   }
 
   deleteDocumento(id: string) {
-
     const ref = doc(this.firestore, `documentos/${id}`);
-
     return deleteDoc(ref);
   }
 

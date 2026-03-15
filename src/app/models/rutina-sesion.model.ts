@@ -6,7 +6,7 @@ export interface RutinaSesion {
 
   rutinaId: string;
 
-  pacienteId: string;
+  patientId: string;
 
   clinicId: string;
 

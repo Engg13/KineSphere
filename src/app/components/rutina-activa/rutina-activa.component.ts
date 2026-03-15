@@ -191,7 +191,7 @@ export class RutinaActivaComponent {
       ...this.rutina,
       id: undefined,
       tipo: 'template',
-      pacienteId: undefined,
+      patientId: undefined,
       estado: undefined,
       publicToken: undefined,
       publicEnabled: undefined,
@@ -210,11 +210,11 @@ export class RutinaActivaComponent {
 
   async iniciarSesionClinica() {
 
-    if (!this.rutina?.id || !this.rutina.pacienteId) return;
+    if (!this.rutina?.id || !this.rutina.patientId) return;
 
     await this.sesionesService.registrarSesion({
       rutinaId: this.rutina.id,
-      pacienteId: this.rutina.pacienteId,
+      patientId: this.rutina.patientId,
       clinicId: this.rutina.clinicId,
       tipoSesion: 'clinica',
       fecha: new Date()

@@ -14,6 +14,7 @@ import { RutinasSesionesService } from '../../services/rutinas-sesiones.service'
 import { EvolucionViewerComponent } from '../../components/evolucion-viewer/evolucion-viewer.component';
 import { EvolucionDocument } from '../../services/evoluciones.service';
 import { TreatmentProgressComponent } from 'src/app/components/treatment-progress/treatment-progress.component';
+import { agruparSesionesPorTratamiento } from 'src/app/services/tratamientos.utils'
 
 interface TratamientoHistorial {
   treatmentId: string
@@ -38,7 +39,7 @@ export class PacienteDetallePage implements OnDestroy {
   rutinasCompletadas: Rutina[] = [];
   rutinasDomiciliarias: Rutina[] = [];
   sesionesExpandidas: Set<string | number> = new Set();
-  pacienteId: string = '';
+  patientId: string = '';
   fechaActual = new Date();
   esAdmin: boolean = false;
   historialVisual: any[] = [];
@@ -77,7 +78,7 @@ export class PacienteDetallePage implements OnDestroy {
   async ionViewDidEnter() {
 
     const queryId =
-      this.route.snapshot.queryParamMap.get('pacienteId') ||
+      this.route.snapshot.queryParamMap.get('patientId') ||
       this.route.snapshot.queryParamMap.get('id');
       const tab = this.route.snapshot.queryParamMap.get('tab');
 
@@ -86,17 +87,17 @@ export class PacienteDetallePage implements OnDestroy {
     }
 
     if (queryId) {
-      this.pacienteId = queryId;
+      this.patientId = queryId;
     }
 
-    if (this.pacienteId) {
+    if (this.patientId) {
 
       this.cancelarSuscripciones();
 
-      await this.cargarPaciente(this.pacienteId);
+      await this.cargarPaciente(this.patientId);
 
       this.tratamientoActivo =
-        await this.flujoClinicoService.getTratamientoActivo(this.pacienteId);
+        await this.flujoClinicoService.getTratamientoActivo(this.patientId);
 
     } else {
 
@@ -158,12 +159,12 @@ export class PacienteDetallePage implements OnDestroy {
 
       this.verificarYCorregirEdad();
 
-      const pacienteIdReal = paciente.id;
+      const patientIdReal = paciente.id;
 
-      this.cargarHistorialSesiones(pacienteIdReal);
-      this.cargarRutinasCompletadas(pacienteIdReal);
-      this.cargarRutinasActivas(pacienteIdReal);
-      this.cargarSesionesDomiciliarias(pacienteIdReal);
+      this.cargarHistorialSesiones(patientIdReal);
+      this.cargarRutinasCompletadas(patientIdReal);
+      this.cargarRutinasActivas(patientIdReal);
+      this.cargarSesionesDomiciliarias(patientIdReal);
 
     } else {
       this.paciente = null;
@@ -180,14 +181,14 @@ export class PacienteDetallePage implements OnDestroy {
   // RUTINAS (REALTIME)
   // ==============================
 
-  private cargarRutinasCompletadas(pacienteId: string) {
+  private cargarRutinasCompletadas(patientId: string) {
 
     if (this.rutinasSub) {
       this.rutinasSub.unsubscribe();
     }
 
     this.rutinasSub = this.rutinasService
-      .getRutinasPaciente(pacienteId)
+      .getRutinasPaciente(patientId)
       .subscribe({
         next: (rutinas: Rutina[]) => {
 
@@ -229,21 +230,24 @@ export class PacienteDetallePage implements OnDestroy {
   // HISTORIAL SESIONES
   // ==============================
 
-  private cargarHistorialSesiones(pacienteId: string) {
+  private cargarHistorialSesiones(patientId: string) {
 
     if (this.evolucionesSub) {
       this.evolucionesSub.unsubscribe();
     }
 
     this.evolucionesSub = this.evolucionesService
-      .getEvolucionesByPacienteRealtime(pacienteId)
+      .getEvolucionesByPacienteRealtime(patientId)
       .subscribe({
         next: (evoluciones) => {
 
-          this.historialSesiones = evoluciones || [];
+          this.historialSesiones = evoluciones ?? [];
 
-          // Agrupar por tratamiento
-          this.agruparSesionesPorTratamiento();
+          this.tratamientosHistorial = agruparSesionesPorTratamiento(
+            this.historialSesiones,
+            this.tratamientoActivo?.id,
+            this.paciente?.diagnostico
+          );
 
         },
         error: (error) => {
@@ -253,7 +257,7 @@ export class PacienteDetallePage implements OnDestroy {
         }
       });
 
-}
+  }
 
   // ==============================
   // EDAD
@@ -297,8 +301,8 @@ export class PacienteDetallePage implements OnDestroy {
   // ==============================
 
   async refrescarDatos(event?: any) {
-    if (this.pacienteId) {
-      await this.cargarPaciente(this.pacienteId);
+    if (this.patientId) {
+      await this.cargarPaciente(this.patientId);
     }
 
     if (event) {
@@ -372,7 +376,7 @@ export class PacienteDetallePage implements OnDestroy {
 
     this.navCtrl.navigateRoot('/evolucion', {
       queryParams: {
-        patientId: this.pacienteId,
+        patientId: this.patientId,
         treatmentId: this.tratamientoActivo.id,
         mode: 'progress'
       }
@@ -389,7 +393,7 @@ export class PacienteDetallePage implements OnDestroy {
 
     this.navCtrl.navigateRoot('/documentos-medicos', {
       queryParams: {
-        pacienteId: this.paciente.id,
+        patientId: this.paciente.id,
         pacienteNombre: this.paciente.nombre
       }
     });
@@ -397,12 +401,12 @@ export class PacienteDetallePage implements OnDestroy {
 
   crearRutina() {
 
-    if (!this.pacienteId) return;
+    if (!this.patientId) return;
 
     this.navCtrl.navigateRoot('/rutina-editor', {
       queryParams: {
         tipo: 'paciente',
-        pacienteId: this.pacienteId
+        patientId: this.patientId
       }
     });
 
@@ -413,7 +417,7 @@ export class PacienteDetallePage implements OnDestroy {
 
     this.navCtrl.navigateRoot('/agregar-paciente', {
       queryParams: {
-        pacienteId: this.pacienteId,
+        patientId: this.patientId,
         modoEdicion: 'true'
       }
     });
@@ -461,7 +465,7 @@ export class PacienteDetallePage implements OnDestroy {
 
     this.navCtrl.navigateRoot('/evolucion', {
       queryParams: {
-        patientId: this.pacienteId,
+        patientId: this.patientId,
         mode: 'initial'
       }
     });
@@ -472,7 +476,7 @@ export class PacienteDetallePage implements OnDestroy {
 
     this.navCtrl.navigateRoot('/evolucion', {
       queryParams: {
-        patientId: this.pacienteId,
+        patientId: this.patientId,
         treatmentId: this.tratamientoActivo.id,
         mode: 'discharge'
       }
@@ -499,7 +503,7 @@ export class PacienteDetallePage implements OnDestroy {
 
   }
 
-  private cargarRutinasActivas(pacienteId: string) {
+  private cargarRutinasActivas(patientId: string) {
 
     if (this.rutinaClinicaSub) {
       this.rutinaClinicaSub.unsubscribe();
@@ -514,7 +518,7 @@ export class PacienteDetallePage implements OnDestroy {
     // =========================
 
     this.rutinaClinicaSub = this.rutinasService
-      .getRutinaClinicaActiva(pacienteId)
+      .getRutinaClinicaActiva(patientId)
       .subscribe({
         next: rutina => {
 
@@ -534,7 +538,7 @@ export class PacienteDetallePage implements OnDestroy {
     // =========================
 
     this.rutinaDomiciliariaSub = this.rutinasService
-      .getRutinaDomiciliariaActiva(pacienteId)
+      .getRutinaDomiciliariaActiva(patientId)
       .subscribe({
         next: rutina => {
 
@@ -591,7 +595,7 @@ export class PacienteDetallePage implements OnDestroy {
       '/asignar-rutina',
       {
         queryParams: {
-          pacienteId: this.paciente.id
+          patientId: this.paciente.id
         }
       }
     );
@@ -604,16 +608,16 @@ export class PacienteDetallePage implements OnDestroy {
       queryParams: {
         tipo: 'paciente',
         id: rutinaId,
-        pacienteId: this.pacienteId
+        patientId: this.patientId
       }
     });
 
   }
 
-  private cargarSesionesDomiciliarias(pacienteId: string) {
+  private cargarSesionesDomiciliarias(patientId: string) {
 
     this.rutinasSesionesService
-      .getSesionesPaciente(pacienteId)
+      .getSesionesPaciente(patientId)
       .subscribe({
         next: sesiones => {
 
@@ -666,64 +670,6 @@ export class PacienteDetallePage implements OnDestroy {
     });
 
     await modal.present();
-
-  }
-
-  private agruparSesionesPorTratamiento() {
-
-    const mapa = new Map<string, TratamientoHistorial>();
-
-    for (const sesion of this.historialSesiones) {
-
-      const treatmentId = sesion.treatmentId || 'sin-tratamiento';
-
-      if (!mapa.has(treatmentId)) {
-
-        mapa.set(treatmentId, {
-          treatmentId,
-          sesiones: [],
-          expandido: false,
-          activo: treatmentId === this.tratamientoActivo?.id,
-          fechaInicio: null,
-          diagnostico: this.paciente?.diagnostico
-        });
-
-      }
-
-      const tratamiento = mapa.get(treatmentId)!;
-
-      tratamiento.sesiones.push(sesion);
-
-      // 🔹 Detectar fecha de inicio desde la evaluación inicial
-      if (sesion.tipoEvolucion === 'initial') {
-        tratamiento.fechaInicio = sesion.createdAt;
-      }
-
-    }
-
-    this.tratamientosHistorial = Array.from(mapa.values()).map(tratamiento => {
-
-      tratamiento.sesiones.sort((a, b) => {
-
-        const aNum = a.sessionNumber ?? 0;
-        const bNum = b.sessionNumber ?? 0;
-
-        return aNum - bNum;
-
-      });
-
-      this.tratamientosHistorial.sort((a, b) => {
-
-        const aTime = a.fechaInicio?.toMillis?.() ?? 0;
-        const bTime = b.fechaInicio?.toMillis?.() ?? 0;
-
-        return bTime - aTime;
-
-      });
-
-      return tratamiento;
-
-    });
 
   }
 

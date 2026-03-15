@@ -51,7 +51,7 @@ export interface Sesion {
 
 export interface Documento {
   id: number | string;
-  pacienteId: number | string;
+  patientId: number | string;
   imagen: string;
   fecha: string;
   tipo: 'foto_camara' | 'desde_galeria';
@@ -60,7 +60,7 @@ export interface Documento {
 
 export interface Evaluacion {
   id?: string;
-  pacienteId: number | string;
+  patientId: number | string;
   pacienteNombre?: string;
   eva: number;
   movilidad?: string;
@@ -77,6 +77,6 @@ export interface BackupData {
   fecha: string;
   app: string;
   pacientes: Paciente[];
-  sesiones: { [pacienteId: string]: Sesion[] };
-  documentos: { [pacienteId: string]: Documento[] };
+  sesiones: { [patientId: string]: Sesion[] };
+  documentos: { [patientId: string]: Documento[] };
 }

@@ -182,7 +182,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     const params = this.route.snapshot.queryParamMap;
 
     if (!this.patientId) {
-      this.patientId = params.get('patientId') || params.get('pacienteId') || '';
+      this.patientId = params.get('patientId') || params.get('patientId') || '';
     }
 
     if (!this.pacienteNombre) {
@@ -741,7 +741,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
     descripcion: '',
     ejercicios: [],
     tipo: 'paciente',
-    pacienteId: this.patientId,
+    patientId: this.patientId,
     clinicId: '',
     createdBy: '',
     activa: true
@@ -756,7 +756,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
   volver(): void {
     this.navCtrl.navigateBack('/paciente-detalle', {
-      queryParams: { pacienteId: this.patientId }
+      queryParams: { patientId: this.patientId }
     });
   }
 

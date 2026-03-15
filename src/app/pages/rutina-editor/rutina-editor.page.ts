@@ -20,7 +20,7 @@ export class RutinaEditorPage {
   rutina!: Rutina;
   tipo: 'template' | 'paciente' = 'template';
   editandoId: string | null = null;
-  pacienteId: string = '';
+  patientId: string = '';
   cargando = true;
   guardando = false;
 
@@ -66,7 +66,7 @@ export class RutinaEditorPage {
 
     this.tipo = (params.get('tipo') as 'template' | 'paciente') || 'template';
     this.editandoId = params.get('id') || null;
-    this.pacienteId = params.get('pacienteId') || '';
+    this.patientId = params.get('patientId') || '';
 
     if (this.editandoId) {
       this.cargarRutinaExistente();
@@ -87,7 +87,7 @@ export class RutinaEditorPage {
       clinicId: '',
       createdBy: '',
       activa: this.tipo === 'paciente' ? true : undefined,
-      pacienteId: this.tipo === 'paciente' ? this.pacienteId : undefined
+      patientId: this.tipo === 'paciente' ? this.patientId : undefined
     };
 
   }
@@ -158,10 +158,10 @@ export class RutinaEditorPage {
 
   volver() {
 
-    if (this.tipo === 'paciente' && this.pacienteId) {
+    if (this.tipo === 'paciente' && this.patientId) {
       this.navCtrl.navigateRoot('/paciente-detalle', {
         queryParams: {
-          pacienteId: this.pacienteId,
+          patientId: this.patientId,
           tab: 'rutinas'
         }
       });
@@ -173,10 +173,10 @@ export class RutinaEditorPage {
 
   private navegarDespuesDeGuardar() {
 
-    if (this.tipo === 'paciente' && this.pacienteId) {
+    if (this.tipo === 'paciente' && this.patientId) {
       this.navCtrl.navigateRoot('/paciente-detalle', {
         queryParams: {
-          pacienteId: this.pacienteId,
+          patientId: this.patientId,
           tab: 'rutinas'
         }
       });

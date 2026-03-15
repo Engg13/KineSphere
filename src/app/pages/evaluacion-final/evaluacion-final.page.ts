@@ -77,8 +77,8 @@ export class EvaluacionFinalPage implements ViewWillEnter {
   }
 
   async seleccionarPaciente(event: any) {
-    const pacienteId = event?.detail?.value;
-    if (!pacienteId) {
+    const patientId = event?.detail?.value;
+    if (!patientId) {
       this.pacienteSeleccionado = null;
       this.sesiones = [];
       this.resumen = null;
@@ -88,10 +88,10 @@ export class EvaluacionFinalPage implements ViewWillEnter {
     this.cargando = true;
     try {
       this.pacienteSeleccionado =
-      this.pacientes.find(p => p.id === pacienteId) ?? null;
+      this.pacientes.find(p => p.id === patientId) ?? null;
       if (!this.pacienteSeleccionado) return;
 
-      const sesiones = await this.evolucionesService.listByPaciente(pacienteId);
+      const sesiones = await this.evolucionesService.listByPaciente(patientId);
       this.sesiones = sesiones.sort((a, b) =>
         (a.sessionNumber ?? 0) - (b.sessionNumber ?? 0)
       );

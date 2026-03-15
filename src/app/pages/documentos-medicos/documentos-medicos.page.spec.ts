@@ -24,7 +24,7 @@ describe('DocumentosMedicosPage', () => {
 
   it('should have default values', () => {
     expect(component.documentos).toEqual([]);
-    expect(component.pacienteId).toBe(0);
+    expect(component.patientId).toBe(0);
     expect(component.pacienteNombre).toBe('Paciente');
   });
 

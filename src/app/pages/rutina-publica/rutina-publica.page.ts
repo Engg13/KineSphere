@@ -246,7 +246,7 @@ export class RutinaPublicaPage implements OnInit {
 
       const sesionId = await this.sesionesService.registrarSesion({
         rutinaId: this.rutinaId,
-        pacienteId: this.rutina.pacienteId,
+        patientId: this.rutina.patientId,
         clinicId,
         tipoSesion: 'domiciliaria',
         fecha: new Date(),
@@ -269,7 +269,7 @@ export class RutinaPublicaPage implements OnInit {
           logs.push({
             sesionId,
             rutinaId: this.rutinaId,
-            pacienteId: this.rutina.pacienteId,
+            patientId: this.rutina.patientId,
             ejercicioId: ej.ejercicioId,
             serie: serie.numero,
             repeticiones: serie.repeticiones,

@@ -15,7 +15,7 @@ export interface Rutina {
 
   tipo: 'template' | 'paciente';
 
-  pacienteId?: string;
+  patientId?: string;
 
   templateId?: string;
 
@@ -61,7 +61,7 @@ export function pacienteToRutina(r: RutinaPaciente): Rutina {
     descripcion: r.descripcion,
     ejercicios: r.ejercicios,
     tipo: 'paciente',
-    pacienteId: r.pacienteId,
+    patientId: r.patientId,
     templateId: r.templateId,
     clinicId: r.clinicId,
     activa: r.activa,
@@ -93,7 +93,7 @@ export function rutinaToPaciente(r: Rutina): Omit<RutinaPaciente, 'id'> & { id?:
     nombre: r.nombre,
     descripcion: r.descripcion,
     ejercicios: r.ejercicios,
-    pacienteId: r.pacienteId!,
+    patientId: r.patientId!,
     clinicId: r.clinicId,
     activa: r.activa ?? true,
     tipo: r.tipoRutina,

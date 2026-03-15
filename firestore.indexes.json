@@ -5,26 +5,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "paciente_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "fecha",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "sesiones",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "pacienteId",
+          "fieldPath": "patientId",
           "order": "ASCENDING"
         },
         {
@@ -71,7 +52,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "pacienteId",
+          "fieldPath": "patientId",
           "order": "ASCENDING"
         },
         {
