@@ -353,6 +353,7 @@ export class EvolucionesService extends BaseClinicService {
       where('patientId', '==', patientId),
       where('tipoEvolucion', '==', 'progress'),
       where('activo', '==', true),
+      where('sessionNumber', '>', 0),
       orderBy('sessionNumber', 'desc'),
       limit(1)
     );
@@ -436,7 +437,8 @@ export class EvolucionesService extends BaseClinicService {
             where('clinicId', '==', clinicId),
             where('tipoEvolucion', '==', 'initial'),
             where('activo', '==', true),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'desc'),
+            limit(20)
         );
 
         const snapshot = await getDocs(q);

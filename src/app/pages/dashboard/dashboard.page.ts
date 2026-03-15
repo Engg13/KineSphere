@@ -73,21 +73,17 @@ export class DashboardPage {
 
     try {
 
-      console.log('Cargando pacientes...');
-      const pacientes = await this.pacientesService.list();
-      console.log('PACIENTES OK', pacientes.length);
-
-      console.log('Cargando tratamientos activos...');
-      const tratamientosActivos = await this.tratamientosService.listActivos();
-      console.log('TRATAMIENTOS OK', tratamientosActivos.length);
-
-      console.log('Cargando evoluciones hoy...');
-      const evolucionesHoy = await this.evolucionesService.listHoy();
-      console.log('EVOLUCIONES HOY OK', evolucionesHoy.length);
-
-      console.log('Cargando evoluciones iniciales...');
-      const evolucionesIniciales = await this.evolucionesService.listIniciales();
-      console.log('EVOLUCIONES INICIALES OK', evolucionesIniciales.length);
+      const [
+        pacientes,
+        tratamientosActivos,
+        evolucionesHoy,
+        evolucionesIniciales
+      ] = await Promise.all([
+        this.pacientesService.list(),
+        this.tratamientosService.listActivos(),
+        this.evolucionesService.listHoy(),
+        this.evolucionesService.listIniciales()
+      ]);
 
       const nuevosDatos = {
         pacientes,

@@ -7,6 +7,7 @@ import {
   getDoc,
   getDocs,
   query,
+  limit, 
   serverTimestamp,
   updateDoc,
   where,
@@ -138,7 +139,8 @@ export class PacientesService extends BaseClinicService {
       this.getCollection(),
       where('clinicId', '==', clinicId),
       where('isDeleted', '==', false),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(50)
     );
 
     const snapshot = await getDocs(q);

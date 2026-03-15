@@ -29,13 +29,21 @@ export class ClinicContextService {
 
     const data = snap.data();
 
+    if (!data['clinicId']) {
+      throw new Error('Usuario sin clinicId asignado');
+    }
+
+    if (!data['role']) {
+      throw new Error('Usuario sin rol asignado');
+    }
+
     this.clinicId = data['clinicId'];
     this.role = data['role'];
 
-    console.log('Clinic loaded:', this.clinicId);
-    console.log('Role:', this.role);
+        console.log('Clinic loaded:', this.clinicId);
+        console.log('Role:', this.role);
 
-  }
+      }
 
   isAdmin(): boolean {
     return this.role === 'admin';

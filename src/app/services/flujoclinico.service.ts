@@ -62,11 +62,21 @@ export class FlujoClinicoService extends BaseClinicService {
       const tratamientoRef = doc(collection(this.firestore, 'tratamientos'));
 
       transaction.set(tratamientoRef, {
+        clinicId,
+        professionalId: this.professionalId,
         patientId,
+
+        estado: 'active',
+
+        totalSesiones: 0,
+        nextSessionNumber: 1,
+
         zonaPrincipal: payload.zonaPrincipal ?? null,
-        zonasSecundarias: [],
-        estado: 'activo',
-        createdAt: new Date()
+        zonasSecundarias: payload.zonasSecundarias ?? [],
+
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        closedAt: null
       });
 
       const evolucionRef = doc(collection(this.firestore, 'evoluciones'));
@@ -77,7 +87,7 @@ export class FlujoClinicoService extends BaseClinicService {
         treatmentId: tratamientoRef.id,
         tipoEvolucion: 'initial',
         sessionNumber: null,
-        createdAt: new Date()
+        createdAt: serverTimestamp()
       });
 
       return evolucionRef.id;

@@ -132,7 +132,7 @@ rules_version = '2';
 
     allow read: if true;
 
-    allow create: if hasProfile();
+    allow create: if isSuperAdmin();
 
   }
 
@@ -155,7 +155,7 @@ rules_version = '2';
 
   match /testTemplates/{id} {
 
-    allow read: if hasProfile();
+    allow read: if hasProfile() && resource.data.clinicId == clinicId();
 
     allow create, update, delete: if hasProfile() &&
       request.resource.data.clinicId == clinicId();
@@ -170,7 +170,8 @@ rules_version = '2';
                   resource.data.clinicId == clinicId();
 
       allow create: if hasProfile() &&
-                    request.resource.data.clinicId == clinicId();
+                    request.resource.data.clinicId == clinicId() &&
+                    request.resource.data.clinicId is string;
 
       allow update: if hasProfile() &&
                     resource.data.clinicId == clinicId();

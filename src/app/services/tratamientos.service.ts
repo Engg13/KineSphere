@@ -166,7 +166,7 @@ export class TratamientosService extends BaseClinicService {
 
     return snapshot.docs.map(d => ({
       id: d.id,
-      ...(d.data() as any)
+      ...(d.data() as Omit<TratamientoDocument,'id'>)
     }));
   }
 
