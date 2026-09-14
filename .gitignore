@@ -76,3 +76,5 @@ keystore.properties
 key.properties
 scripts/kinesphere-6834d-firebase-adminsdk-fbsvc-27ea85d56a.json
 .firebase/
+# APK generado - no subir
+*.apk

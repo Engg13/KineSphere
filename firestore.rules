@@ -138,12 +138,11 @@ rules_version = '2';
 
   match /testTemplates/{id} {
 
-    allow read: if hasProfile();
+    allow read: if request.auth != null;
 
     allow create, update, delete: if hasProfile() &&
       request.resource.data.clinicId == clinicId();
-
-    }
+  }
 
     /* ================= TRATAMIENTOS ================= */
 

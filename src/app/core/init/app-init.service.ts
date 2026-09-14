@@ -22,7 +22,10 @@ export class AppInitService {
     try {
 
       const user = await firstValueFrom(
-        this.authService.user$.pipe(take(1))
+        this.authService.user$.pipe(
+          filter(user => user !== undefined),
+          take(1)
+        )
       );
 
       console.log('Auth initialized', user?.uid);

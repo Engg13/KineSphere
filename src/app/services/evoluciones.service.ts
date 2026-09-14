@@ -201,7 +201,7 @@ export class EvolucionesService extends BaseClinicService {
 
     const ref = await addDoc(
         this.getCollection(),
-        cleanPayload
+        this.sanitize(cleanPayload)
     );
 
     return this.getByIdOrThrow(ref.id, clinicId);
