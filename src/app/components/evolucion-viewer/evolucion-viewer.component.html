@@ -1,135 +1,175 @@
 <ion-header>
   <ion-toolbar>
-
     <ion-buttons slot="start">
       <ion-button (click)="cerrar()">
         <ion-icon name="close-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
-
     <ion-title>
-      Sesión {{ evolucion.sessionNumber }}
+      {{ titulo }}
     </ion-title>
-
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
+  <div class="viewer-wrapper">
 
-<div class="viewer-wrapper">
+    <!-- ========================= -->
+    <!-- EVALUACIÓN INICIAL -->
+    <!-- ========================= -->
+    <ng-container *ngIf="esInicial; else seguimiento">
 
-  <!-- EVA -->
-
-  <div class="section">
-    <h3>EVA</h3>
-    <p>{{ evolucion.painScale ?? '-' }}/10</p>
-  </div>
-
-  <!-- Sueño -->
-
-  <div class="section" *ngIf="evolucion.sleepQuality">
-    <h3>Calidad del sueño</h3>
-    <p>{{ evolucion.sleepQuality }}/5</p>
-  </div>
-
-  <!-- Zona tratamiento -->
-
-  <div class="section" *ngIf="evolucion.zonaPrincipal">
-    <h3>Zona de tratamiento</h3>
-    <p>{{ evolucion.zonaPrincipal }}</p>
-  </div>
-
-  <!-- Técnicas -->
-
-  <div class="section" *ngIf="evolucion.tecnicasAplicadas?.length">
-    <h3>Técnicas aplicadas</h3>
-
-    <ul>
-      <li *ngFor="let t of evolucion.tecnicasAplicadas">
-        {{ t }}
-      </li>
-    </ul>
-
-  </div>
-
-  <!-- ROM -->
-
-  <div class="section" *ngIf="evolucion.rom?.length">
-
-    <h3>Rango de movimiento</h3>
-
-    <div *ngFor="let art of evolucion.rom" class="rom-block">
-
-      <strong>{{ art.articulacion }}</strong>
-
-      <div *ngFor="let mov of art.movimientos" class="rom-row">
-
-        <span>{{ mov.movimiento }}</span>
-
-        <span *ngIf="mov.arom?.valor">
-          AROM: {{ mov.arom.valor }}°
-        </span>
-
-        <span *ngIf="mov.prom?.valor">
-          PROM: {{ mov.prom.valor }}°
-        </span>
-
+      <div class="section" *ngIf="tieneTexto(evolucion.motivoConsulta) || tieneTexto(evolucion.inicioMecanismo) || tieneTexto(evolucion.irritantes) || tieneTexto(evolucion.atenuantes) || tieneTexto(evolucion.actividadLimitada) || tieneTexto(evolucion.principalPreocupacion) || tieneTexto(evolucion.expectativas) || tieneTexto(evolucion.miedos) || tieneTexto(evolucion.objetivoPaciente)">
+        <h3>Motivo y contexto</h3>
+        <p *ngIf="tieneTexto(evolucion.motivoConsulta)"><strong>Motivo de consulta:</strong> {{ evolucion.motivoConsulta }}</p>
+        <p *ngIf="tieneTexto(evolucion.inicioMecanismo)"><strong>Inicio / mecanismo:</strong> {{ evolucion.inicioMecanismo }}</p>
+        <p *ngIf="tieneTexto(evolucion.irritantes)"><strong>Irritantes:</strong> {{ evolucion.irritantes }}</p>
+        <p *ngIf="tieneTexto(evolucion.atenuantes)"><strong>Atenuantes:</strong> {{ evolucion.atenuantes }}</p>
+        <p *ngIf="tieneTexto(evolucion.actividadLimitada)"><strong>Actividad limitada:</strong> {{ evolucion.actividadLimitada }}</p>
+        <p *ngIf="tieneTexto(evolucion.principalPreocupacion)"><strong>Principal preocupación:</strong> {{ evolucion.principalPreocupacion }}</p>
+        <p *ngIf="tieneTexto(evolucion.expectativas)"><strong>Expectativas:</strong> {{ evolucion.expectativas }}</p>
+        <p *ngIf="tieneTexto(evolucion.miedos)"><strong>Miedos:</strong> {{ evolucion.miedos }}</p>
+        <p *ngIf="tieneTexto(evolucion.objetivoPaciente)"><strong>Objetivo del paciente:</strong> {{ evolucion.objetivoPaciente }}</p>
       </div>
 
-    </div>
+      <div class="section" *ngIf="tieneTexto(evolucion.mecanismoPredominante) || tieneTexto(evolucion.irritabilidad) || evolucion.banderasRojas || evolucion.banderasAmarillas || tieneTexto(evolucion.banderasRojasObservaciones) || tieneTexto(evolucion.banderasAmarillasObservaciones)">
+        <h3>Clasificación clínica</h3>
+        <p *ngIf="tieneTexto(evolucion.mecanismoPredominante)"><strong>Mecanismo predominante:</strong> {{ evolucion.mecanismoPredominante }}</p>
+        <p *ngIf="tieneTexto(evolucion.irritabilidad)"><strong>Irritabilidad:</strong> {{ evolucion.irritabilidad }}</p>
+        <p><strong>Banderas rojas:</strong> {{ evolucion.banderasRojas ? 'Sí' : 'No' }}</p>
+        <p *ngIf="tieneTexto(evolucion.banderasRojasObservaciones)"><strong>Observaciones banderas rojas:</strong> {{ evolucion.banderasRojasObservaciones }}</p>
+        <p><strong>Banderas amarillas:</strong> {{ evolucion.banderasAmarillas ? 'Sí' : 'No' }}</p>
+        <p *ngIf="tieneTexto(evolucion.banderasAmarillasObservaciones)"><strong>Observaciones banderas amarillas:</strong> {{ evolucion.banderasAmarillasObservaciones }}</p>
+      </div>
+
+      <div class="section" *ngIf="tieneTexto(evolucion.sleepQuality != null ? String(evolucion.sleepQuality) : '') || tieneTexto(evolucion.estres) || tieneTexto(evolucion.trabajo) || tieneTexto(evolucion.apoyoSocial) || tieneTexto(evolucion.comorbilidades) || tieneTexto(evolucion.barrerasAdherencia)">
+        <h3>Factores biopsicosociales</h3>
+        <p *ngIf="evolucion.sleepQuality != null"><strong>Calidad del sueño:</strong> {{ evolucion.sleepQuality }}/5</p>
+        <p *ngIf="tieneTexto(evolucion.estres)"><strong>Estrés:</strong> {{ evolucion.estres }}</p>
+        <p *ngIf="tieneTexto(evolucion.trabajo)"><strong>Trabajo:</strong> {{ evolucion.trabajo }}</p>
+        <p *ngIf="tieneTexto(evolucion.apoyoSocial)"><strong>Apoyo social:</strong> {{ evolucion.apoyoSocial }}</p>
+        <p *ngIf="tieneTexto(evolucion.comorbilidades)"><strong>Comorbilidades:</strong> {{ evolucion.comorbilidades }}</p>
+        <p *ngIf="tieneTexto(evolucion.barrerasAdherencia)"><strong>Barreras para la adherencia:</strong> {{ evolucion.barrerasAdherencia }}</p>
+      </div>
+
+      <div class="section">
+        <h3>Medidas iniciales</h3>
+        <p><strong>EVA:</strong> {{ evolucion.painScale ?? '-' }}/10</p>
+        <p *ngIf="evolucion.zonaPrincipal"><strong>Zona principal:</strong> {{ evolucion.zonaPrincipal }}</p>
+      </div>
+
+      <div class="section" *ngIf="evolucion.rom?.length || evolucion.signoComparable || evolucion.pruebasFuncionales">
+        <h3>Evaluación física</h3>
+        <p *ngIf="tieneTexto(evolucion.signoComparable)"><strong>Signo comparable:</strong> {{ evolucion.signoComparable }}</p>
+        <p *ngIf="tieneTexto(evolucion.pruebasFuncionales)"><strong>Pruebas funcionales:</strong> {{ evolucion.pruebasFuncionales }}</p>
+        <div *ngIf="evolucion.rom?.length" class="rom-block">
+          <strong>Rango de movimiento</strong>
+          <div *ngFor="let art of evolucion.rom" class="rom-block">
+            <strong>{{ art.articulacion }}</strong>
+            <div *ngFor="let mov of art.movimientos" class="rom-row">
+              <span>{{ mov.movimiento }}</span>
+              <span *ngIf="mov.arom?.valor != null">AROM: {{ mov.arom.valor }}°</span>
+              <span *ngIf="mov.prom?.valor != null">PROM: {{ mov.prom.valor }}°</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" *ngIf="evolucion.test">
+        <h3>Medida de resultado / Test</h3>
+        <p><strong>{{ evolucion.test.testNombre }}</strong></p>
+        <p>Puntaje: {{ evolucion.test.puntajeTotal }}</p>
+        <p *ngIf="tieneTexto(evolucion.test.resultado)">Resultado: {{ evolucion.test.resultado }}</p>
+      </div>
+
+      <div class="section" *ngIf="evolucion.objetivos?.length">
+        <h3>Objetivos del tratamiento</h3>
+        <div *ngFor="let objetivo of evolucion.objetivos; let i = index" class="objective-block">
+          <p><strong>Objetivo {{ i + 1 }}:</strong> {{ objetivo.descripcion }}</p>
+          <p *ngIf="tieneTexto(objetivo.indicador)"><strong>Indicador:</strong> {{ objetivo.indicador }}</p>
+          <p *ngIf="tieneTexto(objetivo.tiempoEstimado)"><strong>Tiempo estimado:</strong> {{ objetivo.tiempoEstimado }}</p>
+          <p *ngIf="objetivo.logrado != null"><strong>Estado:</strong> {{ objetivo.logrado ? 'Logrado' : 'Pendiente' }}</p>
+        </div>
+      </div>
+
+      <div class="section" *ngIf="tieneTexto(evolucion.plan)">
+        <h3>Plan inicial</h3>
+        <p>{{ evolucion.plan }}</p>
+      </div>
+
+    </ng-container>
+
+    <!-- ========================= -->
+    <!-- EVOLUCIÓN DE SESIÓN -->
+    <!-- ========================= -->
+    <ng-template #seguimiento>
+      <div class="section">
+        <h3>EVA</h3>
+        <p>{{ evolucion.painScale ?? '-' }}/10</p>
+      </div>
+
+      <div class="section" *ngIf="evolucion.sleepQuality != null">
+        <h3>Calidad del sueño</h3>
+        <p>{{ evolucion.sleepQuality }}/5</p>
+      </div>
+
+      <div class="section" *ngIf="evolucion.rom?.length">
+        <h3>Rango de movimiento</h3>
+        <div *ngFor="let art of evolucion.rom" class="rom-block">
+          <strong>{{ art.articulacion }}</strong>
+          <div *ngFor="let mov of art.movimientos" class="rom-row">
+            <span>{{ mov.movimiento }}</span>
+            <span *ngIf="mov.arom?.valor != null">AROM: {{ mov.arom.valor }}°</span>
+            <span *ngIf="mov.prom?.valor != null">PROM: {{ mov.prom.valor }}°</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" *ngIf="evolucion.tecnicasAplicadas?.length">
+        <h3>Técnicas aplicadas</h3>
+        <ul><li *ngFor="let t of evolucion.tecnicasAplicadas">{{ t }}</li></ul>
+      </div>
+
+      <div class="section">
+        <h3>Ejercicios realizados</h3>
+        <p>{{ evolucion.ejerciciosRealizados ? 'Sí' : 'No' }}</p>
+      </div>
+
+      <div class="section" *ngIf="tieneTexto(evolucion.objetivoSesion)">
+        <h3>Objetivo de la sesión</h3>
+        <p>{{ evolucion.objetivoSesion }}</p>
+      </div>
+
+      <div class="section" *ngIf="evolucion.test">
+        <h3>Test</h3>
+        <p><strong>{{ evolucion.test.testNombre }}</strong></p>
+        <p>Puntaje: {{ evolucion.test.puntajeTotal }}</p>
+        <p *ngIf="tieneTexto(evolucion.test.resultado)">Resultado: {{ evolucion.test.resultado }}</p>
+      </div>
+
+      <div class="section" *ngIf="tieneTexto(evolucion.comentariosSesion)">
+        <h3>Comentarios de la sesión</h3>
+        <p>{{ evolucion.comentariosSesion }}</p>
+      </div>
+
+      <!-- Compatibilidad con evoluciones antiguas -->
+      <div class="section" *ngIf="!tieneTexto(evolucion.comentariosSesion) && tieneTexto(evolucion.subjective)">
+        <h3>Subjetivo</h3>
+        <p>{{ evolucion.subjective }}</p>
+      </div>
+      <div class="section" *ngIf="!tieneTexto(evolucion.comentariosSesion) && tieneTexto(evolucion.objective)">
+        <h3>Objetivo</h3>
+        <p>{{ evolucion.objective }}</p>
+      </div>
+      <div class="section" *ngIf="!tieneTexto(evolucion.comentariosSesion) && tieneTexto(evolucion.assessment)">
+        <h3>Análisis</h3>
+        <p>{{ evolucion.assessment }}</p>
+      </div>
+      <div class="section" *ngIf="!tieneTexto(evolucion.comentariosSesion) && tieneTexto(evolucion.plan)">
+        <h3>Plan</h3>
+        <p>{{ evolucion.plan }}</p>
+      </div>
+    </ng-template>
 
   </div>
-
-  <!-- Rutina -->
-
-  <div class="section" *ngIf="evolucion.rutinaNombre">
-
-    <h3>Rutina realizada</h3>
-
-    <p>{{ evolucion.rutinaNombre }}</p>
-
-  </div>
-
-  <!-- Subjetivo -->
-
-  <div class="section" *ngIf="evolucion.subjective">
-
-    <h3>Subjetivo</h3>
-
-    <p>{{ evolucion.subjective }}</p>
-
-  </div>
-
-  <!-- Objetivo -->
-
-  <div class="section" *ngIf="evolucion.objective">
-
-    <h3>Objetivo</h3>
-
-    <p>{{ evolucion.objective }}</p>
-
-  </div>
-
-  <!-- Análisis -->
-
-  <div class="section" *ngIf="evolucion.assessment">
-
-    <h3>Análisis</h3>
-
-    <p>{{ evolucion.assessment }}</p>
-
-  </div>
-
-  <!-- Plan -->
-
-  <div class="section" *ngIf="evolucion.plan">
-
-    <h3>Plan</h3>
-
-    <p>{{ evolucion.plan }}</p>
-
-  </div>
-
-</div>
-
 </ion-content>

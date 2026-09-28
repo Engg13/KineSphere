@@ -22,24 +22,20 @@ export class TestTemplatesFirestoreService extends BaseClinicService {
 
   async getTests(): Promise<TestTemplate[]> {
 
-    const ref = collection(this.firestore, 'testTemplates');
+    const ref = collection(this.firestore, COLLECTION_NAME);
 
-    try {
+    const q = query(
+      ref,
+      orderBy('fechaCreacion', 'desc')
+    );
 
-      const snapshot = await getDocs(ref);
+    const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(d => ({
-        id: d.id,
-        ...(d.data() as Omit<TestTemplate, 'id'>),
-        source: 'firebase' as const
-      }));
-
-    } catch (error) {
-
-      console.error('===== TEST TEMPLATES ERROR =====');
-      console.error(error);
-      throw error;
-    }
+    return snapshot.docs.map(d => ({
+      id: d.id,
+      ...(d.data() as Omit<TestTemplate, 'id'>),
+      source: 'firebase' as const
+    }));
   }
 
   async upsertTest(test: TestTemplate): Promise<void> {

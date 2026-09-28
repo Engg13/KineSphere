@@ -118,10 +118,34 @@ export class EvolucionPage implements OnInit, OnDestroy {
     tecnicasAplicadas: this.fb.nonNullable.control<string[]>([]),
     rom: this.fb.array<FormGroup>([]),
     ejerciciosRealizados: this.fb.nonNullable.control(false),
-    subjective: this.fb.nonNullable.control('', Validators.required),
-    objective: this.fb.nonNullable.control('', Validators.required),
+    subjective: this.fb.nonNullable.control(''),
+    objective: this.fb.nonNullable.control(''),
     assessment: this.fb.nonNullable.control(''),
     plan: this.fb.nonNullable.control(''),
+    motivoConsulta: this.fb.nonNullable.control(''),
+    inicioMecanismo: this.fb.nonNullable.control(''),
+    irritantes: this.fb.nonNullable.control(''),
+    atenuantes: this.fb.nonNullable.control(''),
+    actividadLimitada: this.fb.nonNullable.control(''),
+    principalPreocupacion: this.fb.nonNullable.control(''),
+    objetivoPaciente: this.fb.nonNullable.control(''),
+    expectativas: this.fb.nonNullable.control(''),
+    miedos: this.fb.nonNullable.control(''),
+    mecanismoPredominante: this.fb.nonNullable.control(''),
+    irritabilidad: this.fb.nonNullable.control(''),
+    banderasRojas: this.fb.nonNullable.control(false),
+    banderasRojasObservaciones: this.fb.nonNullable.control(''),
+    banderasAmarillas: this.fb.nonNullable.control(false),
+    banderasAmarillasObservaciones: this.fb.nonNullable.control(''),
+    estres: this.fb.nonNullable.control(''),
+    trabajo: this.fb.nonNullable.control(''),
+    apoyoSocial: this.fb.nonNullable.control(''),
+    comorbilidades: this.fb.nonNullable.control(''),
+    barrerasAdherencia: this.fb.nonNullable.control(''),
+    signoComparable: this.fb.nonNullable.control(''),
+    pruebasFuncionales: this.fb.nonNullable.control(''),
+    objetivoSesion: this.fb.nonNullable.control(''),
+    comentariosSesion: this.fb.nonNullable.control(''),
     rutinaId: this.fb.control<string | null>(null),
     rutinaNombre: this.fb.nonNullable.control(''),
     objetivos: this.fb.array<FormGroup>([]),
@@ -208,11 +232,13 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     this.applyZonaLock(tipoActual);
     this.actualizarEstadoObjetivos();
+    this.actualizarValidacionesPorTipo(tipoActual);
 
     this.form.get('tipoEvolucion')?.valueChanges.subscribe(async (tipo) => {
 
       this.applyZonaLock(tipo);
       this.actualizarEstadoObjetivos();
+      this.actualizarValidacionesPorTipo(tipo);
 
       if (tipo === 'discharge') {
 
@@ -660,7 +686,7 @@ export class EvolucionPage implements OnInit, OnDestroy {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      await this.mostrarToast('Completa EVA, Subjetivo y Objetivo.', 'warning');
+      await this.mostrarToast(this.esInitial ? 'Completa los campos obligatorios de la evaluación inicial.' : 'Completa EVA y los comentarios de la sesión.', 'warning');
       return;
     }
 
@@ -683,6 +709,30 @@ export class EvolucionPage implements OnInit, OnDestroy {
       objective: value.objective.trim(),
       assessment: value.assessment.trim(),
       plan: value.plan.trim(),
+      motivoConsulta: value.motivoConsulta.trim(),
+      inicioMecanismo: value.inicioMecanismo.trim(),
+      irritantes: value.irritantes.trim(),
+      atenuantes: value.atenuantes.trim(),
+      actividadLimitada: value.actividadLimitada.trim(),
+      principalPreocupacion: value.principalPreocupacion.trim(),
+      objetivoPaciente: value.objetivoPaciente.trim(),
+      expectativas: value.expectativas.trim(),
+      miedos: value.miedos.trim(),
+      mecanismoPredominante: value.mecanismoPredominante,
+      irritabilidad: value.irritabilidad,
+      banderasRojas: value.banderasRojas,
+      banderasRojasObservaciones: value.banderasRojasObservaciones.trim(),
+      banderasAmarillas: value.banderasAmarillas,
+      banderasAmarillasObservaciones: value.banderasAmarillasObservaciones.trim(),
+      estres: value.estres.trim(),
+      trabajo: value.trabajo.trim(),
+      apoyoSocial: value.apoyoSocial.trim(),
+      comorbilidades: value.comorbilidades.trim(),
+      barrerasAdherencia: value.barrerasAdherencia.trim(),
+      signoComparable: value.signoComparable.trim(),
+      pruebasFuncionales: value.pruebasFuncionales.trim(),
+      objetivoSesion: value.objetivoSesion.trim(),
+      comentariosSesion: value.comentariosSesion.trim(),
       rutinaId: value.rutinaId || undefined,
       rutinaNombre: value.rutinaNombre || undefined,
       objetivos: objetivosPayload,
@@ -801,6 +851,25 @@ export class EvolucionPage implements OnInit, OnDestroy {
     } else {
       zonaControl.enable({ emitEvent: false });
     }
+  }
+
+  private actualizarValidacionesPorTipo(tipo: TipoEvolucion | null): void {
+    const controlesIniciales = [
+      'motivoConsulta', 'objetivoPaciente'
+    ];
+    controlesIniciales.forEach(nombre => this.form.get(nombre)?.clearValidators());
+
+    this.form.get('comentariosSesion')?.clearValidators();
+
+    if (tipo === 'initial') {
+      this.form.get('motivoConsulta')?.setValidators(Validators.required);
+      this.form.get('objetivoPaciente')?.setValidators(Validators.required);
+    } else if (tipo === 'progress') {
+      this.form.get('comentariosSesion')?.setValidators(Validators.required);
+    }
+
+    controlesIniciales.forEach(nombre => this.form.get(nombre)?.updateValueAndValidity({ emitEvent: false }));
+    this.form.get('comentariosSesion')?.updateValueAndValidity({ emitEvent: false });
   }
 
   private actualizarEstadoObjetivos(): void {

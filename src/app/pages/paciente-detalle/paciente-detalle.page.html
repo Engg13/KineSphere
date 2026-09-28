@@ -296,7 +296,7 @@ class="action-card"
     <div class="adherencia-card animated-item">
 
       <div class="adherencia-header">
-        <span class="label">Adherencia domiciliaria</span>
+        <span class="label">Cumplimiento domiciliario</span>
         <span class="value">{{ adherenciaDomiciliaria }}%</span>
       </div>
 
@@ -392,19 +392,17 @@ class="action-card"
 
   <!-- HISTORIAL DOMICILIARIO -->
 
-  @if (rutinasDomiciliarias.length > 0) {
+  @if (sesionesDomiciliarias.length > 0) {
 
   <div class="sessions-card animated-item">
 
   <h3 class="section-title">Rutinas domiciliarias realizadas</h3>
 
-  @for (rutina of rutinasDomiciliarias; track rutina.id) {
-
-  <!-- ITEM -->
+  @for (sesion of sesionesDomiciliarias; track sesion.id) {
 
   <div
     class="session-item clickable"
-    (click)="toggleRutina(rutina.id)"
+    (click)="toggleSesionDomiciliaria(sesion)"
   >
 
     <div class="session-number rutina-icon">
@@ -414,50 +412,68 @@ class="action-card"
     <div class="session-info">
 
       <span class="session-date">
-        {{ formatearFecha(rutina.fechaCompletada || rutina.createdAt) }}
+        {{ sesion.rutina?.nombre || 'Rutina domiciliaria' }}
       </span>
 
       <span class="session-eva">
-        {{ rutina.ejercicios.length }} ejercicios
+        {{ sesion.seriesCompletadas || 0 }} / {{ sesion.totalSeries || 0 }} series completadas
+      </span>
+
+      <span class="session-obs">
+        Realizada: {{ formatearFecha(sesion.fecha) }}
+        @if (sesion.painScore !== undefined && sesion.painScore !== null) {
+          · Dolor: {{ sesion.painScore }}/10
+        }
       </span>
 
     </div>
 
-    <!-- CHEVRON -->
-
     <ion-icon
       class="expand-icon"
-      [name]="rutinaAbiertaId === rutina.id
-        ? 'chevron-down-outline'
-        : 'chevron-forward-outline'">
+      [name]="sesionDomiciliariaAbiertaId === sesion.id ? 'chevron-down-outline' : 'chevron-forward-outline'">
     </ion-icon>
 
   </div>
 
-  <!-- DETALLE -->
+  @if (sesionDomiciliariaAbiertaId === sesion.id) {
 
-  @if (rutinaAbiertaId === rutina.id) {
+    <div class="rutina-detalle domiciliaria-detalle">
 
-  <div class="rutina-detalle">
+      @if (sesion.comentario) {
+        <div class="domiciliaria-bloque domiciliaria-comentario">
+          <span class="domiciliaria-detalle-label">Comentario del paciente</span>
+          <p class="domiciliaria-comentario-text">“{{ sesion.comentario || sesion.comentarioDolor }}”</p>
+        </div>
+      }
 
-    @for (ej of rutina.ejercicios; track ej.orden) {
+      @if (sesion.painScore !== undefined && sesion.painScore !== null) {
+        <div class="domiciliaria-bloque domiciliaria-eva">
+          <span class="domiciliaria-detalle-label">Dolor registrado</span>
+          <strong class="domiciliaria-eva-value">{{ sesion.painScore }}/10</strong>
+        </div>
+      }
 
-    <div class="ej-row">
+      <div class="domiciliaria-bloque domiciliaria-ejercicios">
+        <div class="domiciliaria-detalle-label">Ejercicios realizados</div>
 
-      <span class="ej-nombre">
-        {{ ej.nombre }}
-      </span>
-
-      <span class="ej-reps">
-        {{ ej.series }} x {{ ej.repeticiones }}
-      </span>
+        @if (sesion.logs?.length > 0) {
+          @for (ej of obtenerResumenEjercicios(sesion); track ej.ejercicioId) {
+            <div class="domiciliaria-ejercicio">
+              <div class="domiciliaria-ejercicio-nombre">{{ ej.nombre }}</div>
+              <div class="domiciliaria-ejercicio-datos">
+                {{ ej.seriesRealizadas }}/{{ ej.seriesProgramadas }} series
+                <span>·</span>
+                {{ ej.repeticionesRealizadas }}/{{ ej.repeticionesProgramadas }} rep.
+              </div>
+            </div>
+          }
+        } @else {
+          <span class="session-obs">No hay detalle de ejercicios registrado.</span>
+        }
+      </div>
 
     </div>
 
-    }
-
-  </div>
-
   }
 
   }
@@ -465,7 +481,6 @@ class="action-card"
   </div>
 
   }
-
 
   <!-- EMPTY STATE -->
 
@@ -502,145 +517,142 @@ class="action-card"
 <div class="tratamiento-bloque">
 
 <!-- HEADER TRATAMIENTO -->
-
 <div
-class="tratamiento-header clickable"
-(click)="toggleTratamiento(tratamiento)"
+  class="tratamiento-header clickable"
+  (click)="toggleTratamiento(tratamiento)"
 >
+  <div class="tratamiento-meta">
+    @if (tratamiento.fechaInicio) {
+      <div class="tratamiento-fecha">{{ formatearFecha(tratamiento.fechaInicio) }}</div>
+    }
+    @if (tratamiento.diagnostico) {
+      <div class="tratamiento-diagnostico">{{ tratamiento.diagnostico }}</div>
+    }
+  </div>
 
-<div class="tratamiento-meta">
-
-@if (tratamiento.fechaInicio) {
-
-<div class="tratamiento-fecha">
-{{ formatearFecha(tratamiento.fechaInicio) }}
-</div>
-
-}
-
-@if (tratamiento.diagnostico) {
-
-<div class="tratamiento-diagnostico">
-{{ tratamiento.diagnostico }}
-</div>
-
-}
-
-</div>
-
-@if (!tratamiento.activo) {
-
-<div class="tratamiento-toggle">
-
-@if (!tratamiento.expandido) {
-<span class="compact-range">EI — EF</span>
-}
-
-<ion-icon
-[name]="tratamiento.expandido ? 'chevron-up-outline' : 'chevron-down-outline'">
-</ion-icon>
-
-</div>
-
-}
-
+  @if (!tratamiento.activo) {
+    <div class="tratamiento-toggle">
+      @if (!tratamiento.expandido) {
+        <span class="compact-range">EI — EF</span>
+      }
+      <ion-icon [name]="tratamiento.expandido ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+    </div>
+  }
 </div>
 
 <!-- SESIONES DEL TRATAMIENTO -->
-
 @if (tratamiento.activo || tratamiento.expandido) {
 
 @for (sesion of tratamiento.sesiones; track sesion.id || $index) {
 
-<div
-class="session-item clickable"
-(click)="abrirSesion(sesion)"
->
+<div class="session-item clickable" (click)="abrirSesion(sesion)">
+  <div class="timeline-node">
+    <div
+      class="session-number"
+      [class.initial]="sesion.tipoEvolucion === 'initial'"
+      [class.discharge]="sesion.tipoEvolucion === 'discharge'"
+    >
+      @if (sesion.tipoEvolucion === 'initial') {
+        EI
+      } @else if (sesion.tipoEvolucion === 'discharge') {
+        EF
+      } @else {
+        {{ sesion.sessionNumber }}
+      }
+    </div>
+    <div class="timeline-line"></div>
+  </div>
 
-<div class="timeline-node">
+  <div class="session-info">
+    <div class="session-date">{{ formatearFecha(sesion.createdAt) }}</div>
+    <div class="session-eva">
+      <span class="eva-label">EVA</span>
+      <span class="eva-value">{{ sesion.painScale ?? '-' }}/10</span>
+    </div>
+  </div>
 
-<div
-class="session-number"
-[class.initial]="sesion.tipoEvolucion === 'initial'"
-[class.discharge]="sesion.tipoEvolucion === 'discharge'"
->
+  <ion-icon
+    class="expand-icon"
+    [name]="isSesionExpandida(sesion.id) ? 'chevron-down-outline' : 'chevron-forward-outline'">
+  </ion-icon>
+</div>
 
-@if (sesion.tipoEvolucion === 'initial') {
-EI
+@if (isSesionExpandida(sesion.id)) {
+  <div class="rutina-detalle clinica-detalle">
+
+    @if (sesion.subjective) {
+      <div class="domiciliaria-bloque">
+        <span class="domiciliaria-detalle-label">Subjetivo</span>
+        <p class="clinica-text">{{ sesion.subjective }}</p>
+      </div>
+    }
+
+    @if (sesion.objective) {
+      <div class="domiciliaria-bloque">
+        <span class="domiciliaria-detalle-label">Objetivo</span>
+        <p class="clinica-text">{{ sesion.objective }}</p>
+      </div>
+    }
+
+    @if (sesion.assessment) {
+      <div class="domiciliaria-bloque">
+        <span class="domiciliaria-detalle-label">Evaluación</span>
+        <p class="clinica-text">{{ sesion.assessment }}</p>
+      </div>
+    }
+
+    @if (sesion.plan) {
+      <div class="domiciliaria-bloque">
+        <span class="domiciliaria-detalle-label">Plan</span>
+        <p class="clinica-text">{{ sesion.plan }}</p>
+      </div>
+    }
+
+    @if (sesion.tecnicasAplicadas?.length) {
+      <div class="domiciliaria-bloque">
+        <span class="domiciliaria-detalle-label">Técnicas aplicadas</span>
+        <div class="clinica-chips">
+          @for (tecnica of sesion.tecnicasAplicadas; track tecnica) {
+            <span class="clinica-chip">{{ tecnica }}</span>
+          }
+        </div>
+      </div>
+    }
+
+    @if (sesion.painScale !== undefined && sesion.painScale !== null) {
+      <div class="domiciliaria-bloque domiciliaria-eva">
+        <span class="domiciliaria-detalle-label">Dolor registrado</span>
+        <strong class="domiciliaria-eva-value">{{ sesion.painScale }}/10</strong>
+      </div>
+    }
+
+  </div>
 }
 
-@else if (sesion.tipoEvolucion === 'discharge') {
-EF
 }
-
-@else {
-{{ sesion.sessionNumber }}
 }
 
 </div>
 
-<div class="timeline-line"></div>
-
-</div>
-
-<div class="session-info">
-
-<div class="session-date">
-{{ formatearFecha(sesion.createdAt) }}
-</div>
-
-<div class="session-eva">
-
-<span class="eva-label">EVA</span>
-
-<span class="eva-value">
-{{ sesion.painScale ?? '-' }}/10
-</span>
-
-</div>
-
-</div>
-
-</div>
-
 }
 
-}
-
-</div>
-
-}
-
-}
-
-@else {
+} @else {
 
 <div class="empty-sessions">
+  <ion-icon name="clipboard-outline"></ion-icon>
+  <p>Sin sesiones registradas</p>
 
-<ion-icon name="clipboard-outline"></ion-icon>
+  @if (!tratamientoActivo) {
+    <button class="empty-action" (click)="iniciarTratamiento($event)">
+      Iniciar tratamiento
+    </button>
+  }
 
-<p>Sin sesiones registradas</p>
-
-@if (!tratamientoActivo) {
-
-<button
-class="empty-action"
-(click)="iniciarTratamiento($event)">
-Iniciar tratamiento
-</button>
-
-}
-
-@if (tratamientoActivo) {
-
-<button
-class="empty-action"
-(click)="nuevaSesion()">
-Agregar sesión
-</button>
-
-}
-
+  @if (tratamientoActivo) {
+    <button class="empty-action" (click)="nuevaSesion()">
+      Agregar sesión
+    </button>
+  }
 </div>
 
 }

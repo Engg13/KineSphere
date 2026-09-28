@@ -51,6 +51,31 @@ export interface EvolucionDocument {
   assessment: string;
   plan: string;
 
+  motivoConsulta: string;
+  inicioMecanismo: string;
+  irritantes: string;
+  atenuantes: string;
+  actividadLimitada: string;
+  principalPreocupacion: string;
+  objetivoPaciente: string;
+  expectativas: string;
+  miedos: string;
+  mecanismoPredominante: string;
+  irritabilidad: string;
+  banderasRojas: boolean;
+  banderasRojasObservaciones: string;
+  banderasAmarillas: boolean;
+  banderasAmarillasObservaciones: string;
+  estres: string;
+  trabajo: string;
+  apoyoSocial: string;
+  comorbilidades: string;
+  barrerasAdherencia: string;
+  signoComparable: string;
+  pruebasFuncionales: string;
+  objetivoSesion: string;
+  comentariosSesion: string;
+
   objetivos: ObjetivoClinico[];
 
   rutinaId: string | null;
@@ -184,6 +209,31 @@ export class EvolucionesService extends BaseClinicService {
         assessment: payload.assessment ?? '',
         plan: payload.plan ?? '',
 
+        motivoConsulta: payload.motivoConsulta ?? '',
+        inicioMecanismo: payload.inicioMecanismo ?? '',
+        irritantes: payload.irritantes ?? '',
+        atenuantes: payload.atenuantes ?? '',
+        actividadLimitada: payload.actividadLimitada ?? '',
+        principalPreocupacion: payload.principalPreocupacion ?? '',
+        objetivoPaciente: payload.objetivoPaciente ?? '',
+        expectativas: payload.expectativas ?? '',
+        miedos: payload.miedos ?? '',
+        mecanismoPredominante: payload.mecanismoPredominante ?? '',
+        irritabilidad: payload.irritabilidad ?? '',
+        banderasRojas: payload.banderasRojas ?? false,
+        banderasRojasObservaciones: payload.banderasRojasObservaciones ?? '',
+        banderasAmarillas: payload.banderasAmarillas ?? false,
+        banderasAmarillasObservaciones: payload.banderasAmarillasObservaciones ?? '',
+        estres: payload.estres ?? '',
+        trabajo: payload.trabajo ?? '',
+        apoyoSocial: payload.apoyoSocial ?? '',
+        comorbilidades: payload.comorbilidades ?? '',
+        barrerasAdherencia: payload.barrerasAdherencia ?? '',
+        signoComparable: payload.signoComparable ?? '',
+        pruebasFuncionales: payload.pruebasFuncionales ?? '',
+        objetivoSesion: payload.objetivoSesion ?? '',
+        comentariosSesion: payload.comentariosSesion ?? '',
+
         objetivos: payload.objetivos ?? [],
 
         rutinaId: payload.rutinaId ?? null,
@@ -201,7 +251,7 @@ export class EvolucionesService extends BaseClinicService {
 
     const ref = await addDoc(
         this.getCollection(),
-        this.sanitize(cleanPayload)
+        cleanPayload
     );
 
     return this.getByIdOrThrow(ref.id, clinicId);

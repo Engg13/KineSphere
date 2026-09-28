@@ -682,6 +682,95 @@
 }
 
 
+/* Detalle de actividad domiciliaria */
+.domiciliaria-detalle {
+  margin-left: 52px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.domiciliaria-bloque {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.domiciliaria-bloque:last-child {
+  border-bottom: 0;
+}
+
+.domiciliaria-detalle-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.domiciliaria-comentario {
+  background: #fafafa;
+  border-radius: 8px 8px 0 0;
+}
+
+.domiciliaria-comentario-text {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.domiciliaria-eva {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.domiciliaria-eva .domiciliaria-detalle-label {
+  margin: 0;
+}
+
+.domiciliaria-eva-value {
+  font-size: 1rem;
+  color: var(--ion-color-primary);
+}
+
+.domiciliaria-ejercicios {
+  padding-top: 14px;
+}
+
+.domiciliaria-ejercicio {
+  padding: 10px 0;
+  border-bottom: 1px solid #eef0f2;
+}
+
+.domiciliaria-ejercicio:last-child {
+  border-bottom: 0;
+}
+
+.domiciliaria-ejercicio-nombre {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.domiciliaria-ejercicio-datos {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.domiciliaria-ejercicio-datos span {
+  margin: 0 4px;
+  color: var(--text-muted);
+}
+
 .timeline-node {
   display: flex;
   flex-direction: column;
@@ -800,6 +889,95 @@
   padding: 12px 4px;
 }
 
+/* Detalle de actividad domiciliaria */
+.domiciliaria-detalle {
+  margin-left: 52px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.domiciliaria-bloque {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.domiciliaria-bloque:last-child {
+  border-bottom: 0;
+}
+
+.domiciliaria-detalle-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.domiciliaria-comentario {
+  background: #fafafa;
+  border-radius: 8px 8px 0 0;
+}
+
+.domiciliaria-comentario-text {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.domiciliaria-eva {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.domiciliaria-eva .domiciliaria-detalle-label {
+  margin: 0;
+}
+
+.domiciliaria-eva-value {
+  font-size: 1rem;
+  color: var(--ion-color-primary);
+}
+
+.domiciliaria-ejercicios {
+  padding-top: 14px;
+}
+
+.domiciliaria-ejercicio {
+  padding: 10px 0;
+  border-bottom: 1px solid #eef0f2;
+}
+
+.domiciliaria-ejercicio:last-child {
+  border-bottom: 0;
+}
+
+.domiciliaria-ejercicio-nombre {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.domiciliaria-ejercicio-datos {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.domiciliaria-ejercicio-datos span {
+  margin: 0 4px;
+  color: var(--text-muted);
+}
+
 .timeline-node {
   display: flex;
   flex-direction: column;
@@ -902,3 +1080,39 @@
 
 }
 
+
+
+/* Detalle clínico con la misma jerarquía visual del detalle domiciliario */
+.clinica-detalle {
+  margin: 0 0 12px 48px;
+}
+
+.clinica-text {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #374151;
+  white-space: pre-line;
+}
+
+.clinica-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.clinica-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.clinica-detalle .domiciliaria-bloque:last-child {
+  border-bottom: none;
+}

@@ -1,69 +1,33 @@
-export type TipoSesion = 'clinica' | 'domiciliaria';
-
 export interface RutinaSesion {
-
-  id?: string;
-
+  id: string;
   rutinaId: string;
-
   pacienteId: string;
-
   clinicId: string;
-
-  tipoSesion?: TipoSesion;
-
+  treatmentId?: string;
+  tipoSesion: 'clinica' | 'domiciliaria';
   fecha: Date;
-
-  comentario?: string;
-
   painScore?: number;
-
-  /** @deprecated Kept for backward compat with subcollection sessions */
-  ejercicios?: RutinaSesionEjercicio[];
-
-  /** @deprecated Use comentario */
-  notas?: string;
-
-  createdAt: Date;
-
-}
-
-export interface RutinaSesionEjercicio {
-
-  ejercicioId: string;
-
-  serie: number;
-
-  repeticiones?: number;
-
-  tiempo?: number;
-
-  carga?: number;
-
-  dolor?: number;
-
-  completado?: boolean;
-
+  comentario?: string;
+  totalSeries?: number;
+  seriesCompletadas?: number;
+  progreso?: number;
+  estado?: 'completada' | 'parcial';
+  createdAt?: any;
 }
 
 export interface RutinaLog {
-
-  id?: string;
-
-  sesionId: string;
-
+  id: string;
+  sesionId?: string;
+  rutinaId: string;
+  pacienteId: string;
+  clinicId?: string;
+  treatmentId?: string;
   ejercicioId: string;
-
-  serie: number;
-
-  completado: boolean;
-
-  dolor?: number;
-
+  serie?: number;
+  completado?: boolean;
   repeticiones?: number;
-
-  tiempo?: number;
-
-  carga?: number;
-
+  seriesCompletadas?: number;
+  dolor?: number;
+  fecha?: Date;
+  createdAt?: any;
 }

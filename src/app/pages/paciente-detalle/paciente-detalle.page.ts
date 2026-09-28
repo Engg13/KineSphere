@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PacientesService } from '../../services/pacientes.service';
 import { EvolucionesService } from '../../services/evoluciones.service';
 import { EvolucionPage } from '../evolucion/evolucion.page';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { FlujoClinicoService } from 'src/app/services/flujoclinico.service';
 import { Rutina } from '../../models/rutina.model';
 import { RutinasService } from '../../services/rutinas.service';
@@ -49,6 +49,7 @@ export class PacienteDetallePage implements OnDestroy {
   adherenciaDomiciliaria: number | null = null;
   sesionesDomiciliarias: any[] = [];
   rutinaAbiertaId: string | null = null;
+  sesionDomiciliariaAbiertaId: string | null = null;
   tratamientosHistorial: TratamientoHistorial[] = [];
 
   private rutinasSub?: Subscription;
@@ -326,6 +327,73 @@ export class PacienteDetallePage implements OnDestroy {
       this.rutinaAbiertaId = rutinaId;
     }
 
+  }
+
+  async toggleSesionDomiciliaria(sesion: any) {
+
+    if (this.sesionDomiciliariaAbiertaId === sesion.id) {
+      this.sesionDomiciliariaAbiertaId = null;
+      return;
+    }
+
+    this.sesionDomiciliariaAbiertaId = sesion.id;
+
+    // Los logs se cargan al abrir el detalle para no traerlos
+    // innecesariamente mientras se muestra solo el resumen.
+    if (sesion.logs !== undefined) return;
+
+    try {
+      if (!sesion.id) {
+        sesion.logs = [];
+        return;
+      }
+
+      sesion.logs = await firstValueFrom(
+        this.rutinasSesionesService.getLogsSesion(sesion.id)
+      );
+    } catch (error) {
+      console.error('Error cargando detalle de actividad domiciliaria:', error);
+      sesion.logs = [];
+    }
+
+  }
+
+  obtenerNombreEjercicio(rutina: any, ejercicioId: string): string {
+    const ejercicio = rutina?.ejercicios?.find(
+      (ej: any) => ej.ejercicioId === ejercicioId
+    );
+
+    return ejercicio?.nombre || 'Ejercicio';
+  }
+
+  obtenerResumenEjercicios(sesion: any): any[] {
+    const logs = sesion?.logs || [];
+    const ejerciciosProgramados = sesion?.rutina?.ejercicios || [];
+
+    return ejerciciosProgramados.map((ejercicio: any) => {
+      const logsEjercicio = logs.filter(
+        (log: any) => log.ejercicioId === ejercicio.ejercicioId && log.completado !== false
+      );
+
+      const seriesProgramadas = Number(ejercicio.series || 0);
+      const repeticionesProgramadas =
+        seriesProgramadas * Number(ejercicio.repeticiones || 0);
+
+      const seriesRealizadas = logsEjercicio.length;
+      const repeticionesRealizadas = logsEjercicio.reduce(
+        (total: number, log: any) => total + Number(log.repeticiones || 0),
+        0
+      );
+
+      return {
+        ejercicioId: ejercicio.ejercicioId,
+        nombre: ejercicio.nombre || 'Ejercicio',
+        seriesProgramadas,
+        seriesRealizadas,
+        repeticionesProgramadas,
+        repeticionesRealizadas
+      };
+    }).filter((ejercicio: any) => ejercicio.seriesRealizadas > 0);
   }
 
   isSesionExpandida(sesionId: string | number): boolean {
@@ -615,11 +683,29 @@ export class PacienteDetallePage implements OnDestroy {
     this.rutinasSesionesService
       .getSesionesPaciente(pacienteId)
       .subscribe({
-        next: sesiones => {
+        next: async sesiones => {
 
-          this.sesionesDomiciliarias = sesiones
+          const sesionesDomiciliarias = sesiones
             .filter(s => s.tipoSesion === 'domiciliaria')
             .sort((a, b) => this.getTime(b.fecha) - this.getTime(a.fecha));
+
+          this.sesionesDomiciliarias = await Promise.all(
+            sesionesDomiciliarias.map(async sesion => {
+              try {
+                const rutina = await firstValueFrom(
+                  this.rutinasService.getRutinaById(sesion.rutinaId)
+                );
+
+                return {
+                  ...sesion,
+                  rutina
+                };
+              } catch (error) {
+                console.error('Error cargando rutina de sesión domiciliaria:', error);
+                return { ...sesion, rutina: null };
+              }
+            })
+          );
 
         },
         error: err => {
@@ -656,17 +742,8 @@ export class PacienteDetallePage implements OnDestroy {
 
   }
 
-  async abrirSesion(sesion: any) {
-
-    const modal = await this.modalCtrl.create({
-      component: EvolucionViewerComponent,
-      componentProps: {
-        evolucion: sesion
-      }
-    });
-
-    await modal.present();
-
+  abrirSesion(sesion: any) {
+    this.toggleSesionExpandida(sesion.id);
   }
 
   private agruparSesionesPorTratamiento() {

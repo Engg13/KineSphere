@@ -104,24 +104,55 @@
       </app-sleep-quality>
     </div>
 
-    <div class="section-card">
-      <div class="section-header">
-        <ion-icon name="body-outline" class="section-icon"></ion-icon>
-        <h3>Zona de Tratamiento</h3>
+    <!-- ==================== EVALUACION INICIAL ==================== -->
+    <ng-container *ngIf="esInitial">
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="document-text-outline" class="section-icon"></ion-icon><h3>Motivo y contexto</h3></div>
+        <textarea class="obs-textarea" formControlName="motivoConsulta" placeholder="Motivo de consulta" rows="2"></textarea>
+        <textarea class="obs-textarea" formControlName="inicioMecanismo" placeholder="Inicio o mecanismo del problema" rows="2"></textarea>
+        <div class="two-col">
+          <textarea class="obs-textarea" formControlName="irritantes" placeholder="Irritantes" rows="2"></textarea>
+          <textarea class="obs-textarea" formControlName="atenuantes" placeholder="Atenuantes" rows="2"></textarea>
+        </div>
+        <textarea class="obs-textarea" formControlName="actividadLimitada" placeholder="Actividad que dejó de realizar o tiene limitada" rows="2"></textarea>
+        <textarea class="obs-textarea" formControlName="principalPreocupacion" placeholder="¿Qué le preocupa más?" rows="2"></textarea>
+        <textarea class="obs-textarea" formControlName="objetivoPaciente" placeholder="¿Qué espera lograr con el tratamiento?" rows="2"></textarea>
+        <div class="two-col">
+          <textarea class="obs-textarea" formControlName="expectativas" placeholder="Expectativas" rows="2"></textarea>
+          <textarea class="obs-textarea" formControlName="miedos" placeholder="Miedos o preocupaciones" rows="2"></textarea>
+        </div>
       </div>
-      <ion-item lines="none" class="select-item">
-        <ion-select
-          formControlName="zonaPrincipal"
-          placeholder="Seleccionar zona..."
-          interface="action-sheet"
-          (ionChange)="onZonaPrincipalChange($event)">
-          <ion-select-option *ngFor="let zona of zonasTratamiento" [value]="zona">{{ zona }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-    </div>
 
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="analytics-outline" class="section-icon"></ion-icon><h3>Clasificación clínica</h3></div>
+        <ion-item lines="none" class="select-item"><ion-label position="stacked">Mecanismo predominante</ion-label><ion-select formControlName="mecanismoPredominante" interface="action-sheet" placeholder="Seleccionar"><ion-select-option value="Nociceptivo">Nociceptivo</ion-select-option><ion-select-option value="Neuropático">Neuropático</ion-select-option><ion-select-option value="Nociplástico">Nociplástico</ion-select-option><ion-select-option value="Mixto">Mixto</ion-select-option></ion-select></ion-item>
+        <ion-item lines="none" class="select-item"><ion-label position="stacked">Irritabilidad</ion-label><ion-select formControlName="irritabilidad" interface="action-sheet" placeholder="Seleccionar"><ion-select-option value="Alta">Alta</ion-select-option><ion-select-option value="Moderada">Moderada</ion-select-option><ion-select-option value="Baja">Baja</ion-select-option></ion-select></ion-item>
+        <div class="toggle-row"><ion-label>Banderas rojas</ion-label><ion-toggle formControlName="banderasRojas"></ion-toggle></div>
+        <textarea class="obs-textarea" formControlName="banderasRojasObservaciones" placeholder="Observaciones de banderas rojas" rows="2"></textarea>
+        <div class="toggle-row"><ion-label>Banderas amarillas</ion-label><ion-toggle formControlName="banderasAmarillas"></ion-toggle></div>
+        <textarea class="obs-textarea" formControlName="banderasAmarillasObservaciones" placeholder="Observaciones de banderas amarillas" rows="2"></textarea>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="people-outline" class="section-icon"></ion-icon><h3>Factores biopsicosociales</h3></div>
+        <div class="two-col">
+          <textarea class="obs-textarea" formControlName="estres" placeholder="Estrés" rows="2"></textarea>
+          <textarea class="obs-textarea" formControlName="trabajo" placeholder="Trabajo / contexto laboral" rows="2"></textarea>
+          <textarea class="obs-textarea" formControlName="apoyoSocial" placeholder="Apoyo social" rows="2"></textarea>
+          <textarea class="obs-textarea" formControlName="comorbilidades" placeholder="Comorbilidades relevantes" rows="2"></textarea>
+        </div>
+        <textarea class="obs-textarea" formControlName="barrerasAdherencia" placeholder="Barreras para realizar el tratamiento o ejercicios" rows="2"></textarea>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="body-outline" class="section-icon"></ion-icon><h3>Zona de Tratamiento</h3></div>
+        <ion-item lines="none" class="select-item"><ion-select formControlName="zonaPrincipal" placeholder="Seleccionar zona..." interface="action-sheet" (ionChange)="onZonaPrincipalChange($event)"><ion-select-option *ngFor="let zona of zonasTratamiento" [value]="zona">{{ zona }}</ion-select-option></ion-select></ion-item>
+      </div>
+    </ng-container>
+
+    <!-- ==================== MODULOS CLINICOS ==================== -->
     <ion-accordion-group class="modulos-accordion" multiple="true" [value]="modulosColapsablesAbiertos">
-      <ion-accordion value="tecnicas">
+      <ion-accordion value="tecnicas" *ngIf="esTipoProgress || esDischarge">
         <ion-item slot="header" lines="none" class="accordion-header-item">
           <ion-icon name="hand-left-outline" class="section-icon"></ion-icon>
           <ion-label>Técnicas Aplicadas</ion-label>
@@ -225,7 +256,7 @@
         </div>
       </ion-accordion>
 
-      <ion-accordion value="rutina">
+      <ion-accordion value="rutina" *ngIf="esDischarge">
         <ion-item slot="header" lines="none" class="accordion-header-item">
           <ion-icon name="barbell-outline" class="section-icon"></ion-icon>
           <ion-label>Rutina Asociada</ion-label>
@@ -359,7 +390,7 @@
       </ion-accordion>
     </ion-accordion-group>
 
-    <div class="section-card ejercicio-card">
+    <div class="section-card ejercicio-card" *ngIf="esTipoProgress || esDischarge">
       <div class="ejercicio-row">
         <div class="ejercicio-info">
           <ion-icon name="fitness-outline" class="section-icon"></ion-icon>
@@ -372,37 +403,59 @@
       </div>
     </div>
 
-    <div class="section-card">
-      <div class="section-header">
-        <ion-icon name="create-outline" class="section-icon"></ion-icon>
-        <h3>Subjetivo</h3>
+    <!-- ==================== EVALUACION INICIAL: OBJETIVOS Y PLAN ==================== -->
+    <ng-container *ngIf="esInitial">
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="flag-outline" class="section-icon"></ion-icon><h3>Objetivos del tratamiento</h3></div>
+        <p class="section-desc">Define objetivos funcionales y sus indicadores de seguimiento.</p>
+        <div formArrayName="objetivos">
+          <div *ngFor="let objetivo of objetivosArray.controls; let i = index" [formGroupName]="i" class="objective-card">
+            <ion-input formControlName="descripcion" label="Objetivo" labelPlacement="stacked" placeholder="Ej. Volver a correr sin dolor"></ion-input>
+            <ion-input formControlName="indicador" label="Indicador" labelPlacement="stacked" placeholder="¿Cómo se medirá? "></ion-input>
+            <ion-input formControlName="tiempoEstimado" label="Plazo estimado" labelPlacement="stacked" placeholder="Ej. 4 semanas"></ion-input>
+            <button type="button" class="rom-remove-btn" (click)="eliminarObjetivo(i)"><ion-icon name="trash-outline"></ion-icon><span>Eliminar</span></button>
+          </div>
+        </div>
+        <button type="button" class="btn-crear-rutina" (click)="agregarObjetivo()"><ion-icon name="add-circle-outline"></ion-icon><span>Agregar objetivo</span></button>
       </div>
-      <textarea class="obs-textarea" formControlName="subjective" placeholder="Describe percepción del paciente, dolor, síntomas y cambios desde la sesión previa..." rows="3"></textarea>
-    </div>
 
-    <div class="section-card">
-      <div class="section-header">
-        <ion-icon name="scan-outline" class="section-icon"></ion-icon>
-        <h3>Objetivo</h3>
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="flag-outline" class="section-icon"></ion-icon><h3>Plan inicial</h3></div>
+        <textarea class="obs-textarea" formControlName="plan" placeholder="Plan de tratamiento, prescripción inicial, progresión y educación al paciente..." rows="4"></textarea>
       </div>
-      <textarea class="obs-textarea" formControlName="objective" placeholder="Describe hallazgos clínicos: movilidad, palpación, pruebas físicas y respuesta al tratamiento..." rows="3"></textarea>
-    </div>
 
-    <div class="section-card">
-      <div class="section-header">
-        <ion-icon name="analytics-outline" class="section-icon"></ion-icon>
-        <h3>Assessment</h3>
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="scan-outline" class="section-icon"></ion-icon><h3>Signo comparable y pruebas funcionales</h3></div>
+        <textarea class="obs-textarea" formControlName="signoComparable" placeholder="Signo comparable" rows="2"></textarea>
+        <textarea class="obs-textarea" formControlName="pruebasFuncionales" placeholder="Pruebas funcionales y resultados" rows="3"></textarea>
       </div>
-      <textarea class="obs-textarea" formControlName="assessment" placeholder="Análisis clínico profesional de la evolución..." rows="3"></textarea>
-    </div>
+    </ng-container>
 
-    <div class="section-card">
-      <div class="section-header">
-        <ion-icon name="flag-outline" class="section-icon"></ion-icon>
-        <h3>Plan</h3>
+    <!-- ==================== EVOLUCION DE SESION ==================== -->
+    <ng-container *ngIf="esTipoProgress">
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="locate-outline" class="section-icon"></ion-icon><h3>Objetivo de la sesión</h3></div>
+        <textarea class="obs-textarea" formControlName="objetivoSesion" placeholder="¿Qué se busca trabajar o lograr durante esta sesión?" rows="2"></textarea>
       </div>
-      <textarea class="obs-textarea" formControlName="plan" placeholder="Plan para próxima sesión, ajustes terapéuticos y recomendaciones..." rows="2"></textarea>
-    </div>
+
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="chatbox-ellipses-outline" class="section-icon"></ion-icon><h3>Comentarios de la sesión</h3></div>
+        <p class="section-desc">Registra los aspectos relevantes de la sesión, respuesta del paciente, cambios observados y consideraciones para la continuidad.</p>
+        <textarea class="obs-textarea" formControlName="comentariosSesion" placeholder="Comentarios clínicos de la sesión..." rows="5"></textarea>
+      </div>
+    </ng-container>
+
+    <!-- Alta: mantenemos la estructura histórica mientras se desarrolla HU12 -->
+    <ng-container *ngIf="esDischarge">
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="analytics-outline" class="section-icon"></ion-icon><h3>Análisis de alta</h3></div>
+        <textarea class="obs-textarea" formControlName="assessment" placeholder="Análisis clínico final y resultados obtenidos..." rows="4"></textarea>
+      </div>
+      <div class="section-card">
+        <div class="section-header"><ion-icon name="flag-outline" class="section-icon"></ion-icon><h3>Plan de alta</h3></div>
+        <textarea class="obs-textarea" formControlName="plan" placeholder="Recomendaciones y plan posterior al alta..." rows="3"></textarea>
+      </div>
+    </ng-container>
   </div>
 
   <div class="footer-fake">

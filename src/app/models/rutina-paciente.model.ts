@@ -13,6 +13,9 @@ export interface RutinaPaciente {
 
   pacienteId: string;
 
+  /** Treatment associated with this patient routine. */
+  treatmentId?: string;
+
   nombre: string;
 
   descripcion?: string;

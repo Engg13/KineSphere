@@ -50,7 +50,7 @@ RUTINA PUBLICA — Modern Patient UI
 .rutina-container{
   max-width:540px;
   margin:0 auto;
-  padding:0 16px 260px;
+  padding:0 16px 360px;
 }
 
 /* Hero */
@@ -277,6 +277,31 @@ RUTINA PUBLICA — Modern Patient UI
   font-weight: 500;
 }
 
+.dolor-comentario-item {
+  --background: transparent;
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  margin-top: 12px;
+}
+
+.dolor-comentario-item ion-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+.dolor-comentario-item ion-textarea {
+  --background: #f9fafb;
+  --border-radius: 10px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
 .ind-low { color: #10b981; }
 .ind-mid { color: #f59e0b; }
 .ind-high { color: #ef4444; }
@@ -288,4 +313,150 @@ RUTINA PUBLICA — Modern Patient UI
   --border-radius:14px;
   height:50px;
   font-weight:700;
+}
+
+@media (max-width: 480px) {
+  .rutina-container {
+    padding-bottom: 390px;
+  }
+}
+
+
+/* Acciones de actividad: evita superposición con el panel fijo */
+.actividad-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.guardar-despues-btn,
+.finalizar-btn {
+  margin: 0;
+  --border-radius: 14px;
+  min-height: 48px;
+  font-weight: 700;
+}
+
+.guardar-despues-btn {
+  --border-width: 1px;
+}
+
+.progreso-guardado-msg {
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+@media (max-width: 480px) {
+  .rutina-container {
+    padding-bottom: 455px;
+  }
+
+  .rutina-footer {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    max-height: 78vh;
+    overflow-y: auto;
+  }
+}
+
+
+/* FIX DEFINITIVO DE SUPERPOSICIÓN
+   El panel inferior forma parte del contenido y debe desplazarse con la página.
+   Esto evita que tape el último ejercicio en móviles y pantallas pequeñas. */
+.rutina-footer {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: auto !important;
+  z-index: auto !important;
+  margin-top: 24px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.rutina-container {
+  padding-bottom: 24px !important;
+}
+
+@media (max-width: 480px) {
+  .rutina-container {
+    padding-bottom: 24px !important;
+  }
+
+  .rutina-footer {
+    max-height: none !important;
+    overflow: visible !important;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .actividad-actions {
+    padding-bottom: 8px;
+  }
+}
+
+
+/* AJUSTE FINAL — acciones visibles */
+.rutina-footer {
+  position: static !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: 24px !important;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom)) !important;
+  box-sizing: border-box !important;
+  z-index: auto !important;
+}
+
+.actividad-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+.actividad-actions ion-button {
+  display: block !important;
+  width: 100% !important;
+  min-height: 48px !important;
+  height: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin: 0 !important;
+}
+
+.finalizar-btn {
+  --background: var(--ion-color-success, #2dd36f);
+  --color: #fff;
+  --border-radius: 14px;
+  min-height: 52px !important;
+  height: 52px !important;
+  line-height: 52px !important;
+}
+
+.guardar-despues-btn {
+  --border-radius: 14px;
+  min-height: 48px !important;
+  height: 48px !important;
+}
+
+.progreso-guardado-msg {
+  display: block !important;
+  margin: 4px 0 0 !important;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .rutina-footer {
+    padding-bottom: calc(28px + env(safe-area-inset-bottom)) !important;
+  }
 }

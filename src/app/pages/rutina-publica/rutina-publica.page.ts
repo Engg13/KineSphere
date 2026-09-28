@@ -56,9 +56,12 @@ export class RutinaPublicaPage implements OnInit {
   ejerciciosLocales: EjercicioLocal[] = [];
   cargando = true;
   painScore: number | null = null;
+  comentarioDolor = '';
   guardandoSesion = false;
   sesionGuardada = false;
+  progresoGuardado = false;
   ejerciciosGlobales: Record<string, any> = {};
+  private readonly DRAFT_PREFIX = 'kinesphere_rutina_domiciliaria_draft_';
   
 
   async ngOnInit() {
@@ -139,6 +142,8 @@ export class RutinaPublicaPage implements OnInit {
       this.ejerciciosLocales = this.buildEjerciciosLocales(
         this.rutina.ejercicios || []
       );
+
+      this.restaurarProgresoGuardado();
 
     } catch (err) {
 
@@ -223,14 +228,111 @@ export class RutinaPublicaPage implements OnInit {
 
   }
 
+  getSeriesCompletadas(): number {
+    return this.ejerciciosLocales.reduce(
+      (total, ej) => total + ej.series.filter(s => s.completada).length,
+      0
+    );
+  }
+
   // ========================================
-  // FINISH SESSION — creates session + logs
+  // SAVE / RESTORE PROGRESS
+  // ========================================
+
+  private getDraftKey(): string {
+    return `${this.DRAFT_PREFIX}${this.rutinaId ?? 'unknown'}`;
+  }
+
+  guardarProgresoParaDespues() {
+    if (!this.rutinaId || this.sesionGuardada || this.getSeriesCompletadas() === 0) {
+      return;
+    }
+
+    try {
+      const draft = {
+        ejercicios: this.ejerciciosLocales.map(ej => ({
+          ejercicioId: ej.ejercicioId,
+          series: ej.series.map(serie => ({
+            numero: serie.numero,
+            completada: serie.completada
+          }))
+        })),
+        painScore: this.painScore,
+        comentarioDolor: this.comentarioDolor,
+        savedAt: new Date().toISOString()
+      };
+
+      localStorage.setItem(this.getDraftKey(), JSON.stringify(draft));
+      this.progresoGuardado = true;
+    } catch (err) {
+      console.error('No se pudo guardar el progreso local', err);
+    }
+  }
+
+  private restaurarProgresoGuardado() {
+    if (!this.rutinaId) return;
+
+    try {
+      const raw = localStorage.getItem(this.getDraftKey());
+      if (!raw) return;
+
+      const draft = JSON.parse(raw);
+
+      for (const ejercicio of this.ejerciciosLocales) {
+        const guardado = draft.ejercicios?.find(
+          (item: any) => item.ejercicioId === ejercicio.ejercicioId
+        );
+
+        if (!guardado) continue;
+
+        for (const serie of ejercicio.series) {
+          const serieGuardada = guardado.series?.find(
+            (item: any) => item.numero === serie.numero
+          );
+
+          if (serieGuardada) {
+            serie.completada = !!serieGuardada.completada;
+          }
+        }
+      }
+
+      this.painScore =
+        typeof draft.painScore === 'number' ? draft.painScore : null;
+
+      this.comentarioDolor = draft.comentarioDolor ?? '';
+      this.progresoGuardado = this.getSeriesCompletadas() > 0;
+    } catch (err) {
+      console.error('No se pudo restaurar el progreso local', err);
+      localStorage.removeItem(this.getDraftKey());
+    }
+  }
+
+  private eliminarProgresoGuardado() {
+    if (!this.rutinaId) return;
+
+    try {
+      localStorage.removeItem(this.getDraftKey());
+      this.progresoGuardado = false;
+    } catch (err) {
+      console.error('No se pudo eliminar el progreso local', err);
+    }
+  }
+
+  // ========================================
+  // FINISH ACTIVITY — creates session + logs
   // ========================================
 
   async finalizarSesion() {
 
     if (!this.rutinaPath || !this.rutinaId || !this.rutina) return;
     if (this.guardandoSesion || this.sesionGuardada) return;
+
+    if (this.getSeriesCompletadas() === 0 || this.painScore === null) return;
+
+    if (!this.rutina.treatmentId) {
+      console.error('La rutina domiciliaria no tiene tratamiento asociado');
+      return;
+    }
 
     this.guardandoSesion = true;
 
@@ -241,50 +343,64 @@ export class RutinaPublicaPage implements OnInit {
       const clinicId = pathParts[1];
 
       // =========================
-      // Crear sesión
+      // Construir logs de la actividad
       // =========================
 
-      const sesionId = await this.sesionesService.registrarSesion({
-        rutinaId: this.rutinaId,
-        pacienteId: this.rutina.pacienteId,
-        clinicId,
-        tipoSesion: 'domiciliaria',
-        fecha: new Date(),
-        painScore: this.painScore,
-        comentario: ''
-      });
-
-      // =========================
-      // Crear logs
-      // =========================
-
-      const logs = [];
+      const logs: Omit<import('../../models/rutina-sesion.model').RutinaLog, 'id'>[] = [];
+      const totalSeries = this.ejerciciosLocales.reduce(
+        (total, ej) => total + ej.series.length,
+        0
+      );
+      const seriesCompletadas = this.ejerciciosLocales.reduce(
+        (total, ej) => total + ej.series.filter(s => s.completada).length,
+        0
+      );
 
       for (const ej of this.ejerciciosLocales) {
-
         for (const serie of ej.series) {
-
           if (!serie.completada) continue;
 
           logs.push({
-            sesionId,
+            sesionId: '',
             rutinaId: this.rutinaId,
             pacienteId: this.rutina.pacienteId,
+            treatmentId: this.rutina.treatmentId,
             ejercicioId: ej.ejercicioId,
             serie: serie.numero,
+            completado: true,
             repeticiones: serie.repeticiones,
-            dolor: this.painScore
+            dolor: this.painScore ?? undefined
           });
-
         }
-
       }
 
-      if (logs.length) {
-        await this.sesionesService.registrarLogs(logs);
-      }
+      // =========================
+      // Registrar actividad completa de forma atómica
+      // =========================
+
+      await this.sesionesService.registrarActividadDomiciliaria(
+        {
+          rutinaId: this.rutinaId,
+          pacienteId: this.rutina.pacienteId,
+          treatmentId: this.rutina.treatmentId,
+          clinicId,
+          tipoSesion: 'domiciliaria',
+          fecha: new Date(),
+          ...(this.painScore !== null && this.painScore !== undefined ? { painScore: this.painScore } : {}),
+...(this.comentarioDolor.trim()
+  ? {
+      comentario: this.comentarioDolor.trim()
+    }
+  : {}),
+totalSeries,
+          seriesCompletadas,
+          progreso: totalSeries ? Math.round((seriesCompletadas / totalSeries) * 100) : 0
+        },
+        logs
+      );
 
       this.sesionGuardada = true;
+      this.eliminarProgresoGuardado();
 
     } catch (err) {
 

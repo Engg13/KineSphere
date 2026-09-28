@@ -16,8 +16,25 @@ export class EvolucionViewerComponent {
 
   constructor(private modalCtrl: ModalController) {}
 
+  get esInicial(): boolean {
+    return this.evolucion?.tipoEvolucion === 'initial';
+  }
+
+  get titulo(): string {
+    if (this.evolucion?.tipoEvolucion === 'initial') return 'Evaluación inicial';
+    if (this.evolucion?.tipoEvolucion === 'discharge') return 'Evaluación de alta';
+    return `Sesión ${this.evolucion?.sessionNumber ?? '-'}`;
+  }
+
+  tieneTexto(valor: unknown): boolean {
+    return typeof valor === 'string' && valor.trim().length > 0;
+  }
+
+  String(valor: unknown): string {
+    return String(valor ?? '');
+  }
+
   cerrar() {
     this.modalCtrl.dismiss();
   }
-
 }

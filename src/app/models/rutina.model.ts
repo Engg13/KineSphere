@@ -17,6 +17,9 @@ export interface Rutina {
 
   pacienteId?: string;
 
+  /** Treatment associated with a patient routine. */
+  treatmentId?: string;
+
   templateId?: string;
 
   clinicId: string;
@@ -39,8 +42,6 @@ export interface Rutina {
 
 }
 
-// Mapping helpers to keep compatibility with existing models
-
 export function templateToRutina(t: RutinaTemplate): Rutina {
   return {
     id: t.id,
@@ -62,6 +63,7 @@ export function pacienteToRutina(r: RutinaPaciente): Rutina {
     ejercicios: r.ejercicios,
     tipo: 'paciente',
     pacienteId: r.pacienteId,
+    treatmentId: r.treatmentId,
     templateId: r.templateId,
     clinicId: r.clinicId,
     activa: r.activa,
@@ -94,6 +96,7 @@ export function rutinaToPaciente(r: Rutina): Omit<RutinaPaciente, 'id'> & { id?:
     descripcion: r.descripcion,
     ejercicios: r.ejercicios,
     pacienteId: r.pacienteId!,
+    treatmentId: r.treatmentId,
     clinicId: r.clinicId,
     activa: r.activa ?? true,
     tipo: r.tipoRutina,

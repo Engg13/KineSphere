@@ -100,8 +100,8 @@
     <!-- SESION GUARDADA -->
     <div *ngIf="sesionGuardada" class="sesion-ok-card">
       <div class="sesion-ok-icon">&#10003;</div>
-      <h2 class="sesion-ok-title">Sesion guardada</h2>
-      <p class="sesion-ok-subtitle">Excelente trabajo! Tu progreso fue registrado.</p>
+      <h2 class="sesion-ok-title">Actividad domiciliaria registrada</h2>
+      <p class="sesion-ok-subtitle">Excelente trabajo. Tu actividad fue registrada correctamente.</p>
       </div>
     </div>
 
@@ -177,29 +177,57 @@
 
           </div>
 
+          <ion-item lines="none" class="dolor-comentario-item">
+            <ion-label position="stacked">Comentario sobre el dolor (opcional)</ion-label>
+            <ion-textarea
+              [(ngModel)]="comentarioDolor"
+              [autoGrow]="true"
+              maxlength="500"
+              placeholder="Ej.: Me dolió durante el segundo ejercicio, especialmente en la última serie.">
+            </ion-textarea>
+          </ion-item>
+
         </div>
 
       </div>
 
-      <!-- BOTON FINALIZAR -->
+      <!-- ACCIONES DE LA ACTIVIDAD -->
 
-      <ion-button
-        expand="block"
-        size="large"
-        class="finalizar-btn"
-        [disabled]="getProgreso() < 100 || painScore === null || guardandoSesion"
-        (click)="finalizarSesion()">
+      <div class="actividad-actions">
 
-        <ion-spinner
-          *ngIf="guardandoSesion"
-          name="crescent">
-        </ion-spinner>
+        <ion-button
+          expand="block"
+          size="large"
+          class="guardar-despues-btn"
+          fill="outline"
+          [disabled]="getSeriesCompletadas() === 0 || guardandoSesion"
+          (click)="guardarProgresoParaDespues()">
+          Guardar y continuar después
+        </ion-button>
 
-        <span *ngIf="!guardandoSesion">
-          Finalizar sesión
-        </span>
+        <ion-button
+          expand="block"
+          size="large"
+          class="finalizar-btn"
+          [disabled]="getSeriesCompletadas() === 0 || painScore === null || guardandoSesion"
+          (click)="finalizarSesion()">
 
-      </ion-button>
+          <ion-spinner
+            *ngIf="guardandoSesion"
+            name="crescent">
+          </ion-spinner>
+
+          <span *ngIf="!guardandoSesion">
+            Finalizar actividad
+          </span>
+
+        </ion-button>
+
+        <p *ngIf="progresoGuardado" class="progreso-guardado-msg">
+          Progreso guardado. Puedes volver y continuar después.
+        </p>
+
+      </div>
 
     </div>
 </ion-content>
